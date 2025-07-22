@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Install Lua
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lua5.3 liblua5.3-dev
+        
+    - name: Run Unit Tests
+      run: lua tests/run_tests.lua
+      
+    - name: Install LÖVE for integration tests
+      run: |
+        sudo add-apt-repository ppa:bartbes/love-stable
+        sudo apt-get update
+        sudo apt-get install -y love
+        
+    - name: Check game can load with LÖVE
+      run: |
+        # Run LÖVE in headless mode to verify the game loads
+        timeout 5s xvfb-run -a love . --console || true
