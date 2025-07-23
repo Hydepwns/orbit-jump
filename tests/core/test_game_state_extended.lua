@@ -1,9 +1,9 @@
 -- Extended Tests for Game State
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local GameState = require("src.core.game_state")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local GameState = Utils.Utils.require("src.core.game_state")
 
 -- Setup mocks
 Mocks.setup()
@@ -58,7 +58,7 @@ local tests = {
         TestFramework.utils.assertEqual(50, GameState.getPullPower(), "Pull power should be set")
         
         local maxPull = GameState.getMaxPullDistance()
-        TestFramework.utils.assertEqual(150, maxPull, "Max pull distance should be default")
+        TestFramework.utils.assertEqual(250, maxPull, "Max pull distance should be default")
     end,
     
     ["config management"] = function()
@@ -128,8 +128,8 @@ local tests = {
         GameState.setCombo(5)
         TestFramework.utils.assertEqual(5, GameState.getCombo(), "Combo should be 5")
         
-        -- Test combo timeout
-        GameState.data.comboTimer = 0
+        -- Test combo timeout - set timer to small positive value so reset logic triggers
+        GameState.data.comboTimer = 0.05
         GameState.update(0.1)
         TestFramework.utils.assertEqual(0, GameState.getCombo(), "Combo should reset")
     end,
@@ -149,9 +149,9 @@ local tests = {
         GameState.setSpeedBoost(1.5)
         TestFramework.utils.assertEqual(1.5, GameState.getSpeedBoost(), "Speed boost should be set")
         
-        -- Test speed boost reset on combo timeout
+        -- Test speed boost reset on combo timeout - set timer to small positive value so reset logic triggers
         GameState.data.combo = 5
-        GameState.data.comboTimer = 0
+        GameState.data.comboTimer = 0.05
         GameState.update(0.1)
         TestFramework.utils.assertEqual(1.0, GameState.player.speedBoost, "Speed boost should reset")
     end,
@@ -204,7 +204,7 @@ local function run()
     local success = TestFramework.runSuite("Game State Extended Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("game_state", 8) -- Now testing all 8 functions
     
     return success

@@ -1,8 +1,8 @@
 -- Integration tests for game state
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local GameState = require("src.core.game_state")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local GameState = Utils.Utils.require("src.core.game_state")
 
 -- Initialize test framework
 TestFramework.init()
@@ -135,7 +135,7 @@ local tests = {
         
         if distance <= planet.radius + GameState.player.radius then
             GameState.player.onPlanet = 1
-            GameState.player.angle = math.atan2 and math.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x) or 0
+            GameState.player.angle = math.atan2 and Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x) or 0
         end
         
         TestFramework.utils.assertEqual(1, GameState.player.onPlanet, "Player should land on planet")

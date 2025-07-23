@@ -1,11 +1,11 @@
 -- Unit tests for game logic using Busted-style syntax
 package.path = package.path .. ";../../?.lua"
 
-require("tests.busted")
+Utils.require("tests.busted")
 
 -- Ensure we're using the real Utils, not mocked ones
-local Utils = require("src.utils.utils")
-local GameLogic = require("src.core.game_logic")
+local Utils = Utils.Utils.require("src.utils.utils")
+local GameLogic = Utils.Utils.require("src.core.game_logic")
 
 describe("Game Logic", function()
     describe("Distance Calculations", function()

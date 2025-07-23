@@ -1,13 +1,13 @@
 -- Tests for SoundManager module
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 -- Mock love.audio
 Mocks.setup()
 
-local SoundManager = require("src.audio.sound_manager")
+local SoundManager = Utils.Utils.require("src.audio.sound_manager")
 
 -- Initialize test framework
 TestFramework.init()
@@ -23,7 +23,7 @@ local tests = {
     
     ["sound loading"] = function()
         local soundManager = SoundManager:new()
-        local success = pcall(function() soundManager:load() end)
+        local success  = Utils.ErrorHandler.safeCall(function() soundManager:load() end)
         TestFramework.utils.assertTrue(success, "Sound loading should not crash")
         TestFramework.utils.assertNotNil(soundManager.sounds, "Sounds table should exist")
     end,
@@ -33,7 +33,7 @@ local tests = {
         soundManager:load()
         
         -- Should not crash when playing sounds
-        local success = pcall(function() 
+        local success  = Utils.ErrorHandler.safeCall(function() 
             soundManager:playJump()
         end)
         TestFramework.utils.assertTrue(success, "Playing jump sound should not crash")
@@ -43,7 +43,7 @@ local tests = {
         local soundManager = SoundManager:new()
         soundManager:load()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             soundManager:playCollectRing()
             soundManager:playPowerUp()
         end)
@@ -54,7 +54,7 @@ local tests = {
         local soundManager = SoundManager:new()
         soundManager:load()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             soundManager:playDash()
             soundManager:playLand()
         end)
@@ -83,7 +83,7 @@ local tests = {
         TestFramework.utils.assertFalse(soundManager.enabled, "Sound should be disabled")
         
         -- Should not play when disabled
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             soundManager:playJump()
         end)
         TestFramework.utils.assertTrue(success, "Playing while disabled should not crash")
@@ -96,7 +96,7 @@ local tests = {
         local soundManager = SoundManager:new()
         soundManager:load()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             soundManager:cleanup()
         end)
         TestFramework.utils.assertTrue(success, "Cleanup should not crash")
@@ -117,7 +117,7 @@ local tests = {
         local soundManager = SoundManager:new()
         soundManager:load()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             for combo = 1, 20 do
                 soundManager:playComboSound(combo)
             end
@@ -131,7 +131,7 @@ local function run()
     local success = TestFramework.runSuite("Sound Manager Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("sound_manager", 8) -- All major functions tested
     
     return success

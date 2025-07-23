@@ -1,8 +1,13 @@
--- Unit tests for game logic
+-- Tests for Game Logic
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local GameLogic = require("src.core.game_logic")
+local Utils = Utils.Utils.require("src.utils.utils")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local GameLogic = Utils.Utils.require("src.core.game_logic")
+
+-- Setup mocks
+local Mocks = Utils.Utils.require("tests.mocks")
+Mocks.setup()
 
 -- Initialize test framework
 TestFramework.init()
@@ -11,14 +16,14 @@ TestFramework.init()
 local tests = {
     -- Test distance calculations
     calculateDistance = function()
-        local dist, dx, dy = GameLogic.calculateDistance(0, 0, 3, 4)
+        local dist, dx, dy = Utils.distance(0, 0, 3, 4)
         TestFramework.utils.assertEqual(5, dist, "Should calculate distance correctly")
         TestFramework.utils.assertEqual(3, dx, "Should calculate dx correctly")
         TestFramework.utils.assertEqual(4, dy, "Should calculate dy correctly")
     end,
     
     ["calculateDistance with negative coordinates"] = function()
-        local dist, dx, dy = GameLogic.calculateDistance(-1, -1, 2, 3)
+        local dist, dx, dy = Utils.distance(-1, -1, 2, 3)
         TestFramework.utils.assertEqual(5, dist, "Should handle negative coordinates")
         TestFramework.utils.assertEqual(3, dx, "Should calculate dx with negatives")
         TestFramework.utils.assertEqual(4, dy, "Should calculate dy with negatives")

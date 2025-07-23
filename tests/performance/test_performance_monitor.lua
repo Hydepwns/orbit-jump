@@ -1,12 +1,12 @@
 -- Tests for Performance Monitor
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local PerformanceMonitor = require("src.performance.performance_monitor")
+local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
 
 -- Initialize test framework
 TestFramework.init()
@@ -89,7 +89,7 @@ local tests = {
         PerformanceMonitor.init({enabled = true})
         
         -- Test logging
-        local success = pcall(PerformanceMonitor.logPerformance)
+        local success  = Utils.ErrorHandler.safeCall(PerformanceMonitor.logPerformance)
         TestFramework.utils.assertTrue(success, "Performance logging should not crash")
     end,
     
@@ -97,7 +97,7 @@ local tests = {
         PerformanceMonitor.init({enabled = true})
         
         -- Test drawing (should not crash)
-        local success = pcall(PerformanceMonitor.draw)
+        local success  = Utils.ErrorHandler.safeCall(PerformanceMonitor.draw)
         TestFramework.utils.assertTrue(success, "Performance drawing should not crash")
     end,
     
@@ -133,7 +133,7 @@ local function run()
     local success = TestFramework.runSuite("Performance Monitor Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("performance_monitor", 10) -- All major functions tested
     
     return success

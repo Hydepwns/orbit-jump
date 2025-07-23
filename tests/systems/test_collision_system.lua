@@ -1,9 +1,9 @@
 -- Tests for Collision System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local CollisionSystem = require("src.systems.collision_system")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local CollisionSystem = Utils.Utils.require("src.systems.collision_system")
 
 -- Setup mocks
 Mocks.setup()
@@ -208,8 +208,8 @@ local tests = {
         
         -- Mock ParticleSystem
         local particleCount = 0
-        local originalCreate = require("src.systems.particle_system").create
-        require("src.systems.particle_system").create = function()
+        local originalCreate = Utils.Utils.require("src.systems.particle_system").create
+        Utils.require("src.systems.particle_system").create = function()
             particleCount = particleCount + 1
         end
         
@@ -218,7 +218,7 @@ local tests = {
         TestFramework.utils.assertEqual(20, particleCount, "Should create 20 particles for burst effect")
         
         -- Restore original function
-        require("src.systems.particle_system").create = originalCreate
+        Utils.require("src.systems.particle_system").create = originalCreate
     end,
     
     -- Test player in ring detection
@@ -275,7 +275,7 @@ local tests = {
         local rings = {{x = 150, y = 150, collected = false}}
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CollisionSystem.updateSpatialGrid(nil, planets, rings)
         end)
         
@@ -290,10 +290,10 @@ local tests = {
         }
         
         -- Mock systems
-        local ProgressionSystem = require("src.systems.progression_system")
-        local AchievementSystem = require("src.systems.achievement_system")
-        local MapSystem = require("src.systems.map_system")
-        local PlanetLore = require("src.systems.planet_lore")
+        local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
+        local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
+        local MapSystem = Utils.Utils.require("src.systems.map_system")
+        local PlanetLore = Utils.Utils.require("src.systems.planet_lore")
         
         local originalOnPlanetDiscovered = ProgressionSystem.onPlanetDiscovered
         local originalCheckPlanetAchievements = AchievementSystem.checkPlanetAchievements
@@ -380,7 +380,7 @@ local function run()
     local success = TestFramework.runSuite("Collision System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("collision_system", 10) -- All major functions tested
     
     return success

@@ -1,8 +1,8 @@
 -- Test suite for Achievement System
 -- Tests all achievement tracking, unlocking, and notification functionality
 
-local TestFramework = require("tests.test_framework")
-local AchievementSystem = require("src.systems.achievement_system")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
 
 -- Initialize test framework
 TestFramework.init()

@@ -1,8 +1,8 @@
 -- Tests for Sound Generator
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
@@ -20,7 +20,7 @@ love.sound = {
     end
 }
 
-local SoundGenerator = require("src.audio.sound_generator")
+local SoundGenerator = Utils.Utils.require("src.audio.sound_generator")
 
 -- Initialize test framework
 TestFramework.init()
@@ -42,7 +42,7 @@ local tests = {
             volume = 0.5
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should generate sine wave without error")
         TestFramework.utils.assertNotNil(soundData, "Should return sound data")
     end,
@@ -55,7 +55,7 @@ local tests = {
             volume = 0.3
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should generate square wave without error")
     end,
     
@@ -67,7 +67,7 @@ local tests = {
             volume = 0.4
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should generate sawtooth wave without error")
     end,
     
@@ -78,36 +78,36 @@ local tests = {
             volume = 0.2
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should generate noise without error")
     end,
     
     ["generate jump sound"] = function()
-        local success, soundData = pcall(SoundGenerator.generateJump)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generateJump)
         TestFramework.utils.assertTrue(success, "Should generate jump sound without error")
         TestFramework.utils.assertNotNil(soundData, "Should return jump sound data")
     end,
     
     ["generate dash sound"] = function()
-        local success, soundData = pcall(SoundGenerator.generateDash)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generateDash)
         TestFramework.utils.assertTrue(success, "Should generate dash sound without error")
         TestFramework.utils.assertNotNil(soundData, "Should return dash sound data")
     end,
     
     ["generate collect sound"] = function()
         local ringValue = 10
-        local success, soundData = pcall(SoundGenerator.generateCollect, ringValue)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generateCollect, ringValue)
         TestFramework.utils.assertTrue(success, "Should generate collect sound without error")
         TestFramework.utils.assertNotNil(soundData, "Should return collect sound data")
     end,
     
     ["generate power up sound"] = function()
-        local success, soundData = pcall(SoundGenerator.generatePowerUp)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generatePowerUp)
         TestFramework.utils.assertTrue(success, "Should generate power up sound without error")
     end,
     
     ["generate land sound"] = function()
-        local success, soundData = pcall(SoundGenerator.generateLand)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generateLand)
         TestFramework.utils.assertTrue(success, "Should generate land sound without error")
     end,
     
@@ -125,7 +125,7 @@ local tests = {
             }
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should apply envelope without error")
     end,
     
@@ -141,7 +141,7 @@ local tests = {
             }
         }
         
-        local success, soundData = pcall(SoundGenerator.generate, params)
+        local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         TestFramework.utils.assertTrue(success, "Should apply frequency modulation without error")
     end,
     
@@ -157,7 +157,7 @@ local tests = {
                 volume = 0.3
             }
             
-            local success, soundData = pcall(SoundGenerator.generate, params)
+            local success, soundData  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
             TestFramework.utils.assertTrue(success, "Should generate sound " .. i)
             table.insert(sounds, soundData)
         end
@@ -174,7 +174,7 @@ local tests = {
             volume = 2
         }
         
-        local success = pcall(SoundGenerator.generate, params)
+        local success  = Utils.ErrorHandler.safeCall(SoundGenerator.generate, params)
         -- Should handle invalid parameters gracefully
         TestFramework.utils.assertTrue(true, "Should handle invalid parameters")
     end,
@@ -182,7 +182,7 @@ local tests = {
     ["combo sound generation"] = function()
         -- Generate sounds for different combo levels
         for combo = 1, 10 do
-            local success = pcall(SoundGenerator.generateCombo, combo)
+            local success  = Utils.ErrorHandler.safeCall(SoundGenerator.generateCombo, combo)
             TestFramework.utils.assertTrue(success, "Should generate combo sound for level " .. combo)
         end
     end,
@@ -193,7 +193,7 @@ local function run()
     local success = TestFramework.runSuite("Sound Generator Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("sound_generator", 6) -- All major functions tested
     
     return success

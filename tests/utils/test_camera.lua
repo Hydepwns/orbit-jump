@@ -1,9 +1,9 @@
 -- Tests for Camera System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local Camera = require("src.core.camera")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local Camera = Utils.Utils.require("src.core.camera")
 
 -- Setup mocks
 Mocks.setup()
@@ -291,7 +291,7 @@ local function run()
     local success = TestFramework.runSuite("Camera System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("camera", 6) -- All major functions tested
     
     return success

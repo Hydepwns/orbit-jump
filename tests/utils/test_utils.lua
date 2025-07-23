@@ -1,9 +1,9 @@
 -- Tests for Utils Module
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local Utils = require("src.utils.utils")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local Utils = Utils.Utils.require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()
@@ -433,7 +433,7 @@ local function run()
     local success = TestFramework.runSuite("Utils Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("utils", 25) -- All major functions tested
     
     return success

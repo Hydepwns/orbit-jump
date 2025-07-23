@@ -1,12 +1,12 @@
 -- Tests for UI System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local UISystem = require("src.ui.ui_system")
+local UISystem = Utils.Utils.require("src.ui.ui_system")
 
 -- Initialize test framework
 TestFramework.init()
@@ -197,7 +197,7 @@ local tests = {
         UISystem.init(mockFonts)
         
         -- Test that drawButton function exists and can be called
-        local success = pcall(UISystem.drawButton, "Test", 100, 100, 200, 50)
+        local success  = Utils.ErrorHandler.safeCall(UISystem.drawButton, "Test", 100, 100, 200, 50)
         TestFramework.utils.assertTrue(success, "drawButton should not crash")
     end,
     
@@ -228,7 +228,7 @@ local tests = {
         UISystem.upgradeSelection = 1
         
         -- Test that purchaseUpgrade function exists and can be called
-        local success = pcall(UISystem.purchaseUpgrade)
+        local success  = Utils.ErrorHandler.safeCall(UISystem.purchaseUpgrade)
         TestFramework.utils.assertTrue(success, "purchaseUpgrade should not crash")
     end,
     
@@ -272,11 +272,11 @@ local tests = {
         
         -- Test that keypressed doesn't crash with invalid keys
         UISystem.currentScreen = "menu"
-        local success = pcall(UISystem.keypressed, "invalid_key")
+        local success  = Utils.ErrorHandler.safeCall(UISystem.keypressed, "invalid_key")
         TestFramework.utils.assertTrue(success, "keypressed should handle invalid keys gracefully")
         
         UISystem.currentScreen = "upgrades"
-        success = pcall(UISystem.keypressed, "invalid_key")
+        success  = Utils.ErrorHandler.safeCall(UISystem.keypressed, "invalid_key")
         TestFramework.utils.assertTrue(success, "keypressed should handle invalid keys gracefully")
     end,
     
@@ -353,7 +353,7 @@ local function run()
     local success = TestFramework.runSuite("UI System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("ui_system", 14) -- All major functions tested
     
     return success

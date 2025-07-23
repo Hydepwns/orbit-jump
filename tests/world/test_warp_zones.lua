@@ -1,12 +1,12 @@
 -- Tests for Warp Zones system
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local WarpZones = require("src.systems.warp_zones")
+local WarpZones = Utils.Utils.require("src.systems.warp_zones")
 
 -- Initialize test framework
 TestFramework.init()
@@ -119,7 +119,7 @@ local tests = {
     ["generate random warp network"] = function()
         WarpZones.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             WarpZones.generateRandomNetwork(5, 1000, 1000)
         end)
         TestFramework.utils.assertTrue(success, "Generating random network should not crash")
@@ -131,7 +131,7 @@ local tests = {
         
         local zone = WarpZones.createZone(100, 100, 50)
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             local effects = WarpZones.getZoneEffects(zone)
             TestFramework.utils.assertNotNil(effects, "Should return effects data")
         end)
@@ -172,7 +172,7 @@ local function run()
     local success = TestFramework.runSuite("Warp Zones Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("warp_zones", 16) -- All major functions tested
     
     return success

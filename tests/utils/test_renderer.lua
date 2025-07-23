@@ -1,10 +1,10 @@
 -- Tests for Renderer System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local Renderer = require("src.core.renderer")
-local Utils = require("src.utils.utils")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local Renderer = Utils.Utils.require("src.core.renderer")
+local Utils = Utils.Utils.require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()
@@ -38,7 +38,7 @@ local tests = {
         Renderer.camera = nil
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawBackground()
         end)
         
@@ -52,7 +52,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawBackground()
         end)
         
@@ -68,7 +68,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayer(player, false)
         end)
         
@@ -83,7 +83,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayer(player, true)
         end)
         
@@ -99,7 +99,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayer(player, false)
         end)
         
@@ -115,7 +115,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayer(player, true)
         end)
         
@@ -127,7 +127,7 @@ local tests = {
         local trail = {}
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayerTrail(trail)
         end)
         
@@ -142,7 +142,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlayerTrail(trail)
         end)
         
@@ -159,7 +159,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawDashCooldown(player, 0.5, 1.0)
         end)
         
@@ -175,7 +175,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawDashCooldown(player, 0.5, 1.0)
         end)
         
@@ -191,7 +191,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawDashCooldown(player, 0, 1.0)
         end)
         
@@ -203,7 +203,7 @@ local tests = {
         local planets = {}
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlanets(planets)
         end)
         
@@ -215,7 +215,7 @@ local tests = {
         TestFramework.utils.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
         
         -- Test with empty planets list (should not crash)
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlanets({})
         end)
         
@@ -227,7 +227,7 @@ local tests = {
         TestFramework.utils.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
         
         -- Test with minimal planet data (should not crash)
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlanets({{x = 400, y = 300, radius = 50}})
         end)
         
@@ -239,7 +239,7 @@ local tests = {
         local rings = {}
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawRings(rings)
         end)
         
@@ -273,7 +273,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawRings(rings)
         end)
         
@@ -296,7 +296,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawRings(rings)
         end)
         
@@ -308,7 +308,7 @@ local tests = {
         local particles = {}
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawParticles(particles)
         end)
         
@@ -336,7 +336,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawParticles(particles)
         end)
         
@@ -352,7 +352,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 50, 100)
         end)
         
@@ -367,7 +367,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 50, 100)
         end)
         
@@ -382,7 +382,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 80, 100)
         end)
         
@@ -405,7 +405,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawMobileControls(player, fonts)
         end)
         
@@ -427,7 +427,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawMobileControls(player, fonts)
         end)
         
@@ -447,7 +447,7 @@ local tests = {
         Utils.MobileInput.isMobile = function() return true end
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawMobilePullIndicator(player, 450, 350, 400, 300, 50, 100)
         end)
         
@@ -465,7 +465,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawUI(1000, 5, 2.0, 1.5, fonts)
         end)
         
@@ -479,7 +479,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawUI(1000, 10, 3.0, 2.0, fonts)
         end)
         
@@ -497,7 +497,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawControlsHint(player, fonts)
         end)
         
@@ -514,7 +514,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawControlsHint(player, fonts)
         end)
         
@@ -530,7 +530,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawGameOver(1500, fonts)
         end)
         
@@ -544,7 +544,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawSoundStatus(true, fonts)
         end)
         
@@ -557,7 +557,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawSoundStatus(false, fonts)
         end)
         
@@ -582,7 +582,7 @@ local tests = {
         TestFramework.utils.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawExplorationIndicator(player, Camera)
         end)
         
@@ -606,7 +606,7 @@ local tests = {
         TestFramework.utils.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawExplorationIndicator(player, Camera)
         end)
         
@@ -616,7 +616,7 @@ local tests = {
     -- Test utility rendering functions
     ["button rendering"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawButton("Test Button", 100, 100, 200, 50, false)
         end)
         
@@ -625,7 +625,7 @@ local tests = {
     
     ["button rendering hovered"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawButton("Test Button", 100, 100, 200, 50, true)
         end)
         
@@ -634,7 +634,7 @@ local tests = {
     
     ["progress bar rendering"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawProgressBar(100, 100, 200, 20, 0.75)
         end)
         
@@ -643,7 +643,7 @@ local tests = {
     
     ["progress bar rendering full"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawProgressBar(100, 100, 200, 20, 1.0)
         end)
         
@@ -652,7 +652,7 @@ local tests = {
     
     ["progress bar rendering empty"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawProgressBar(100, 100, 200, 20, 0.0)
         end)
         
@@ -665,7 +665,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawText("Test Text", 100, 100, fonts.regular, {1, 1, 1, 1}, "left")
         end)
         
@@ -674,7 +674,7 @@ local tests = {
     
     ["text rendering without font"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawText("Test Text", 100, 100, nil, {1, 1, 1, 1}, "center")
         end)
         
@@ -687,7 +687,7 @@ local tests = {
         }
         
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawCenteredText("Centered Text", 100, fonts.bold, {1, 1, 1, 1})
         end)
         
@@ -696,7 +696,7 @@ local tests = {
     
     ["panel rendering"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPanel(100, 100, 200, 150, {0.1, 0.1, 0.1, 0.8})
         end)
         
@@ -705,7 +705,7 @@ local tests = {
     
     ["panel rendering with default color"] = function()
         -- Should not crash
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPanel(100, 100, 200, 150)
         end)
         
@@ -718,7 +718,7 @@ local function run()
     local success = TestFramework.runSuite("Renderer System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("renderer", 12) -- All major functions tested
     
     return success

@@ -1,12 +1,12 @@
 -- Tests for Cosmic Events system
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local CosmicEvents = require("src.systems.cosmic_events")
+local CosmicEvents = Utils.Utils.require("src.systems.cosmic_events")
 
 -- Initialize test framework
 TestFramework.init()
@@ -31,7 +31,7 @@ local tests = {
         CosmicEvents.init()
         local player = {x = 100, y = 100}
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.triggerMeteorShower(player)
         end)
         TestFramework.utils.assertTrue(success, "Triggering meteor shower should not crash")
@@ -42,7 +42,7 @@ local tests = {
         CosmicEvents.init()
         local player = {x = 200, y = 200}
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.triggerGravityWave(player)
         end)
         TestFramework.utils.assertTrue(success, "Triggering gravity wave should not crash")
@@ -51,7 +51,7 @@ local tests = {
     ["trigger wormhole"] = function()
         CosmicEvents.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.triggerWormhole(300, 300)
         end)
         TestFramework.utils.assertTrue(success, "Triggering wormhole should not crash")
@@ -68,7 +68,7 @@ local tests = {
         -- Trigger some events
         CosmicEvents.triggerMeteorShower(player)
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.update(0.1, player, planets)
         end)
         TestFramework.utils.assertTrue(success, "Updating events should not crash")
@@ -78,7 +78,7 @@ local tests = {
         CosmicEvents.init()
         local rings = {}
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.triggerRingStorm(rings, 100, 100)
         end)
         TestFramework.utils.assertTrue(success, "Ring storm should not crash")
@@ -87,7 +87,7 @@ local tests = {
     ["quantum teleport event"] = function()
         CosmicEvents.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.triggerQuantumTeleport(500, 500)
         end)
         TestFramework.utils.assertTrue(success, "Quantum teleport should not crash")
@@ -138,7 +138,7 @@ local tests = {
     ["black hole creation"] = function()
         CosmicEvents.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             CosmicEvents.createBlackHole(600, 600, 100)
         end)
         TestFramework.utils.assertTrue(success, "Creating black hole should not crash")
@@ -147,7 +147,7 @@ local tests = {
     ["event visual effects"] = function()
         CosmicEvents.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             local particles = CosmicEvents.getEventParticles()
             TestFramework.utils.assertNotNil(particles, "Should return particle array")
         end)
@@ -158,7 +158,7 @@ local tests = {
         CosmicEvents.init()
         local player = {x = 100, y = 100}
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             for i = 1, 10 do
                 CosmicEvents.tryTriggerRandomEvent(player, {})
             end
@@ -172,7 +172,7 @@ local function run()
     local success = TestFramework.runSuite("Cosmic Events Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("cosmic_events", 18) -- All major functions tested
     
     return success

@@ -1,12 +1,12 @@
 -- Tests for Blockchain Integration
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local BlockchainIntegration = require("src.blockchain.blockchain_integration")
+local BlockchainIntegration = Utils.Utils.require("src.blockchain.blockchain_integration")
 
 -- Initialize test framework
 TestFramework.init()
@@ -22,7 +22,7 @@ local tests = {
     ["connect to blockchain"] = function()
         BlockchainIntegration.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             BlockchainIntegration.connect("test-wallet-address")
         end)
         TestFramework.utils.assertTrue(success, "Connection attempt should not crash")
@@ -54,7 +54,7 @@ local tests = {
             rarity = "rare"
         }
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             BlockchainIntegration.mintAchievementNFT(achievement)
         end)
         TestFramework.utils.assertTrue(success, "NFT minting should not crash")
@@ -63,7 +63,7 @@ local tests = {
     ["record high score"] = function()
         BlockchainIntegration.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             BlockchainIntegration.recordHighScore(50000, "player123")
         end)
         TestFramework.utils.assertTrue(success, "Recording high score should not crash")
@@ -84,7 +84,7 @@ local tests = {
         BlockchainIntegration.init()
         
         local tokens = 100
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             BlockchainIntegration.claimTokens(tokens, "player123")
         end)
         TestFramework.utils.assertTrue(success, "Claiming tokens should not crash")
@@ -139,7 +139,7 @@ local tests = {
     ["smart contract interaction"] = function()
         BlockchainIntegration.init()
         
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             BlockchainIntegration.callSmartContract("GameRewards", "claimDailyBonus", {})
         end)
         TestFramework.utils.assertTrue(success, "Smart contract call should not crash")
@@ -151,7 +151,7 @@ local function run()
     local success = TestFramework.runSuite("Blockchain Integration Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("blockchain_integration", 12) -- All major functions tested
     
     return success
