@@ -3,7 +3,7 @@
 -- It is used to configure the blockchain, progression, game, UI, sound, and development settings
 -- It is also used to configure the achievement definitions, upgrade definitions, NFT definitions, and helper functions
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local Config = {}
 
 -- Configuration validation
@@ -67,7 +67,7 @@ end
 
 -- Hot-reload configuration from file
 function Config.reload()
-    local success, newConfig = pcall(dofile, "config.lua")
+    local success, newConfig = Utils.ErrorHandler.safeCall(dofile, "config.lua")
     if success and newConfig then
         -- Validate new configuration
         local valid, errors = newConfig.validate()

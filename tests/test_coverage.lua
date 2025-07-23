@@ -1,6 +1,8 @@
 -- Test Coverage Tracker for Orbit Jump
 -- Monitors test coverage across all modules
 
+local Utils = Utils.Utils.require("src.utils.utils")
+
 local TestCoverage = {}
 
 -- Function counts per module (approximate based on code analysis)
@@ -72,23 +74,23 @@ function TestCoverage.getModuleCoverage(moduleName)
 end
 
 function TestCoverage.generateReport()
-    print("\n" .. string.rep("=", 60))
-    print("TEST COVERAGE REPORT")
-    print(string.rep("=", 60))
+    Utils.Logger.info("\n" .. string.rep("=", 60))
+    Utils.Logger.info("TEST COVERAGE REPORT")
+    Utils.Logger.info(string.rep("=", 60))
     
     local totalCoverage = TestCoverage.calculateCoverage()
-    print(string.format("Overall Coverage: %.1f%%", totalCoverage))
-    print()
+    Utils.Logger.info("Overall Coverage: %.1f%%", totalCoverage)
+    Utils.Logger.info("")
     
-    print("Module Coverage:")
+    Utils.Logger.info("Module Coverage:")
     for module, count in pairs(TestCoverage.functions) do
         local coverage = TestCoverage.getModuleCoverage(module)
         local status = coverage >= 80 and "✅" or coverage >= 50 and "⚠️" or "❌"
-        print(string.format("  %s %s: %.1f%% (%d/%d)", 
-            status, module, coverage, TestCoverage.tested[module] or 0, count))
+        Utils.Logger.info("  %s %s: %.1f%% (%d/%d)", 
+            status, module, coverage, TestCoverage.tested[module] or 0, count)
     end
     
-    print("\nPriority for testing:")
+    Utils.Logger.info("\nPriority for testing:")
     local priorities = {}
     for module, count in pairs(TestCoverage.functions) do
         local coverage = TestCoverage.getModuleCoverage(module)
@@ -101,11 +103,11 @@ function TestCoverage.generateReport()
     
     for i, priority in ipairs(priorities) do
         if i <= 5 then
-            print(string.format("  %d. %s (%.1f%%)", i, priority.module, priority.coverage))
+            Utils.Logger.info("  %d. %s (%.1f%%)", i, priority.module, priority.coverage)
         end
     end
     
-    print(string.rep("=", 60))
+    Utils.Logger.info(string.rep("=", 60))
 end
 
 function TestCoverage.updateModule(moduleName, testedCount)

@@ -3,14 +3,14 @@
 
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = require("tests.test_framework")
-local Mocks = require("tests.mocks")
-local GameState = require("src.core.game_state")
-local GameLogic = require("src.core.game_logic")
-local RingSystem = require("src.systems.ring_system")
-local ProgressionSystem = require("src.systems.progression_system")
-local WorldGenerator = require("src.systems.world_generator")
-local Utils = require("src.utils.utils")
+local TestFramework = Utils.Utils.require("tests.test_framework")
+local Mocks = Utils.Utils.require("tests.mocks")
+local GameState = Utils.Utils.require("src.core.game_state")
+local GameLogic = Utils.Utils.require("src.core.game_logic")
+local RingSystem = Utils.Utils.require("src.systems.ring_system")
+local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
+local WorldGenerator = Utils.Utils.require("src.systems.world_generator")
+local Utils = Utils.Utils.require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()
@@ -236,7 +236,7 @@ local tests = {
     ["camera and player interaction"] = function()
         -- Initialize systems
         GameState.init(800, 600)
-        local Camera = require("src.core.camera")
+        local Camera = Utils.Utils.require("src.core.camera")
         local camera = Camera:new()
         
         -- Set player position
@@ -254,12 +254,12 @@ local tests = {
     
     ["sound system integration"] = function()
         -- Initialize systems
-        local SoundManager = require("src.audio.sound_manager")
+        local SoundManager = Utils.Utils.require("src.audio.sound_manager")
         local soundManager = SoundManager:new()
         soundManager:load()
         
         -- Test sound playing (should not crash with mocks)
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             soundManager:playJump()
             soundManager:playCollectRing()
             soundManager:playDash()
@@ -270,7 +270,7 @@ local tests = {
     
     ["performance monitoring integration"] = function()
         -- Initialize systems
-        local PerformanceMonitor = require("src.performance.performance_monitor")
+        local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
         PerformanceMonitor.init({
             enabled = true,
             showOnScreen = false,
@@ -296,7 +296,7 @@ local tests = {
         TestFramework.utils.assertTrue(type(isMobile) == "boolean", "Mobile detection should return boolean")
         
         -- Test touch handling
-        local success = pcall(function()
+        local success  = Utils.ErrorHandler.safeCall(function()
             Utils.MobileInput.handleTouch(1, 400, 300, "pressed")
             Utils.MobileInput.handleTouch(1, 400, 300, "released")
         end)
@@ -315,7 +315,7 @@ local tests = {
         ProgressionSystem.data.upgrades.dashPower = 2
         
         -- Save data
-        local saveSuccess = pcall(function()
+        local saveSuccess  = Utils.ErrorHandler.safeCall(function()
             ProgressionSystem.saveData()
         end)
         
@@ -326,7 +326,7 @@ local tests = {
         ProgressionSystem.data.totalRingsCollected = 0
         
         -- Load data (should restore original values)
-        local loadSuccess = pcall(function()
+        local loadSuccess  = Utils.ErrorHandler.safeCall(function()
             ProgressionSystem.loadData()
         end)
         
@@ -335,7 +335,7 @@ local tests = {
     
     ["error handling integration"] = function()
         -- Test that systems handle errors gracefully
-        local success1 = pcall(function()
+        local success1  = Utils.ErrorHandler.safeCall(function()
             GameState.init(-100, -100) -- Invalid dimensions
         end)
         
@@ -425,7 +425,7 @@ local function run()
     local success = TestFramework.runSuite("Integration Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = require("tests.test_coverage")
+    local TestCoverage = Utils.Utils.require("tests.test_coverage")
     TestCoverage.updateModule("integration", 15) -- Integration test coverage
     
     return success

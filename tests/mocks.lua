@@ -98,7 +98,7 @@ Mocks.math = {
     sin = math.sin,
     cos = math.cos,
     sqrt = math.sqrt,
-    atan2 = math.atan2,
+    atan2 = function(y, x) return Utils.atan2(y, x) end, -- Use Utils.atan2 pattern
     floor = math.floor,
     ceil = math.ceil,
     min = math.min,
@@ -110,7 +110,9 @@ Mocks.math = {
 -- Mock Utils functions
 Mocks.utils = {
     distance = function(x1, y1, x2, y2)
-        return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
+        local dx = x2 - x1
+        local dy = y2 - y1
+        return math.sqrt(dx*dx + dy*dy), dx, dy
     end,
     randomFloat = function(min, max)
         return min + (max - min) * 0.5
@@ -180,7 +182,7 @@ function Mocks.setup()
     end
     
     -- Mock Utils functions
-    local Utils = require("src.utils.utils")
+    local Utils = Utils.Utils.require("src.utils.utils")
     if Utils then
         Utils.distance = Mocks.utils.distance
         Utils.randomFloat = Mocks.utils.randomFloat

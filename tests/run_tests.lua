@@ -2,23 +2,25 @@
 -- Comprehensive Test Runner for Orbit Jump
 -- Runs all test suites and generates coverage reports
 
-print("================================")
-print("Orbit Jump Comprehensive Test Suite")
-print("================================\n")
+local Utils = Utils.Utils.require("src.utils.utils")
+
+Utils.Logger.info("================================")
+Utils.Logger.info("Orbit Jump Comprehensive Test Suite")
+Utils.Logger.info("================================\n")
 
 local allPassed = true
 
 -- Setup mocks for all tests
-local Mocks = require("tests.mocks")
+local Mocks = Utils.Utils.require("tests.mocks")
 Mocks.setup()
 
 -- Run Core Tests
-print("\n--- Core Tests ---")
+Utils.Logger.info("\n--- Core Tests ---")
 local coreTests = {
-    require("tests.core.test_game_logic"),
-    require("tests.core.test_game_state"),
-    require("tests.core.test_game_state_extended"),
-    require("tests.core.test_config")
+    Utils.Utils.require("tests.core.test_game_logic"),
+    Utils.Utils.require("tests.core.test_game_state"),
+    Utils.Utils.require("tests.core.test_game_state_extended"),
+    Utils.Utils.require("tests.core.test_config")
 }
 
 for _, test in ipairs(coreTests) do
@@ -28,11 +30,11 @@ for _, test in ipairs(coreTests) do
 end
 
 -- Run Utility Tests
-print("\n--- Utility Tests ---")
+Utils.Logger.info("\n--- Utility Tests ---")
 local utilityTests = {
-    require("tests.utils.test_utils"),
-    require("tests.utils.test_camera"),
-    require("tests.utils.test_renderer")
+    Utils.Utils.require("tests.utils.test_utils"),
+    Utils.Utils.require("tests.utils.test_camera"),
+    Utils.Utils.require("tests.utils.test_renderer")
 }
 
 for _, test in ipairs(utilityTests) do
@@ -42,12 +44,12 @@ for _, test in ipairs(utilityTests) do
 end
 
 -- Run System Tests
-print("\n--- System Tests ---")
+Utils.Logger.info("\n--- System Tests ---")
 local systemTests = {
-    require("tests.systems.test_collision_system"),
-    require("tests.systems.test_particle_system"),
-    require("tests.systems.test_progression_system"),
-    require("tests.systems.test_ring_system")
+    Utils.Utils.require("tests.systems.test_collision_system"),
+    Utils.Utils.require("tests.systems.test_particle_system"),
+    Utils.Utils.require("tests.systems.test_progression_system"),
+    Utils.Utils.require("tests.systems.test_ring_system")
 }
 
 for _, test in ipairs(systemTests) do
@@ -57,10 +59,10 @@ for _, test in ipairs(systemTests) do
 end
 
 -- Run Audio Tests
-print("\n--- Audio Tests ---")
+Utils.Logger.info("\n--- Audio Tests ---")
 local audioTests = {
-    require("tests.audio.test_sound_manager"),
-    require("tests.audio.test_sound_generator")
+    Utils.Utils.require("tests.audio.test_sound_manager"),
+    Utils.Utils.require("tests.audio.test_sound_generator")
 }
 
 for _, test in ipairs(audioTests) do
@@ -70,11 +72,11 @@ for _, test in ipairs(audioTests) do
 end
 
 -- Run UI Tests
-print("\n--- UI Tests ---")
+Utils.Logger.info("\n--- UI Tests ---")
 local uiTests = {
-    require("tests.ui.test_ui_system"),
-    require("tests.ui.test_achievement_system"),
-    require("tests.ui.test_upgrade_system")
+    Utils.Utils.require("tests.ui.test_ui_system"),
+    Utils.Utils.require("tests.ui.test_achievement_system"),
+    Utils.Utils.require("tests.ui.test_upgrade_system")
 }
 
 for _, test in ipairs(uiTests) do
@@ -84,12 +86,12 @@ for _, test in ipairs(uiTests) do
 end
 
 -- Run World Tests
-print("\n--- World Tests ---")
+Utils.Logger.info("\n--- World Tests ---")
 local worldTests = {
-    require("tests.world.test_world_generator"),
-    require("tests.world.test_cosmic_events"),
-    require("tests.world.test_warp_zones"),
-    require("tests.world.test_planet_lore")
+    Utils.Utils.require("tests.world.test_world_generator"),
+    Utils.Utils.require("tests.world.test_cosmic_events"),
+    Utils.Utils.require("tests.world.test_warp_zones"),
+    Utils.Utils.require("tests.world.test_planet_lore")
 }
 
 for _, test in ipairs(worldTests) do
@@ -99,9 +101,9 @@ for _, test in ipairs(worldTests) do
 end
 
 -- Run Performance Tests
-print("\n--- Performance Tests ---")
+Utils.Logger.info("\n--- Performance Tests ---")
 local performanceTests = {
-    require("tests.performance.test_performance_monitor")
+    Utils.Utils.require("tests.performance.test_performance_monitor")
 }
 
 for _, test in ipairs(performanceTests) do
@@ -111,9 +113,9 @@ for _, test in ipairs(performanceTests) do
 end
 
 -- Run Development Tools Tests
-print("\n--- Development Tools Tests ---")
+Utils.Logger.info("\n--- Development Tools Tests ---")
 local devTests = {
-    require("tests.dev.test_dev_tools")
+    Utils.Utils.require("tests.dev.test_dev_tools")
 }
 
 for _, test in ipairs(devTests) do
@@ -123,9 +125,9 @@ for _, test in ipairs(devTests) do
 end
 
 -- Run Blockchain Tests
-print("\n--- Blockchain Tests ---")
+Utils.Logger.info("\n--- Blockchain Tests ---")
 local blockchainTests = {
-    require("tests.blockchain.test_blockchain_integration")
+    Utils.Utils.require("tests.blockchain.test_blockchain_integration")
 }
 
 for _, test in ipairs(blockchainTests) do
@@ -135,9 +137,9 @@ for _, test in ipairs(blockchainTests) do
 end
 
 -- Run Integration Tests
-print("\n--- Integration Tests ---")
+Utils.Logger.info("\n--- Integration Tests ---")
 local integrationTests = {
-    require("tests.integration_tests.test_integration")
+    Utils.Utils.require("tests.integration_tests.test_integration")
 }
 
 for _, test in ipairs(integrationTests) do
@@ -147,15 +149,15 @@ for _, test in ipairs(integrationTests) do
 end
 
 -- Generate coverage report
-print("\n\n--- Coverage Report ---")
-local TestCoverage = require("tests.test_coverage")
+Utils.Logger.info("\n\n--- Coverage Report ---")
+local TestCoverage = Utils.Utils.require("tests.test_coverage")
 TestCoverage.generateReport()
 
-print("\n================================")
+Utils.Logger.info("\n================================")
 if allPassed then
-    print("✅ All tests passed!")
+    Utils.Logger.info("✅ All tests passed!")
     os.exit(0)
 else
-    print("❌ Some tests failed!")
+    Utils.Logger.info("❌ Some tests failed!")
     os.exit(1)
 end

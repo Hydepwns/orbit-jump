@@ -1,4 +1,6 @@
 -- Font test for Monaspace Argon fonts
+local Utils = Utils.Utils.require("src.utils.utils")
+
 local fonts = {
     regular = nil,
     bold = nil,
@@ -15,11 +17,11 @@ function love.load()
     fonts.light = love.graphics.newFont("assets/fonts/MonaspaceArgon-Light.otf", 16)
     fonts.extraBold = love.graphics.newFont("assets/fonts/MonaspaceArgon-ExtraBold.otf", 24)
     
-    print("Fonts loaded successfully!")
-    print("Regular font: " .. tostring(fonts.regular))
-    print("Bold font: " .. tostring(fonts.bold))
-    print("Light font: " .. tostring(fonts.light))
-    print("ExtraBold font: " .. tostring(fonts.extraBold))
+    Utils.Logger.info("Fonts loaded successfully!")
+    Utils.Logger.info("Regular font: %s", tostring(fonts.regular))
+    Utils.Logger.info("Bold font: %s", tostring(fonts.bold))
+    Utils.Logger.info("Light font: %s", tostring(fonts.light))
+    Utils.Logger.info("ExtraBold font: %s", tostring(fonts.extraBold))
 end
 
 function love.draw()
