@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Install Lua
       run: |
@@ -19,7 +19,9 @@ jobs:
         sudo apt-get install -y lua5.3 liblua5.3-dev
         
     - name: Run Unit Tests
-      run: lua tests/run_tests.lua
+      run: |
+        # Run our comprehensive test suite
+        bash run_tests.sh
       
     - name: Install LÖVE for integration tests
       run: |
