@@ -1,0 +1,237 @@
+-- Tests for Dev Tools
+package.path = package.path .. ";../../?.lua"
+
+local TestFramework = require("tests.test_framework")
+local Mocks = require("tests.mocks")
+
+Mocks.setup()
+
+local DevTools = require("src.dev.dev_tools")
+
+-- Initialize test framework
+TestFramework.init()
+
+-- Test suite
+local tests = {
+    ["dev tools initialization"] = function()
+        DevTools.init()
+        TestFramework.utils.assertNotNil(DevTools.enabled, "Dev tools enabled flag should exist")
+        TestFramework.utils.assertNotNil(DevTools.console, "Console should be initialized")
+        TestFramework.utils.assertNotNil(DevTools.commands, "Commands should be initialized")
+    end,
+    
+    ["toggle dev tools"] = function()
+        DevTools.init()
+        local initial = DevTools.enabled
+        
+        DevTools.toggle()
+        TestFramework.utils.assertEqual(not initial, DevTools.enabled, "Should toggle enabled state")
+        
+        DevTools.toggle()
+        TestFramework.utils.assertEqual(initial, DevTools.enabled, "Should toggle back")
+    end,
+    
+    ["console command registration"] = function()
+        DevTools.init()
+        
+        local testExecuted = false
+        DevTools.registerCommand("test", "Test command", function()
+            testExecuted = true
+        end)
+        
+        TestFramework.utils.assertNotNil(DevTools.commands.test, "Command should be registered")
+        TestFramework.utils.assertEqual("Test command", DevTools.commands.test.description, "Description should match")
+        
+        -- Execute command
+        DevTools.executeCommand("test")
+        TestFramework.utils.assertTrue(testExecuted, "Command should execute")
+    end,
+    
+    ["command with arguments"] = function()
+        DevTools.init()
+        
+        local receivedArgs = nil
+        DevTools.registerCommand("argtest", "Arg test", function(args)
+            receivedArgs = args
+        end)
+        
+        DevTools.executeCommand("argtest", {"arg1", "arg2"})
+        TestFramework.utils.assertNotNil(receivedArgs, "Should receive arguments")
+        TestFramework.utils.assertEqual("arg1", receivedArgs[1], "First argument should match")
+        TestFramework.utils.assertEqual("arg2", receivedArgs[2], "Second argument should match")
+    end,
+    
+    ["built-in commands"] = function()
+        DevTools.init()
+        
+        -- Check that built-in commands exist
+        TestFramework.utils.assertNotNil(DevTools.commands.help, "Help command should exist")
+        TestFramework.utils.assertNotNil(DevTools.commands.clear, "Clear command should exist")
+        TestFramework.utils.assertNotNil(DevTools.commands.fps, "FPS command should exist")
+        TestFramework.utils.assertNotNil(DevTools.commands.teleport, "Teleport command should exist")
+        TestFramework.utils.assertNotNil(DevTools.commands.give, "Give command should exist")
+    end,
+    
+    ["console input handling"] = function()
+        DevTools.init()
+        DevTools.enabled = true
+        
+        -- Add text to console
+        DevTools.console.input = "test"
+        DevTools.handleKeyPress("return")
+        
+        -- Check command history
+        TestFramework.utils.assertTrue(#DevTools.console.history > 0, "Command should be added to history")
+        TestFramework.utils.assertEqual("", DevTools.console.input, "Input should be cleared")
+    end,
+    
+    ["console output"] = function()
+        DevTools.init()
+        
+        DevTools.log("Test message")
+        TestFramework.utils.assertTrue(#DevTools.console.output > 0, "Message should be in output")
+        
+        local lastMessage = DevTools.console.output[#DevTools.console.output]
+        TestFramework.utils.assertTrue(string.find(lastMessage.text, "Test message"), "Message should contain text")
+    end,
+    
+    ["log levels"] = function()
+        DevTools.init()
+        
+        DevTools.log("Info message", "info")
+        DevTools.log("Warning message", "warning")
+        DevTools.log("Error message", "error")
+        
+        local output = DevTools.console.output
+        TestFramework.utils.assertTrue(#output >= 3, "Should have logged all messages")
+    end,
+    
+    ["variable inspection"] = function()
+        DevTools.init()
+        
+        local testObject = {
+            name = "test",
+            value = 42,
+            nested = {
+                data = "nested value"
+            }
+        }
+        
+        local inspected = DevTools.inspect(testObject)
+        TestFramework.utils.assertNotNil(inspected, "Should return inspection result")
+        TestFramework.utils.assertTrue(string.find(inspected, "name"), "Should include property names")
+        TestFramework.utils.assertTrue(string.find(inspected, "42"), "Should include values")
+    end,
+    
+    ["fps monitoring"] = function()
+        DevTools.init()
+        
+        -- Update FPS a few times
+        for i = 1, 10 do
+            DevTools.updateFPS(0.016) -- ~60 FPS
+        end
+        
+        local fps = DevTools.getFPS()
+        TestFramework.utils.assertTrue(fps > 0, "FPS should be calculated")
+        TestFramework.utils.assertTrue(fps >= 50 and fps <= 70, "FPS should be reasonable")
+    end,
+    
+    ["performance profiling"] = function()
+        DevTools.init()
+        
+        DevTools.startProfile("test_operation")
+        
+        -- Simulate some work
+        local sum = 0
+        for i = 1, 100 do
+            sum = sum + i
+        end
+        
+        DevTools.endProfile("test_operation")
+        
+        local profile = DevTools.getProfile("test_operation")
+        TestFramework.utils.assertNotNil(profile, "Profile should exist")
+        TestFramework.utils.assertTrue(profile.time > 0, "Profile should have time")
+    end,
+    
+    ["entity spawning command"] = function()
+        DevTools.init()
+        
+        local spawnedEntities = {}
+        DevTools.registerCommand("spawn", "Spawn entity", function(args)
+            table.insert(spawnedEntities, {type = args[1], x = args[2], y = args[3]})
+        end)
+        
+        DevTools.executeCommand("spawn", {"planet", "100", "200"})
+        
+        TestFramework.utils.assertEqual(1, #spawnedEntities, "Should spawn entity")
+        TestFramework.utils.assertEqual("planet", spawnedEntities[1].type, "Type should match")
+    end,
+    
+    ["console scrolling"] = function()
+        DevTools.init()
+        
+        -- Add many messages
+        for i = 1, 50 do
+            DevTools.log("Message " .. i)
+        end
+        
+        -- Test scrolling
+        local initialScroll = DevTools.console.scrollOffset
+        DevTools.scrollConsole(-5)
+        TestFramework.utils.assertEqual(initialScroll + 5, DevTools.console.scrollOffset, "Should scroll up")
+        
+        DevTools.scrollConsole(3)
+        TestFramework.utils.assertEqual(initialScroll + 2, DevTools.console.scrollOffset, "Should scroll down")
+    end,
+    
+    ["cheat commands"] = function()
+        DevTools.init()
+        
+        -- Test god mode toggle
+        local godMode = false
+        DevTools.registerCommand("god", "Toggle god mode", function()
+            godMode = not godMode
+        end)
+        
+        DevTools.executeCommand("god")
+        TestFramework.utils.assertTrue(godMode, "God mode should be enabled")
+        
+        DevTools.executeCommand("god")
+        TestFramework.utils.assertFalse(godMode, "God mode should be disabled")
+    end,
+    
+    ["save/load debug state"] = function()
+        DevTools.init()
+        
+        -- Set some debug state
+        DevTools.enabled = true
+        DevTools.console.input = "test input"
+        DevTools.log("Test message")
+        
+        -- Save state
+        local state = DevTools.saveState()
+        TestFramework.utils.assertNotNil(state, "Should save state")
+        
+        -- Reset
+        DevTools.init()
+        
+        -- Load state
+        DevTools.loadState(state)
+        TestFramework.utils.assertTrue(DevTools.enabled, "Enabled state should be restored")
+        TestFramework.utils.assertTrue(#DevTools.console.output > 0, "Output should be restored")
+    end,
+}
+
+-- Run the test suite
+local function run()
+    local success = TestFramework.runSuite("Dev Tools Tests", tests)
+    
+    -- Update coverage tracking
+    local TestCoverage = require("tests.test_coverage")
+    TestCoverage.updateModule("dev_tools", 15) -- All major functions tested
+    
+    return success
+end
+
+return {run = run}
