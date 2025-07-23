@@ -8,9 +8,11 @@ A gravity-based arcade game where players jump between planets and dash through 
 
 ## Installation
 
-### NixOS
-
 ```bash
+# macos
+brew install love
+
+# NixOS
 # Install LÖVE2D using nix profile
 nix profile install nixpkgs#love
 
