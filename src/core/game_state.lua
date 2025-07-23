@@ -27,7 +27,8 @@ GameState.data = {
     mouseStartX = 0,
     mouseStartY = 0,
     pullPower = 0,
-    maxPullDistance = 150
+    maxPullDistance = 250,
+    isCharging = false
 }
 
 -- Player state
@@ -149,6 +150,7 @@ function GameState.reset()
     GameState.data.gameTime = 0
     GameState.data.isMouseDown = false
     GameState.data.pullPower = 0
+    GameState.data.isCharging = false
     
     -- Reset player (only if planets are available)
     if GameState.objects.planets and #GameState.objects.planets > 0 then
@@ -190,6 +192,29 @@ function GameState.update(dt)
             GameState.data.combo = 0
             GameState.player.speedBoost = 1.0
         end
+    end
+    
+    -- Auto-reset if player is stuck in space for too long
+    if GameState.player.onPlanet == nil or GameState.player.onPlanet == false then
+        -- Check if player velocity is very low (essentially stuck)
+        local speed = math.sqrt(GameState.player.vx^2 + GameState.player.vy^2)
+        if speed < 50 then
+            GameState.player.stuckTimer = (GameState.player.stuckTimer or 0) + dt
+            if GameState.player.stuckTimer > 3 then -- Reset after 3 seconds of being stuck
+                GameState.resetPlayerToNearestPlanet()
+                GameState.player.stuckTimer = 0
+                
+                -- Show hint in tutorial
+                local TutorialSystem = require("src.ui.tutorial_system")
+                if TutorialSystem.isActive then
+                    Utils.Logger.info("Player was stuck and auto-reset. Press R to manually reset when stuck.")
+                end
+            end
+        else
+            GameState.player.stuckTimer = 0
+        end
+    else
+        GameState.player.stuckTimer = 0
     end
     
     -- Generate new planets as player explores
@@ -456,6 +481,46 @@ function GameState.initializePlayerPosition()
     end
 end
 
+-- Reset player to nearest planet when stuck in space
+function GameState.resetPlayerToNearestPlanet()
+    if not GameState.objects.planets or #GameState.objects.planets == 0 then
+        return
+    end
+    
+    -- Find nearest planet
+    local nearestPlanet = nil
+    local nearestDist = math.huge
+    local nearestIndex = 1
+    
+    for i, planet in ipairs(GameState.objects.planets) do
+        local dist = Utils.distance(GameState.player.x, GameState.player.y, planet.x, planet.y)
+        if dist < nearestDist then
+            nearestDist = dist
+            nearestPlanet = planet
+            nearestIndex = i
+        end
+    end
+    
+    if nearestPlanet then
+        -- Calculate angle to planet
+        local angle = math.atan2(GameState.player.y - nearestPlanet.y, GameState.player.x - nearestPlanet.x)
+        
+        -- Place player on planet surface
+        local orbitRadius = nearestPlanet.radius + GameState.player.radius + 5
+        GameState.player.x = nearestPlanet.x + math.cos(angle) * orbitRadius
+        GameState.player.y = nearestPlanet.y + math.sin(angle) * orbitRadius
+        GameState.player.angle = angle
+        GameState.player.onPlanet = nearestIndex
+        GameState.player.vx = 0
+        GameState.player.vy = 0
+        GameState.player.isDashing = false
+        GameState.player.dashTimer = 0
+        GameState.player.dashCooldown = 0
+        
+        Utils.Logger.info("Reset player to nearest planet")
+    end
+end
+
 -- Challenge state management
 GameState.challengeBackup = nil
 
@@ -500,6 +565,11 @@ function GameState.handleKeyPress(key)
         -- Debug: Add rings
         local RingSystem = require("src.systems.ring_system")
         GameState.objects.rings = RingSystem.generateRings(GameState.objects.planets)
+    elseif key == "r" then
+        -- Reset player position if stuck in space
+        if GameState.player.onPlanet == nil or GameState.player.onPlanet == false then
+            GameState.resetPlayerToNearestPlanet()
+        end
     end
 end
 
@@ -510,9 +580,23 @@ function GameState.handleMousePress(x, y, button)
     
     if button == 1 and GameState.player.onPlanet then
         -- Start jump charge
-        GameState.mouseStartX = x
-        GameState.mouseStartY = y
-        GameState.isCharging = true
+        GameState.data.mouseStartX = x
+        GameState.data.mouseStartY = y
+        GameState.data.isCharging = true
+    end
+end
+
+function GameState.handleMouseMove(x, y)
+    if not GameState.isPlaying() then
+        return
+    end
+    
+    -- Update pull power during charging
+    if GameState.data.isCharging and GameState.player.onPlanet and GameState.data.mouseStartX then
+        local dx = GameState.data.mouseStartX - x
+        local dy = GameState.data.mouseStartY - y
+        local pullPower = math.min(Utils.distance(0, 0, dx, dy), GameState.data.maxPullDistance)
+        GameState.setPullPower(pullPower)
     end
 end
 
@@ -522,11 +606,11 @@ function GameState.handleMouseRelease(x, y, button)
     end
     
     if button == 1 then
-        if GameState.isCharging and GameState.player.onPlanet then
+        if GameState.data.isCharging and GameState.player.onPlanet then
             -- Calculate jump
-            local dx = GameState.mouseStartX - x
-            local dy = GameState.mouseStartY - y
-            local pullPower = math.min(Utils.distance(0, 0, dx, dy), GameState.maxPullDistance)
+            local dx = GameState.data.mouseStartX - x
+            local dy = GameState.data.mouseStartY - y
+            local pullPower = math.min(Utils.distance(0, 0, dx, dy), GameState.data.maxPullDistance)
             local pullAngle = Utils.atan2(dy, dx)
             
             -- Execute jump
@@ -538,6 +622,10 @@ function GameState.handleMouseRelease(x, y, button)
                 GameState,
                 GameState.soundManager
             )
+            
+            -- Notify tutorial system of jump action
+            local TutorialSystem = require("src.ui.tutorial_system")
+            TutorialSystem.onPlayerAction("jump")
         elseif not GameState.player.onPlanet then
             -- Try dash
             local PlayerSystem = require("src.systems.player_system")
@@ -546,12 +634,16 @@ function GameState.handleMouseRelease(x, y, button)
                 x, y,
                 GameState.soundManager
             )
+            
+            -- Notify tutorial system of dash action
+            local TutorialSystem = require("src.ui.tutorial_system")
+            TutorialSystem.onPlayerAction("dash")
         end
         
-        GameState.isCharging = false
-        GameState.mouseStartX = nil
-        GameState.mouseStartY = nil
-        GameState.pullPower = 0
+        GameState.data.isCharging = false
+        GameState.data.mouseStartX = nil
+        GameState.data.mouseStartY = nil
+        GameState.data.pullPower = 0
     end
 end
 

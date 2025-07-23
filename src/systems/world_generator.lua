@@ -250,6 +250,36 @@ end
 
 function WorldGenerator.reset()
     WorldGenerator.generatedSectors = {}
+    
+    -- Generate initial planets for game start
+    local GameState = require("src.core.game_state")
+    local initialPlanets = WorldGenerator.generateInitialWorld()
+    GameState.setPlanets(initialPlanets)
+end
+
+-- Generate initial world with starting planets
+function WorldGenerator.generateInitialWorld()
+    local planets = {}
+    
+    -- Create starting planet at center
+    table.insert(planets, WorldGenerator.generatePlanet(0, 0, "standard"))
+    
+    -- Create a few nearby planets in a circle
+    local planetCount = 5
+    local radius = 500
+    for i = 1, planetCount do
+        local angle = (i / planetCount) * math.pi * 2
+        local x = math.cos(angle) * radius
+        local y = math.sin(angle) * radius
+        
+        -- Random planet type
+        local types = {"standard", "ice", "lava", "tech"}
+        local planetType = types[math.random(#types)]
+        
+        table.insert(planets, WorldGenerator.generatePlanet(x, y, planetType))
+    end
+    
+    return planets
 end
 
 -- Generate a single planet at specified position

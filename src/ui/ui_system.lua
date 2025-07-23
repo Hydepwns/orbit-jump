@@ -77,8 +77,11 @@ function UISystem.update(dt, progressionSystem, blockchainIntegration)
 end
 
 function UISystem.draw()
-    -- Only draw UI if not in game screen
-    if UISystem.currentScreen ~= "game" then
+    if UISystem.currentScreen == "game" then
+        -- Draw minimal game UI (score, combo, etc)
+        UISystem.drawGameUI()
+    else
+        -- Draw menu screens
         if UISystem.currentScreen == "menu" then
             UISystem.drawMenuUI()
         elseif UISystem.currentScreen == "upgrades" then
@@ -89,46 +92,31 @@ function UISystem.draw()
             UISystem.drawBlockchainUI()
         end
     end
-    -- Don't draw game UI overlays for now to fix overlapping issues
 end
 
 function UISystem.drawGameUI()
-    if not UISystem.progressionSystem then return end
+    local GameState = require("src.core.game_state")
+    local screenWidth = love.graphics.getWidth()
+    local screenHeight = love.graphics.getHeight()
     
-    local data = UISystem.progressionSystem.data
+    -- Draw score and combo
+    Utils.setColor({1, 1, 1}, 1)
+    love.graphics.setFont(love.graphics.getFont())
+    love.graphics.print("Score: " .. GameState.getScore(), 10, 10)
     
-    -- Draw progression bar
-    UISystem.drawProgressionBar()
-    
-    -- Draw upgrade button with mobile scaling
-    local upgradeBtn = UISystem.elements.upgradeButton
-    Utils.drawButton("Upgrades", upgradeBtn.x, upgradeBtn.y, upgradeBtn.width, upgradeBtn.height)
-    
-    -- Draw blockchain button with mobile scaling
-    local blockchainBtn = UISystem.elements.blockchainButton
-    Utils.drawButton("Blockchain", blockchainBtn.x, blockchainBtn.y, blockchainBtn.width, blockchainBtn.height)
-    
-    -- Draw mobile controls hint if on mobile
-    if UISystem.isMobile then
-        love.graphics.setFont(UISystem.fonts.light)
-        Utils.setColor(Utils.colors.white, 0.7)
-        love.graphics.printf("Swipe to jump • Double-tap to dash", 0, love.graphics.getHeight() - 60, love.graphics.getWidth(), "center")
+    -- Draw combo if active
+    if GameState.getCombo() > 0 then
+        Utils.setColor({1, 1, 0}, 1)
+        love.graphics.print("Combo: " .. GameState.getCombo() .. "x", 10, 35)
     end
     
-    -- Draw total score
-    Utils.setColor(Utils.colors.text)
-    love.graphics.setFont(UISystem.fonts.bold)
-    love.graphics.print("Total Score: " .. Utils.formatNumber(data.totalScore), 10, 80)
+    -- Draw controls hint
+    Utils.setColor({0.7, 0.7, 0.7}, 0.8)
+    love.graphics.print("Press U for upgrades | TAB for map", screenWidth - 250, 10)
     
-    -- Draw total rings
-    love.graphics.print("Total Rings: " .. Utils.formatNumber(data.totalRingsCollected), 10, 100)
-    
-    -- Draw blockchain status if enabled
-    if UISystem.blockchainIntegration and UISystem.blockchainIntegration.config.enabled then
-        local status = UISystem.blockchainIntegration.getStatus()
-        Utils.setColor(Utils.colors.blockchain)
-        love.graphics.print("Blockchain: " .. status.network, 10, 120)
-        love.graphics.print("Events: " .. status.queuedEvents, 10, 140)
+    -- Draw reset hint if in space
+    if not GameState.player.onPlanet then
+        love.graphics.print("Press R to reset if stuck", screenWidth - 200, screenHeight - 30)
     end
 end
 
@@ -475,6 +463,44 @@ function UISystem.mousepressed(x, y, button)
             UISystem.currentScreen = "blockchain"
         end
     end
+end
+
+-- Key input handler
+function UISystem.handleKeyPress(key)
+    if UISystem.currentScreen == "game" then
+        if key == "u" then
+            UISystem.currentScreen = "upgrades"
+            return true
+        end
+    else
+        if key == "escape" then
+            UISystem.currentScreen = "game"
+            return true
+        elseif UISystem.currentScreen == "upgrades" then
+            -- Handle upgrade navigation
+            local UpgradeSystem = require("src.systems.upgrade_system")
+            if key == "up" then
+                UISystem.upgradeSelection = math.max(1, UISystem.upgradeSelection - 1)
+                return true
+            elseif key == "down" then
+                local maxUpgrades = 6 -- We have 6 upgrade types
+                UISystem.upgradeSelection = math.min(maxUpgrades, UISystem.upgradeSelection + 1)
+                return true
+            elseif key == "return" or key == "space" then
+                -- Purchase selected upgrade
+                local i = 1
+                for id, _ in pairs(UpgradeSystem.upgrades) do
+                    if i == UISystem.upgradeSelection then
+                        UpgradeSystem.purchase(id)
+                        break
+                    end
+                    i = i + 1
+                end
+                return true
+            end
+        end
+    end
+    return false
 end
 
 return UISystem 

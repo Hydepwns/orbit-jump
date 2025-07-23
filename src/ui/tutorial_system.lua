@@ -25,13 +25,14 @@ TutorialSystem.steps = {
     {
         id = "jump",
         title = "How to Jump",
-        text = "Click and drag AWAY from where you want to go,\nthen release to jump!",
+        text = "Click and drag AWAY from where you want to go,\nthen release to jump!\nThe further you pull, the stronger your jump!",
         duration = 0, -- Wait for player action
         condition = function(player) 
             return player.onPlanet 
         end,
         action = "jump",
-        highlight = "player"
+        highlight = "player",
+        showPullIndicator = true
     },
     {
         id = "jump_success",
@@ -46,7 +47,7 @@ TutorialSystem.steps = {
     {
         id = "dash",
         title = "Dashing in Space",
-        text = "While in space, press SHIFT, Z, or X to dash!\nYou can dash once per jump.",
+        text = "While in space, click to dash towards your mouse!\nYou can dash once per jump.",
         duration = 0,
         condition = function(player) 
             return not player.onPlanet 
@@ -222,6 +223,30 @@ function TutorialSystem.draw(player, camera)
             love.graphics.circle("line", screenX, screenY, 50 * pulse)
             love.graphics.circle("line", screenX, screenY, 55 * pulse)
             
+            -- Show pull direction hint for jump tutorial
+            if step.showPullIndicator and player.onPlanet then
+                Utils.setColor({1, 1, 0}, 0.3 * TutorialSystem.fadeAlpha)
+                love.graphics.setLineWidth(4)
+                -- Draw arrow pointing away from player
+                local arrowDist = 100
+                local arrowAngle = math.sin(TutorialSystem.pulsePhase) * 0.5
+                local endX = screenX + math.cos(arrowAngle) * arrowDist
+                local endY = screenY - math.sin(arrowAngle) * arrowDist - 50
+                love.graphics.line(screenX, screenY, endX, endY)
+                
+                -- Arrow head
+                local headSize = 15
+                local headAngle1 = arrowAngle + 2.5
+                local headAngle2 = arrowAngle - 2.5
+                love.graphics.line(endX, endY, 
+                    endX - math.cos(headAngle1) * headSize, 
+                    endY + math.sin(headAngle1) * headSize)
+                love.graphics.line(endX, endY, 
+                    endX - math.cos(headAngle2) * headSize, 
+                    endY + math.sin(headAngle2) * headSize)
+                love.graphics.setLineWidth(1)
+            end
+            
         elseif step.highlight == "rings" then
             -- Highlight nearest ring
             local GameState = require("src.core.game_state")
@@ -316,6 +341,40 @@ function TutorialSystem.draw(player, camera)
             love.graphics.circle("line", x, y, dotSize)
         end
     end
+end
+
+-- Input handlers (return false to allow input to pass through)
+function TutorialSystem.handleKeyPress(key)
+    if not TutorialSystem.isActive then return false end
+    
+    -- Allow skipping tutorial with Enter
+    if key == "return" then
+        TutorialSystem.skip()
+        return true
+    end
+    
+    -- Check for map action
+    if key == "tab" and TutorialSystem.steps[TutorialSystem.currentStep].action == "map" then
+        TutorialSystem.onPlayerAction("map")
+    end
+    
+    -- Let input pass through to game
+    return false
+end
+
+function TutorialSystem.mousepressed(x, y, button)
+    -- Always let mouse input pass through during tutorial
+    return false
+end
+
+function TutorialSystem.mousemoved(x, y)
+    -- Always let mouse input pass through during tutorial
+    return false
+end
+
+function TutorialSystem.mousereleased(x, y, button)
+    -- Always let mouse input pass through during tutorial
+    return false
 end
 
 -- Save/Load tutorial state

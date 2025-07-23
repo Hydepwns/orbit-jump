@@ -21,6 +21,10 @@ function love.mousepressed(x, y, button)
     Game.handleMousePress(x, y, button)
 end
 
+function love.mousemoved(x, y)
+    Game.handleMouseMove(x, y)
+end
+
 function love.mousereleased(x, y, button)
     Game.handleMouseRelease(x, y, button)
 end

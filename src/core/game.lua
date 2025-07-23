@@ -93,7 +93,6 @@ function Game.initSystems()
     
     -- Initialize UI systems
     ModuleLoader.initModule("ui.ui_system", "init")
-    ModuleLoader.initModule("ui.tutorial_system", "init")
     ModuleLoader.initModule("ui.pause_menu", "init")
     
     -- Initialize audio
@@ -116,11 +115,9 @@ function Game.initSystems()
         SaveSystem.load()
     end
     
-    -- Start tutorial if first time
+    -- Initialize and start tutorial if first time
     local TutorialSystem = require("src.ui.tutorial_system")
-    if not TutorialSystem.completed then
-        TutorialSystem.start()
-    end
+    TutorialSystem.init()  -- This will check save state and start if needed
 end
 
 function Game.update(dt)
@@ -166,7 +163,7 @@ function Game.update(dt)
         end
         
         if UISystem.update then
-            UISystem.update(dt)
+            UISystem.update(dt, ProgressionSystem, nil) -- Pass progression system, blockchain is optional
         end
         
         if PerformanceSystem.update then
@@ -214,11 +211,11 @@ function Game.draw()
         Renderer.drawPlayer(player, player.isDashing)
         
         -- Draw pull indicator if dragging
-        if GameState.mouseStartX and love.mouse.isDown(1) then
+        if GameState.data.isCharging and GameState.data.mouseStartX and GameState.player.onPlanet then
             local mouseX, mouseY = love.mouse.getPosition()
             Renderer.drawPullIndicator(player, mouseX, mouseY, 
-                GameState.mouseStartX, GameState.mouseStartY, 
-                GameState.pullPower, GameState.maxPullDistance)
+                GameState.data.mouseStartX, GameState.data.mouseStartY, 
+                GameState.data.pullPower, GameState.data.maxPullDistance)
         end
     end
     
@@ -271,19 +268,41 @@ function Game.handleMousePress(x, y, button)
     local UISystem = require("src.ui.ui_system")
     
     -- Input priority: Pause > Tutorial > UI > Game
-    if PauseMenu.handleMousePress and PauseMenu.handleMousePress(x, y, button) then
+    if PauseMenu.mousepressed and PauseMenu.mousepressed(x, y, button) then
         return
     end
     
-    if TutorialSystem.handleMousePress and TutorialSystem.handleMousePress(x, y, button) then
+    if TutorialSystem.mousepressed and TutorialSystem.mousepressed(x, y, button) then
         return
     end
     
-    if UISystem.handleMousePress and UISystem.handleMousePress(x, y, button) then
+    if UISystem.mousepressed and UISystem.mousepressed(x, y, button) then
         return
     end
     
     GameState.handleMousePress(x, y, button)
+end
+
+function Game.handleMouseMove(x, y)
+    local GameState = require("src.core.game_state")
+    local PauseMenu = require("src.ui.pause_menu")
+    local TutorialSystem = require("src.ui.tutorial_system")
+    local UISystem = require("src.ui.ui_system")
+    
+    -- Input priority: Pause > Tutorial > UI > Game
+    if PauseMenu.mousemoved and PauseMenu.mousemoved(x, y) then
+        return
+    end
+    
+    if TutorialSystem.mousemoved and TutorialSystem.mousemoved(x, y) then
+        return
+    end
+    
+    if UISystem.mousemoved and UISystem.mousemoved(x, y) then
+        return
+    end
+    
+    GameState.handleMouseMove(x, y)
 end
 
 function Game.handleMouseRelease(x, y, button)
@@ -293,15 +312,15 @@ function Game.handleMouseRelease(x, y, button)
     local UISystem = require("src.ui.ui_system")
     
     -- Input priority: Pause > Tutorial > UI > Game
-    if PauseMenu.handleMouseRelease and PauseMenu.handleMouseRelease(x, y, button) then
+    if PauseMenu.mousereleased and PauseMenu.mousereleased(x, y, button) then
         return
     end
     
-    if TutorialSystem.handleMouseRelease and TutorialSystem.handleMouseRelease(x, y, button) then
+    if TutorialSystem.mousereleased and TutorialSystem.mousereleased(x, y, button) then
         return
     end
     
-    if UISystem.handleMouseRelease and UISystem.handleMouseRelease(x, y, button) then
+    if UISystem.mousereleased and UISystem.mousereleased(x, y, button) then
         return
     end
     

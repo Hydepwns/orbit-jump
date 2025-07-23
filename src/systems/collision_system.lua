@@ -41,14 +41,12 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
     local dy = player.y - planet.y
     player.angle = Utils.atan2(dy, dx)
     
-    -- Set player state
-    player.onPlanet = true
-    -- Find planet index
+    -- Set player state - find planet index
     local gameState = require("src.core.game_state")
     local planets = gameState.getPlanets()
     for i, p in ipairs(planets) do
         if p == planet then
-            player.currentPlanet = i
+            player.onPlanet = i  -- Set to planet index, not boolean
             break
         end
     end
@@ -131,14 +129,11 @@ function CollisionSystem.trackPlanetDiscovery(planet, gameState)
         end
         
         -- Check achievements
-        if AchievementSystem then
-            AchievementSystem.checkPlanetAchievements()
+        if AchievementSystem and AchievementSystem.onPlanetDiscovered then
+            AchievementSystem.onPlanetDiscovered(planet.type)
         end
         
-        -- Update map
-        if MapSystem then
-            MapSystem.discoverPlanet(planet)
-        end
+        -- Map system will automatically track discovered planets in its update
         
         -- Show lore
         if PlanetLore and planet.lore then

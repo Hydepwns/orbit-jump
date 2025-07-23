@@ -305,6 +305,14 @@ function RingSystem.reset()
     RingSystem.warpPairs = {}
     RingSystem.chainSequence = {}
     RingSystem.currentChain = 1
+    
+    -- Generate initial rings
+    local GameState = require("src.core.game_state")
+    local planets = GameState.getPlanets()
+    if planets and #planets > 0 then
+        local rings = RingSystem.generateRings(planets)
+        GameState.setRings(rings)
+    end
 end
 
 -- Generate rings around planets

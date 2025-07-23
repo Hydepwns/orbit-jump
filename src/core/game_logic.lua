@@ -42,6 +42,13 @@ function GameLogic.calculateJumpVelocity(playerX, playerY, planetX, planetY, jum
     return nx * jumpPower + tangentVx, ny * jumpPower + tangentVy
 end
 
+-- Simple jump velocity calculation from angle and power
+function GameLogic.calculateJumpVelocityFromAngle(angle, jumpPower)
+    local jumpVx = math.cos(angle) * jumpPower
+    local jumpVy = math.sin(angle) * jumpPower
+    return jumpVx, jumpVy
+end
+
 function GameLogic.calculateTangentVelocity(angle, rotationSpeed, radius)
     local tangentX = -math.sin(angle) * rotationSpeed * radius
     local tangentY = math.cos(angle) * rotationSpeed * radius

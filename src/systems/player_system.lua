@@ -23,8 +23,8 @@ function PlayerSystem.update(player, planets, dt)
     end
     
     -- Update position based on whether on planet or in space
-    if player.onPlanet and planets[player.currentPlanet] then
-        PlayerSystem.updateOnPlanet(player, planets[player.currentPlanet], dt)
+    if player.onPlanet and planets[player.onPlanet] then
+        PlayerSystem.updateOnPlanet(player, planets[player.onPlanet], dt)
     else
         PlayerSystem.updateInSpace(player, planets, dt)
     end
@@ -139,7 +139,7 @@ function PlayerSystem.jump(player, pullPower, pullAngle, gameState, soundManager
     
     -- Calculate jump velocity
     local jumpPower = math.min(pullPower * 3, Config.game.maxJumpPower)
-    local jumpVx, jumpVy = GameLogic.calculateJumpVelocity(pullAngle, jumpPower)
+    local jumpVx, jumpVy = GameLogic.calculateJumpVelocityFromAngle(pullAngle, jumpPower)
     
     -- Apply speed boost if active
     local RingSystem = require("src.systems.ring_system")
@@ -172,9 +172,10 @@ function PlayerSystem.dash(player, targetX, targetY, soundManager)
         return false
     end
     
-    -- Check if multi-jump is active
+    -- Check if multi-jump is active (skip check during tutorial)
+    local TutorialSystem = require("src.ui.tutorial_system")
     local RingSystem = require("src.systems.ring_system")
-    if not RingSystem.isActive("multijump") then
+    if not TutorialSystem.isActive and not RingSystem.isActive("multijump") then
         return false
     end
     

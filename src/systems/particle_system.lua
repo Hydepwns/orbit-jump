@@ -25,7 +25,18 @@ function ParticleSystem.init()
                 type = "default"
             }
         end,
-        ParticleSystem.maxParticles
+        function(particle)
+            -- Reset particle to default state
+            particle.x = 0
+            particle.y = 0
+            particle.vx = 0
+            particle.vy = 0
+            particle.lifetime = 0
+            particle.maxLifetime = 1
+            particle.size = 2
+            particle.color = {1, 1, 1, 1}
+            particle.type = "default"
+        end
     )
     
     ParticleSystem.particles = {}
@@ -38,7 +49,7 @@ function ParticleSystem.create(x, y, vx, vy, color, lifetime, size, type)
         -- Remove oldest particle
         local oldest = table.remove(ParticleSystem.particles, 1)
         if oldest and ParticleSystem.particlePool then
-            ParticleSystem.particlePool:release(oldest)
+            ParticleSystem.particlePool:returnObject(oldest)
         end
     end
     
@@ -168,7 +179,7 @@ end
 function ParticleSystem.clear()
     if ParticleSystem.particlePool then
         for _, particle in ipairs(ParticleSystem.particles) do
-            ParticleSystem.particlePool:release(particle)
+            ParticleSystem.particlePool:returnObject(particle)
         end
     end
     ParticleSystem.particles = {}
