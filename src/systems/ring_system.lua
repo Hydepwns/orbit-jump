@@ -1,7 +1,7 @@
 -- Enhanced Ring System for Orbit Jump
 -- Manages special ring types and their effects
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local RingSystem = {}
 
 -- Ring type definitions
@@ -169,7 +169,7 @@ function RingSystem.collectRing(ring, player)
     ring.collected = true
     
     -- Track constellation patterns
-    local success, RingConstellations = pcall(require, "ring_constellations")
+    local success, RingConstellations  = Utils.ErrorHandler.safeCall(require, "ring_constellations")
     if success and RingConstellations.onRingCollected then
         RingConstellations.onRingCollected(ring, player)
     end
@@ -181,7 +181,7 @@ function RingSystem.collectRing(ring, player)
         local shieldDuration = typeData and typeData.duration or 5
         -- Try to get upgrade effect, but don't fail if upgrade system doesn't exist
         local upgradeMultiplier = 1
-        local success, upgradeSystem = pcall(require, "upgrade_system")
+        local success, upgradeSystem  = Utils.ErrorHandler.safeCall(require, "upgrade_system")
         if success and upgradeSystem then
             upgradeMultiplier = upgradeSystem.getEffect and upgradeSystem.getEffect("shield_duration") or 1
         end
@@ -215,7 +215,7 @@ function RingSystem.collectRing(ring, player)
             -- Bonus for completing chain
             if RingSystem.currentChain > #RingSystem.chainSequence then
                 -- Track achievement
-                local success, achievementSystem = pcall(require, "achievement_system")
+                local success, achievementSystem  = Utils.ErrorHandler.safeCall(require, "achievement_system")
                 if success and achievementSystem and achievementSystem.onChainCompleted then
                     achievementSystem.onChainCompleted(#RingSystem.chainSequence)
                 end
@@ -246,7 +246,7 @@ function RingSystem.updatePowers(dt)
             RingSystem.activePowers[power] = nil
             
             -- Deactivate effects
-            local GameState = require("src.core.game_state")
+            local GameState = Utils.Utils.require("src.core.game_state")
             if power == "shield" and GameState and GameState.player then
                 GameState.player.hasShield = false
             elseif power == "magnet" and GameState and GameState.player then
@@ -271,7 +271,7 @@ end
 
 function RingSystem.findWarpPair(ring)
     -- GameState needs to be passed in or required
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     for _, r in pairs(GameState.getRings()) do
         if r ~= ring and r.type == "warp" and r.pairId == ring.pairId then
             return r
@@ -307,7 +307,7 @@ function RingSystem.reset()
     RingSystem.currentChain = 1
     
     -- Generate initial rings
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     local planets = GameState.getPlanets()
     if planets and #planets > 0 then
         local rings = RingSystem.generateRings(planets)

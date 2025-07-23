@@ -1,10 +1,23 @@
 -- Main game controller
-local GameLogic = require("src.core.game_logic")
-local GameState = require("src.core.game_state")
-local Renderer = require("src.core.renderer")
-local ModuleLoader = require("src.utils.module_loader")
-local Utils = require("src.utils.utils")
-local Config = require("src.utils.config")
+local Utils = Utils.Utils.require("src.utils.utils")
+
+-- Use cached requires to prevent duplicate loading
+local GameLogic = Utils.Utils.require("src.core.game_logic")
+local GameState = Utils.Utils.require("src.core.game_state")
+local Renderer = Utils.Utils.require("src.core.renderer")
+local ModuleLoader = Utils.Utils.require("src.utils.module_loader")
+local Config = Utils.Utils.require("src.utils.config")
+local Camera = Utils.Utils.require("src.core.camera")
+local SoundManager = Utils.Utils.require("src.audio.sound_manager")
+local SaveSystem = Utils.Utils.require("src.systems.save_system")
+local TutorialSystem = Utils.Utils.require("src.ui.tutorial_system")
+local PauseMenu = Utils.Utils.require("src.ui.pause_menu")
+local UISystem = Utils.Utils.require("src.ui.ui_system")
+local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
+local PerformanceSystem = Utils.Utils.require("src.performance.performance_system")
+local CosmicEvents = Utils.Utils.require("src.systems.cosmic_events")
+local RingSystem = Utils.Utils.require("src.systems.ring_system")
+local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
 
 local Game = {}
 
@@ -39,7 +52,7 @@ function Game.initGraphics()
     love.graphics.setBackgroundColor(0.05, 0.05, 0.1)
     
     -- Load fonts
-    local fontLoadSuccess, fontError = pcall(function()
+    local fontLoadSuccess, fontError = Utils.ErrorHandler.safeCall(function()
         fonts.regular = love.graphics.newFont("assets/fonts/MonaspaceArgon-Regular.otf", 16)
         fonts.bold = love.graphics.newFont("assets/fonts/MonaspaceArgon-Bold.otf", 16)
         fonts.light = love.graphics.newFont("assets/fonts/MonaspaceArgon-Light.otf", 16)
@@ -62,9 +75,7 @@ function Game.initSystems()
     local screenWidth, screenHeight = love.graphics.getDimensions()
     
     -- Initialize core systems directly (they need special handling)
-    local GameState = require("src.core.game_state")
-    local Renderer = require("src.core.renderer")
-    local Camera = require("src.core.camera")
+    -- GameState, Renderer, and Camera are already loaded at the top
     
     -- Initialize camera instance first
     Game.camera = Camera:new()
@@ -96,7 +107,7 @@ function Game.initSystems()
     ModuleLoader.initModule("ui.pause_menu", "init")
     
     -- Initialize audio
-    local SoundManager = require("src.audio.sound_manager")
+    -- SoundManager is already loaded at the top
     Game.soundManager = SoundManager:new()
     Game.soundManager:load()
     
@@ -110,23 +121,19 @@ function Game.initSystems()
     end
     
     -- Load saved game if exists
-    local SaveSystem = require("src.systems.save_system")
+    -- SaveSystem is already loaded at the top
     if SaveSystem.hasSave() then
         SaveSystem.load()
     end
     
     -- Initialize and start tutorial if first time
-    local TutorialSystem = require("src.ui.tutorial_system")
+    -- TutorialSystem is already loaded at the top
     TutorialSystem.init()  -- This will check save state and start if needed
 end
 
 function Game.update(dt)
     -- Update all systems
-    local GameState = require("src.core.game_state")
-    local Renderer = require("src.core.renderer")
-    local PauseMenu = require("src.ui.pause_menu")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local PerformanceMonitor = require("src.performance.performance_monitor")
+    -- GameState, Renderer, PauseMenu, TutorialSystem, and PerformanceMonitor are already loaded at the top
     
     -- Handle pause state
     if not PauseMenu.shouldPauseGameplay() then
@@ -138,12 +145,7 @@ function Game.update(dt)
         end
         
         -- Update other systems as needed
-        local CosmicEvents = require("src.systems.cosmic_events")
-        local RingSystem = require("src.systems.ring_system")
-        local ProgressionSystem = require("src.systems.progression_system")
-        local SaveSystem = require("src.systems.save_system")
-        local UISystem = require("src.ui.ui_system")
-        local PerformanceSystem = require("src.performance.performance_system")
+        -- CosmicEvents, RingSystem, ProgressionSystem, SaveSystem, UISystem, and PerformanceSystem are already loaded at the top
         
         -- Update systems with their specific parameter requirements
         if CosmicEvents.update then
@@ -178,13 +180,7 @@ function Game.update(dt)
 end
 
 function Game.draw()
-    local Renderer = require("src.core.renderer")
-    local GameState = require("src.core.game_state")
-    local UISystem = require("src.ui.ui_system")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local PauseMenu = require("src.ui.pause_menu")
-    local PerformanceMonitor = require("src.performance.performance_monitor")
-    local Config = require("src.utils.config")
+    -- Renderer, GameState, UISystem, TutorialSystem, PauseMenu, PerformanceMonitor, and Config are already loaded at the top
     
     -- Apply camera transform
     if Game.camera then
@@ -200,7 +196,7 @@ function Game.draw()
         Renderer.drawPlayerTrail(player.trail)
         
         -- Use culling for performance
-        local PerformanceSystem = require("src.performance.performance_system")
+        -- PerformanceSystem is already loaded at the top
         local visiblePlanets = PerformanceSystem.cullPlanets(GameState.getPlanets(), Game.camera)
         local visibleRings = PerformanceSystem.cullRings(GameState.getRings(), Game.camera)
         local visibleParticles = PerformanceSystem.cullParticles(GameState.getParticles(), Game.camera)
@@ -219,31 +215,25 @@ function Game.draw()
         end
     end
     
-    -- Clear camera transform
+    -- Reset camera transform for UI
     if Game.camera then
-        Game.camera:clear()
+        Game.camera:reset()
     end
     
-    -- Draw UI (no camera transform)
+    -- Draw UI elements
     UISystem.draw()
-    TutorialSystem.draw(player, Game.camera)
+    TutorialSystem.draw()
     PauseMenu.draw()
+    PerformanceMonitor.draw()
     
-    -- Draw save indicator
-    local SaveSystem = require("src.systems.save_system")
-    SaveSystem.drawUI()
-    
-    -- Draw performance overlay if enabled
-    if Config.dev.showFPS then
-        PerformanceMonitor.draw()
+    -- Draw mobile controls if needed
+    if Utils.MobileInput.isMobile() then
+        Renderer.drawMobileControls()
     end
 end
 
 function Game.handleKeyPress(key)
-    local GameState = require("src.core.game_state")
-    local PauseMenu = require("src.ui.pause_menu")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local UISystem = require("src.ui.ui_system")
+    -- GameState, PauseMenu, TutorialSystem, and UISystem are already loaded at the top
     
     -- Input priority: Pause > Tutorial > UI > Game
     if PauseMenu.handleKeyPress and PauseMenu.handleKeyPress(key) then
@@ -262,10 +252,7 @@ function Game.handleKeyPress(key)
 end
 
 function Game.handleMousePress(x, y, button)
-    local GameState = require("src.core.game_state")
-    local PauseMenu = require("src.ui.pause_menu")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local UISystem = require("src.ui.ui_system")
+    -- GameState, PauseMenu, TutorialSystem, and UISystem are already loaded at the top
     
     -- Input priority: Pause > Tutorial > UI > Game
     if PauseMenu.mousepressed and PauseMenu.mousepressed(x, y, button) then
@@ -284,10 +271,7 @@ function Game.handleMousePress(x, y, button)
 end
 
 function Game.handleMouseMove(x, y)
-    local GameState = require("src.core.game_state")
-    local PauseMenu = require("src.ui.pause_menu")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local UISystem = require("src.ui.ui_system")
+    -- GameState, PauseMenu, TutorialSystem, and UISystem are already loaded at the top
     
     -- Input priority: Pause > Tutorial > UI > Game
     if PauseMenu.mousemoved and PauseMenu.mousemoved(x, y) then
@@ -306,10 +290,7 @@ function Game.handleMouseMove(x, y)
 end
 
 function Game.handleMouseRelease(x, y, button)
-    local GameState = require("src.core.game_state")
-    local PauseMenu = require("src.ui.pause_menu")
-    local TutorialSystem = require("src.ui.tutorial_system")
-    local UISystem = require("src.ui.ui_system")
+    -- GameState, PauseMenu, TutorialSystem, and UISystem are already loaded at the top
     
     -- Input priority: Pause > Tutorial > UI > Game
     if PauseMenu.mousereleased and PauseMenu.mousereleased(x, y, button) then
@@ -329,7 +310,7 @@ end
 
 function Game.quit()
     -- Save game before quitting
-    local SaveSystem = require("src.systems.save_system")
+    -- SaveSystem is already loaded at the top
     SaveSystem.save()
     
     Utils.Logger.info("Game shutting down")

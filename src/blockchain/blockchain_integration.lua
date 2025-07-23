@@ -72,17 +72,17 @@ function BlockchainIntegration.init(config)
     BlockchainIntegration.eventQueue = {}
     BlockchainIntegration.lastBatchTime = love.timer.getTime()
     
-    print("Blockchain Integration initialized:", BlockchainIntegration.config.enabled and "ENABLED" or "DISABLED")
+    Utils.Logger.info("Blockchain Integration initialized: %s", BlockchainIntegration.config.enabled and "ENABLED" or "DISABLED")
 end
 
 function BlockchainIntegration.enable()
     BlockchainIntegration.config.enabled = true
-    print("Blockchain integration enabled")
+    Utils.Logger.info("Blockchain integration enabled")
 end
 
 function BlockchainIntegration.disable()
     BlockchainIntegration.config.enabled = false
-    print("Blockchain integration disabled")
+    Utils.Logger.info("Blockchain integration disabled")
 end
 
 function BlockchainIntegration.queueEvent(eventType, data)
@@ -98,7 +98,7 @@ function BlockchainIntegration.queueEvent(eventType, data)
     }
     
     table.insert(BlockchainIntegration.eventQueue, event)
-    print("Queued blockchain event:", eventType, BlockchainIntegration.serialize(data))
+    Utils.Logger.info("Queued blockchain event: %s %s", eventType, BlockchainIntegration.serialize(data))
     
     -- Check if we should batch process
     BlockchainIntegration.checkBatchProcessing()
@@ -120,7 +120,7 @@ function BlockchainIntegration.processBatch()
         return
     end
     
-    print("Processing blockchain batch with", #BlockchainIntegration.eventQueue, "events")
+    Utils.Logger.info("Processing blockchain batch with %d events", #BlockchainIntegration.eventQueue)
     
     -- Group events by type for efficient processing
     local groupedEvents = {}
@@ -233,14 +233,14 @@ function BlockchainIntegration.sendToBlockchain(action, data)
     end
     
     -- Log the event (in a real implementation, this would send to blockchain)
-    print("Blockchain Event:", action, BlockchainIntegration.serialize(data))
+    Utils.Logger.info("Blockchain Event: %s %s", action, BlockchainIntegration.serialize(data))
 end
 
 function BlockchainIntegration.sendWebhook(data)
     -- This would use LÖVE's HTTP library or a Lua HTTP client
     -- For now, we'll just simulate the webhook call
-    print("Webhook sent to:", BlockchainIntegration.config.webhookUrl)
-    print("Data:", BlockchainIntegration.serialize(data))
+    Utils.Logger.info("Webhook sent to: %s", BlockchainIntegration.config.webhookUrl)
+    Utils.Logger.info("Data: %s", BlockchainIntegration.serialize(data))
 end
 
 function BlockchainIntegration.serialize(obj)

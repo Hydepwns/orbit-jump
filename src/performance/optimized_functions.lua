@@ -1,7 +1,7 @@
 -- Optimized Functions for Orbit Jump
 -- Contains performance-optimized versions of critical functions
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local OptimizedFunctions = {}
 
 -- Optimized planet collision detection using spatial grid
@@ -31,7 +31,7 @@ function OptimizedFunctions.checkPlanetCollisions(player, planets, spatialGrid, 
                 GameState.setPlayerOnPlanet(planetIndex)
                 local dx = player.x - planet.x
                 local dy = player.y - planet.y
-                player.angle = math.atan2(dy, dx)
+                player.angle = Utils.atan2(dy, dx)
                 
                 -- Mark planet as discovered
                 local wasDiscovered = planet.discovered

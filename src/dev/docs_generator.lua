@@ -1,7 +1,7 @@
 -- Documentation Generator for Orbit Jump
 -- Automatically generates API documentation from code comments and function signatures
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local DocsGenerator = {}
 
 -- Documentation templates
@@ -139,7 +139,7 @@ function DocsGenerator.generateModuleDoc(moduleName, modulePath)
     local doc = string.format(DocsGenerator.templates.moduleHeader, moduleName, "")
     
     -- Try to load the module to get function names
-    local success, module = pcall(require, modulePath)
+    local success, module  = Utils.ErrorHandler.safeCall(require, modulePath)
     if success and type(module) == "table" then
         for name, value in pairs(module) do
             if type(value) == "function" then
@@ -172,7 +172,7 @@ end
 
 -- Generate configuration documentation
 function DocsGenerator.generateConfigDoc()
-    local Config = require("src.utils.config")
+    local Config = Utils.Utils.require("src.utils.config")
     local doc = string.format(DocsGenerator.templates.configDoc, "")
     
     for sectionName, section in pairs(Config) do

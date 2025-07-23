@@ -162,7 +162,7 @@ end
 
 -- Check and unlock special entries
 function PlanetLore.checkSpecialEntries()
-    local AchievementSystem = require("src.systems.achievement_system")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
     
     for _, entry in ipairs(PlanetLore.specialEntries) do
         if not entry.discovered and AchievementSystem.achievements[entry.requirement] then
@@ -184,7 +184,7 @@ function PlanetLore.display(entry)
     PlanetLore.fadeIn = 0
     
     -- Play discovery sound
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playLoreDiscovered then
         soundManager:playLoreDiscovered()
     end

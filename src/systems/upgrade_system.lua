@@ -164,7 +164,7 @@ UpgradeSystem.upgrades = {
         end,
         onPurchase = function()
             -- Unlock warp drive when purchased
-            local WarpDrive = require("src.systems.warp_drive")
+            local WarpDrive = Utils.Utils.require("src.systems.warp_drive")
             WarpDrive.unlock()
         end
     }
@@ -206,13 +206,13 @@ function UpgradeSystem.purchase(upgradeId)
     upgrade.currentLevel = upgrade.currentLevel + 1
     
     -- Play upgrade sound
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playUpgrade then
         soundManager:playUpgrade()
     end
     
     -- Log upgrade
-    local Utils = require("src.utils.utils")
+    local Utils = Utils.Utils.require("src.utils.utils")
     Utils.Logger.info("Purchased upgrade: %s level %d", upgrade.name, upgrade.currentLevel)
     
     -- Call onPurchase callback if it exists

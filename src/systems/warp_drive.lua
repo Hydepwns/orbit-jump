@@ -1,7 +1,7 @@
 -- Warp Drive System for Orbit Jump
 -- Fast travel between discovered planets
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local WarpDrive = {}
 
 -- Warp state
@@ -37,7 +37,7 @@ function WarpDrive.unlock()
     WarpDrive.isUnlocked = true
     
     -- Achievement
-    local AchievementSystem = require("src.systems.achievement_system")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
     if AchievementSystem.onWarpDriveUnlocked then
         AchievementSystem.onWarpDriveUnlocked()
     end
@@ -83,7 +83,7 @@ function WarpDrive.startWarp(targetPlanet, player)
     WarpDrive.createWarpParticles(player)
     
     -- Play warp sound
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager.playEventWarning then
         soundManager:playEventWarning()
     end
@@ -191,13 +191,13 @@ function WarpDrive.completeWarp(player)
     WarpDrive.warpProgress = 0
     
     -- Camera shake
-    local Camera = require("src.core.camera")
+    local Camera = Utils.Utils.require("src.core.camera")
     if Camera.shake then
         Camera:shake(15, 0.3)
     end
     
     -- Achievement tracking
-    local AchievementSystem = require("src.systems.achievement_system")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
     if AchievementSystem.onWarpCompleted then
         AchievementSystem.onWarpCompleted()
     end

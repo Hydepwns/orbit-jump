@@ -1,7 +1,7 @@
 -- Warp Zones System for Orbit Jump
 -- Secret portals that transport players to special challenge areas
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local WarpZones = {}
 
 -- Warp zone types
@@ -132,7 +132,7 @@ function WarpZones.checkEntry(player)
             -- Discover the zone
             if not zone.discovered then
                 zone.discovered = true
-                local AchievementSystem = require("src.systems.achievement_system")
+                local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
                 AchievementSystem.onWarpZoneDiscovered()
             end
             
@@ -167,7 +167,7 @@ function WarpZones.enterChallenge(zone, player)
     WarpZones.challengeTimer = 30 -- Default 30 seconds
     
     -- Play warp sound
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager.playEventWarning then
         soundManager:playEventWarning()
     end
@@ -175,8 +175,8 @@ end
 
 -- Create ring gauntlet challenge
 function WarpZones.createRingGauntlet(player)
-    local GameState = require("src.core.game_state")
-    local RingSystem = require("src.systems.ring_system")
+    local GameState = Utils.Utils.require("src.core.game_state")
+    local RingSystem = Utils.Utils.require("src.systems.ring_system")
     
     -- Clear existing game objects
     GameState.clearForChallenge()
@@ -232,7 +232,7 @@ end
 
 -- Create gravity maze challenge
 function WarpZones.createGravityMaze(player)
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     
     -- Clear existing game objects
     GameState.clearForChallenge()
@@ -296,7 +296,7 @@ function WarpZones.update(dt, player)
     WarpZones.portalPhase = WarpZones.portalPhase + dt * 2
     
     -- Generate new zones
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     WarpZones.generateAroundPlayer(player, GameState.getPlanets())
     
     -- Check for entry
@@ -321,7 +321,7 @@ function WarpZones.updateChallenge(dt, player)
     
     if WarpZones.currentChallenge.type == "ring_gauntlet" then
         -- Check if all rings collected
-        local GameState = require("src.core.game_state")
+        local GameState = Utils.Utils.require("src.core.game_state")
         local rings = GameState.getRings()
         local allCollected = true
         for _, ring in ipairs(rings) do
@@ -335,7 +335,7 @@ function WarpZones.updateChallenge(dt, player)
         
     elseif WarpZones.currentChallenge.type == "gravity_maze" then
         -- Check if reached goal planet
-        local GameState = require("src.core.game_state")
+        local GameState = Utils.Utils.require("src.core.game_state")
         local planets = GameState.getPlanets()
         for _, planet in ipairs(planets) do
             if planet.isGoal and player.onPlanet then
@@ -361,9 +361,9 @@ end
 function WarpZones.completeChallenge(success)
     if not WarpZones.currentChallenge then return end
     
-    local GameState = require("src.core.game_state")
-    local AchievementSystem = require("src.systems.achievement_system")
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local GameState = Utils.Utils.require("src.core.game_state")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     
     if success then
         -- Award points
@@ -375,7 +375,7 @@ function WarpZones.completeChallenge(success)
         AchievementSystem.onWarpZoneCompleted(WarpZones.currentChallenge.type)
         
         -- Play success sound
-        local soundManager = require("src.audio.sound_manager")
+        local soundManager = Utils.Utils.require("src.audio.sound_manager")
         if soundManager.playCombo then
             soundManager:play("combo", 1.0, 1.5)
         end
@@ -474,7 +474,7 @@ function WarpZones.drawChallengeUI()
     
     -- Draw progress for ring gauntlet
     if WarpZones.currentChallenge.type == "ring_gauntlet" then
-        local GameState = require("src.core.game_state")
+        local GameState = Utils.Utils.require("src.core.game_state")
         local rings = GameState.getRings()
         local collected = 0
         local total = #rings

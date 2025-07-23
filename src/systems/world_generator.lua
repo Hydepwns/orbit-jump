@@ -1,7 +1,7 @@
 -- World Generator for Orbit Jump
 -- Procedurally generates planets as the player explores
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local WorldGenerator = {}
 
 -- Generation parameters
@@ -215,7 +215,7 @@ function WorldGenerator.generateAroundPosition(x, y, existingPlanets, radius)
 end
 
 function WorldGenerator.generateRingsForPlanet(planet)
-    local RingSystem = require("src.systems.ring_system")
+    local RingSystem = Utils.Utils.require("src.systems.ring_system")
     local rings = {}
     local ringCount = math.random(5, 15)
     
@@ -252,7 +252,7 @@ function WorldGenerator.reset()
     WorldGenerator.generatedSectors = {}
     
     -- Generate initial planets for game start
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     local initialPlanets = WorldGenerator.generateInitialWorld()
     GameState.setPlanets(initialPlanets)
 end
@@ -324,7 +324,7 @@ function WorldGenerator.discoverPlanet(planet, playerX, playerY)
         planet.discoveryTime = love.timer.getTime()
         
         -- Trigger discovery event
-        local success, achievementSystem = pcall(require, "achievement_system")
+        local success, achievementSystem  = Utils.ErrorHandler.safeCall(require, "achievement_system")
         if success and achievementSystem and achievementSystem.onPlanetDiscovered then
             achievementSystem.onPlanetDiscovered(planet.type)
         end

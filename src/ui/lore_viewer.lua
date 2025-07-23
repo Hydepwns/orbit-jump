@@ -1,7 +1,7 @@
 -- Lore Viewer UI for Orbit Jump
 -- Displays collected artifacts and their lore entries
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local LoreViewer = {}
 
 -- UI state
@@ -41,7 +41,7 @@ function LoreViewer.openToArtifact(artifactId)
     LoreViewer.scrollY = 0
     
     -- Find and select the artifact
-    local ArtifactSystem = require("src.systems.artifact_system")
+    local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
     for _, artifact in ipairs(ArtifactSystem.artifacts) do
         if artifact.id == artifactId then
             LoreViewer.selectedArtifact = artifact
@@ -112,7 +112,7 @@ function LoreViewer.mousepressed(x, y, button)
             end
         else
             -- In list view, check for artifact clicks
-            local ArtifactSystem = require("src.systems.artifact_system")
+            local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
             local listY = viewerY + 80 - LoreViewer.scrollY
             
             for _, artifact in ipairs(ArtifactSystem.artifacts) do
@@ -193,7 +193,7 @@ function LoreViewer.drawArtifactList(x, y)
     love.graphics.printf("Ancient Artifacts", x, y + 20, LoreViewer.width, "center")
     
     -- Collection progress
-    local ArtifactSystem = require("src.systems.artifact_system")
+    local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
     local collected = ArtifactSystem.collectedCount or 0
     local total = #ArtifactSystem.artifacts
     

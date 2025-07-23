@@ -1,7 +1,7 @@
 -- Achievement System for Orbit Jump
 -- Provides instant gratification and progression tracking
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local AchievementSystem = {}
 
 -- Achievement definitions
@@ -311,7 +311,7 @@ function AchievementSystem.unlock(achievementId)
     })
     
     -- Play sound effect if available
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playAchievement then
         soundManager:playAchievement()
     end
@@ -320,7 +320,7 @@ function AchievementSystem.unlock(achievementId)
     Utils.Logger.info("Achievement unlocked: %s", achievement.name)
     
     -- Add points to upgrade system
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     UpgradeSystem.addCurrency(achievement.points)
     
     -- Return points earned
@@ -581,7 +581,7 @@ function AchievementSystem.onConstellationComplete(patternId)
         AchievementSystem.incrementProgress("infinity_master", 1)
     end
     
-    local Utils = require("src.utils.utils")
+    local Utils = Utils.Utils.require("src.utils.utils")
     Utils.Logger.info("Constellation completed: %s", patternId)
 end
 

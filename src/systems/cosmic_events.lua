@@ -1,7 +1,7 @@
 -- Cosmic Events System for Orbit Jump
 -- Dynamic events that create challenges and opportunities
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local CosmicEvents = {}
 
 -- Event types
@@ -148,7 +148,7 @@ function CosmicEvents.startEvent(eventType)
     table.insert(CosmicEvents.activeEvents, event)
     
     -- Play warning sound
-    local soundManager = require("src.audio.sound_manager")
+    local soundManager = Utils.Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playEventWarning then
         soundManager:playEventWarning()
     end
@@ -163,7 +163,7 @@ function CosmicEvents.endEvent(event)
         CosmicEvents.meteors = {}
     elseif event.type == "ring_storm" then
         -- Convert storm rings to regular rings
-        local GameState = require("src.core.game_state")
+        local GameState = Utils.Utils.require("src.core.game_state")
         for _, ring in ipairs(CosmicEvents.stormRings) do
             if not ring.collected then
                 table.insert(GameState.getRings(), ring)
@@ -250,7 +250,7 @@ function CosmicEvents.updateMeteors(dt, player)
         ) then
             -- Damage player (unless shielded)
             if not player.hasShield then
-                local GameState = require("src.core.game_state")
+                local GameState = Utils.Utils.require("src.core.game_state")
                 GameState.setState(GameState.STATES.GAME_OVER)
             else
                 player.hasShield = false
@@ -259,7 +259,7 @@ function CosmicEvents.updateMeteors(dt, player)
         end
         
         -- Remove if too far
-        local Camera = require("src.core.camera")
+        local Camera = Utils.Utils.require("src.core.camera")
         local x1, y1, x2, y2 = Camera:getVisibleArea()
         if meteor.x < x1 - 200 or meteor.x > x2 + 200 or
            meteor.y < y1 - 200 or meteor.y > y2 + 200 then
@@ -296,7 +296,7 @@ end
 
 -- Update storm rings
 function CosmicEvents.updateStormRings(dt, player)
-    local RingSystem = require("src.systems.ring_system")
+    local RingSystem = Utils.Utils.require("src.systems.ring_system")
     
     for i = #CosmicEvents.stormRings, 1, -1 do
         local ring = CosmicEvents.stormRings[i]
@@ -318,7 +318,7 @@ function CosmicEvents.updateStormRings(dt, player)
         ) then
             ring.collected = true
             -- Add bonus points during storm
-            local GameState = require("src.core.game_state")
+            local GameState = Utils.Utils.require("src.core.game_state")
             GameState.addScore(ring.value * 2)
             GameState.addCombo()
         end

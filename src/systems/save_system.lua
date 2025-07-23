@@ -1,7 +1,7 @@
 -- Save System for Orbit Jump
 -- Handles saving and loading game progress
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local SaveSystem = {}
 
 -- Save file location
@@ -59,14 +59,14 @@ function SaveSystem.collectSaveData()
     }
     
     -- Get player stats from GameState
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     if GameState then
         saveData.player.totalScore = GameState.data.score or 0
         saveData.player.gameTime = GameState.data.gameTime or 0
     end
     
     -- Get progression data
-    local ProgressionSystem = require("src.systems.progression_system")
+    local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
     if ProgressionSystem and ProgressionSystem.data then
         saveData.player.totalScore = ProgressionSystem.data.totalScore or 0
         saveData.player.totalRingsCollected = ProgressionSystem.data.totalRingsCollected or 0
@@ -77,7 +77,7 @@ function SaveSystem.collectSaveData()
     end
     
     -- Get upgrade data
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     if UpgradeSystem then
         saveData.currency = UpgradeSystem.currency or 0
         saveData.upgrades = {}
@@ -90,7 +90,7 @@ function SaveSystem.collectSaveData()
     end
     
     -- Get achievement data
-    local AchievementSystem = require("src.systems.achievement_system")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
     if AchievementSystem then
         saveData.achievements = {}
         
@@ -109,7 +109,7 @@ function SaveSystem.collectSaveData()
     end
     
     -- Get discovered planets from MapSystem
-    local MapSystem = require("src.systems.map_system")
+    local MapSystem = Utils.Utils.require("src.systems.map_system")
     if MapSystem and MapSystem.discoveredPlanets then
         saveData.discoveredPlanets = {}
         for id, planet in pairs(MapSystem.discoveredPlanets) do
@@ -123,7 +123,7 @@ function SaveSystem.collectSaveData()
     end
     
     -- Get collected artifacts
-    local ArtifactSystem = require("src.systems.artifact_system")
+    local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
     if ArtifactSystem then
         saveData.collectedArtifacts = {}
         for _, artifact in ipairs(ArtifactSystem.artifacts) do
@@ -135,7 +135,7 @@ function SaveSystem.collectSaveData()
     end
     
     -- Get warp drive status
-    local WarpDrive = require("src.systems.warp_drive")
+    local WarpDrive = Utils.Utils.require("src.systems.warp_drive")
     if WarpDrive then
         saveData.warpDrive = {
             unlocked = WarpDrive.isUnlocked,
@@ -155,7 +155,7 @@ function SaveSystem.save()
     local saveData = SaveSystem.collectSaveData()
     
     -- Serialize to JSON
-    local json = require("libs.json")
+    local json = Utils.Utils.require("libs.json")
     local saveString = json.encode(saveData)
     
     -- Write to file
@@ -189,8 +189,8 @@ function SaveSystem.load()
     end
     
     -- Parse JSON
-    local json = require("libs.json")
-    local success, saveData = pcall(json.decode, contents)
+    local json = Utils.Utils.require("libs.json")
+    local success, saveData  = Utils.ErrorHandler.safeCall(json.decode, contents)
     
     if not success then
         Utils.Logger.error("Failed to parse save file: %s", saveData)
@@ -213,7 +213,7 @@ end
 -- Apply loaded save data to game systems
 function SaveSystem.applySaveData(saveData)
     -- Restore progression data
-    local ProgressionSystem = require("src.systems.progression_system")
+    local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
     if ProgressionSystem and saveData.player then
         ProgressionSystem.data.totalScore = saveData.player.totalScore or 0
         ProgressionSystem.data.totalRingsCollected = saveData.player.totalRingsCollected or 0
@@ -224,7 +224,7 @@ function SaveSystem.applySaveData(saveData)
     end
     
     -- Restore upgrades
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     if UpgradeSystem and saveData.upgrades then
         UpgradeSystem.currency = saveData.currency or 0
         
@@ -234,7 +234,7 @@ function SaveSystem.applySaveData(saveData)
                 
                 -- Trigger onPurchase callbacks for unlocked upgrades
                 if id == "warp_drive" and upgradeData.currentLevel > 0 then
-                    local WarpDrive = require("src.systems.warp_drive")
+                    local WarpDrive = Utils.Utils.require("src.systems.warp_drive")
                     WarpDrive.unlock()
                 end
             end
@@ -242,7 +242,7 @@ function SaveSystem.applySaveData(saveData)
     end
     
     -- Restore achievements
-    local AchievementSystem = require("src.systems.achievement_system")
+    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
     if AchievementSystem and saveData.achievements then
         for id, achievementData in pairs(saveData.achievements) do
             if AchievementSystem.achievements[id] and achievementData.unlocked then
@@ -258,13 +258,13 @@ function SaveSystem.applySaveData(saveData)
     end
     
     -- Restore discovered planets
-    local MapSystem = require("src.systems.map_system")
+    local MapSystem = Utils.Utils.require("src.systems.map_system")
     if MapSystem and saveData.discoveredPlanets then
         MapSystem.discoveredPlanets = saveData.discoveredPlanets
     end
     
     -- Restore collected artifacts
-    local ArtifactSystem = require("src.systems.artifact_system")
+    local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
     if ArtifactSystem and saveData.collectedArtifacts then
         for artifactId, _ in pairs(saveData.collectedArtifacts) do
             for _, artifact in ipairs(ArtifactSystem.artifacts) do
@@ -278,7 +278,7 @@ function SaveSystem.applySaveData(saveData)
     
     -- Restore warp drive
     if saveData.warpDrive then
-        local WarpDrive = require("src.systems.warp_drive")
+        local WarpDrive = Utils.Utils.require("src.systems.warp_drive")
         if WarpDrive then
             WarpDrive.isUnlocked = saveData.warpDrive.unlocked or false
             WarpDrive.energy = saveData.warpDrive.energy or WarpDrive.maxEnergy
@@ -343,8 +343,8 @@ function SaveSystem.getSaveInfo()
         return nil
     end
     
-    local json = require("libs.json")
-    local success, saveData = pcall(json.decode, contents)
+    local json = Utils.Utils.require("libs.json")
+    local success, saveData  = Utils.ErrorHandler.safeCall(json.decode, contents)
     
     if not success then
         return nil

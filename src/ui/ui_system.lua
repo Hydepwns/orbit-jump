@@ -1,7 +1,7 @@
 -- UI System for Orbit Jump
 -- Handles progression display, upgrade menus, and blockchain status
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local UISystem = {}
 
 -- UI state
@@ -95,7 +95,7 @@ function UISystem.draw()
 end
 
 function UISystem.drawGameUI()
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
@@ -170,7 +170,7 @@ function UISystem.drawMenuUI()
 end
 
 function UISystem.drawUpgradeUI()
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local panel = UISystem.elements.menuPanel
     
     -- Center panel on screen
@@ -432,7 +432,7 @@ function UISystem.handleMenuSelection()
 end
 
 function UISystem.purchaseUpgrade()
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local upgradeList = {
         "jump_power", "jump_control", "dash_power", "dash_cooldown",
         "ring_magnet", "ring_value", "combo_timer", "combo_multiplier",
@@ -478,7 +478,7 @@ function UISystem.handleKeyPress(key)
             return true
         elseif UISystem.currentScreen == "upgrades" then
             -- Handle upgrade navigation
-            local UpgradeSystem = require("src.systems.upgrade_system")
+            local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
             if key == "up" then
                 UISystem.upgradeSelection = math.max(1, UISystem.upgradeSelection - 1)
                 return true

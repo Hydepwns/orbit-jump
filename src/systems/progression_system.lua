@@ -69,7 +69,7 @@ function ProgressionSystem.init()
 end
 
 function ProgressionSystem.loadData()
-    local success, data = pcall(love.filesystem.load, "progression_data.lua")
+    local success, data  = Utils.ErrorHandler.safeCall(love.filesystem.load, "progression_data.lua")
     if success and data then
         local loadedData = data()
         if loadedData then
@@ -258,7 +258,7 @@ end
 function ProgressionSystem.triggerBlockchainEvent(eventType, data)
     -- This would integrate with a blockchain service
     -- For now, we'll just log the event
-    print("Blockchain Event:", eventType, ProgressionSystem.serialize(data))
+    Utils.Logger.info("Blockchain Event: %s %s", eventType, ProgressionSystem.serialize(data))
     
     -- Could send to webhook, API, or local blockchain node
     ProgressionSystem.data.blockchain.lastSync = love.timer.getTime()

@@ -1,18 +1,13 @@
 -- Game logic module - extracted from main.lua for testing
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 local GameLogic = {}
-
--- Use Utils for common math operations
-function GameLogic.calculateDistance(x1, y1, x2, y2)
-    return Utils.distance(x1, y1, x2, y2)
-end
 
 function GameLogic.normalizeVector(x, y)
     return Utils.normalize(x, y)
 end
 
 function GameLogic.calculateGravity(playerX, playerY, planetX, planetY, planetRadius)
-    local distance, dx, dy = GameLogic.calculateDistance(playerX, playerY, planetX, planetY)
+    local distance, dx, dy = Utils.distance(playerX, playerY, planetX, planetY)
     
     if distance <= planetRadius then
         return 0, 0
@@ -77,7 +72,7 @@ function GameLogic.calculateComboBonus(combo, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local comboMultiplierBoost = UpgradeSystem.getEffect("combo_multiplier")
     
     return baseBonus * comboMultiplierBoost
@@ -101,7 +96,7 @@ function GameLogic.calculateJumpPower(basePower, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local jumpPowerBoost = UpgradeSystem.getEffect("jump_power")
     local jumpControl = UpgradeSystem.getEffect("jump_control")
     
@@ -117,7 +112,7 @@ function GameLogic.calculateDashPower(basePower, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local dashPowerBoost = UpgradeSystem.getEffect("dash_power")
     
     return power * dashPowerBoost
@@ -131,7 +126,7 @@ function GameLogic.calculateRingValue(baseValue, combo, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
     local ringValueBoost = UpgradeSystem.getEffect("ring_value")
     
     return value * ringValueBoost

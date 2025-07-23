@@ -1,7 +1,15 @@
 -- Game State Manager for Orbit Jump
 -- Centralizes all game state management for consistency
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
+-- Cache commonly used modules
+local TutorialSystem = Utils.Utils.require("src.ui.tutorial_system")
+local WorldGenerator = Utils.Utils.require("src.systems.world_generator")
+local PlayerSystem = Utils.Utils.require("src.systems.player_system")
+local ParticleSystem = Utils.Utils.require("src.systems.particle_system")
+local CollisionSystem = Utils.Utils.require("src.systems.collision_system")
+local RingSystem = Utils.Utils.require("src.systems.ring_system")
+
 local GameState = {}
 
 -- Game states
@@ -160,7 +168,7 @@ function GameState.reset()
         
         -- Calculate initial angle
         local planet = GameState.objects.planets[GameState.player.onPlanet]
-        GameState.player.angle = math.atan2 and math.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x) or 0
+        GameState.player.angle = Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x)
     else
         -- Default position if planets not set yet
         GameState.player.x = GameState.data.screenWidth / 2
@@ -205,7 +213,7 @@ function GameState.update(dt)
                 GameState.player.stuckTimer = 0
                 
                 -- Show hint in tutorial
-                local TutorialSystem = require("src.ui.tutorial_system")
+                -- TutorialSystem is already loaded at the top
                 if TutorialSystem.isActive then
                     Utils.Logger.info("Player was stuck and auto-reset. Press R to manually reset when stuck.")
                 end
@@ -218,7 +226,7 @@ function GameState.update(dt)
     end
     
     -- Generate new planets as player explores
-    local WorldGenerator = require("src.systems.world_generator")
+    -- WorldGenerator is already loaded at the top
     if GameState.player and not GameState.player.onPlanet then
         local newPlanets = WorldGenerator.generateAroundPosition(
             GameState.player.x, GameState.player.y,
@@ -232,16 +240,16 @@ function GameState.update(dt)
     end
     
     -- Update player using PlayerSystem
-    local PlayerSystem = require("src.systems.player_system")
+    -- PlayerSystem is already loaded at the top
     PlayerSystem.update(GameState.player, GameState.objects.planets, dt)
     
     -- Update particles
-    local ParticleSystem = require("src.systems.particle_system")
+    -- ParticleSystem is already loaded at the top
     ParticleSystem.update(dt)
     GameState.objects.particles = ParticleSystem.getParticles()
     
     -- Update spatial grid for collisions
-    local CollisionSystem = require("src.systems.collision_system")
+    -- CollisionSystem is already loaded at the top
     CollisionSystem.updateSpatialGrid(
         GameState.spatialGrid,
         GameState.objects.planets,
@@ -266,7 +274,7 @@ function GameState.update(dt)
     )
     
     -- Check ring completion
-    local RingSystem = require("src.systems.ring_system")
+    -- RingSystem is already loaded at the top
     if #collectedRings > 0 then
         local allCollected = true
         for _, ring in ipairs(GameState.objects.rings) do
@@ -477,7 +485,7 @@ function GameState.initializePlayerPosition()
         GameState.player.x = planet.x + planet.radius + 20
         GameState.player.y = planet.y
         GameState.player.onPlanet = 1
-        GameState.player.angle = math.atan2 and math.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x) or 0
+        GameState.player.angle = Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x)
     end
 end
 
@@ -503,7 +511,7 @@ function GameState.resetPlayerToNearestPlanet()
     
     if nearestPlanet then
         -- Calculate angle to planet
-        local angle = math.atan2(GameState.player.y - nearestPlanet.y, GameState.player.x - nearestPlanet.x)
+        local angle = Utils.atan2(GameState.player.y - nearestPlanet.y, GameState.player.x - nearestPlanet.x)
         
         -- Place player on planet surface
         local orbitRadius = nearestPlanet.radius + GameState.player.radius + 5
@@ -563,7 +571,7 @@ function GameState.handleKeyPress(key)
         end
     elseif key == "f2" then
         -- Debug: Add rings
-        local RingSystem = require("src.systems.ring_system")
+        -- RingSystem is already loaded at the top
         GameState.objects.rings = RingSystem.generateRings(GameState.objects.planets)
     elseif key == "r" then
         -- Reset player position if stuck in space
@@ -614,7 +622,7 @@ function GameState.handleMouseRelease(x, y, button)
             local pullAngle = Utils.atan2(dy, dx)
             
             -- Execute jump
-            local PlayerSystem = require("src.systems.player_system")
+            -- PlayerSystem is already loaded at the top
             PlayerSystem.jump(
                 GameState.player,
                 pullPower,
@@ -624,11 +632,11 @@ function GameState.handleMouseRelease(x, y, button)
             )
             
             -- Notify tutorial system of jump action
-            local TutorialSystem = require("src.ui.tutorial_system")
+            -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("jump")
         elseif not GameState.player.onPlanet then
             -- Try dash
-            local PlayerSystem = require("src.systems.player_system")
+            -- PlayerSystem is already loaded at the top
             PlayerSystem.dash(
                 GameState.player,
                 x, y,
@@ -636,7 +644,7 @@ function GameState.handleMouseRelease(x, y, button)
             )
             
             -- Notify tutorial system of dash action
-            local TutorialSystem = require("src.ui.tutorial_system")
+            -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("dash")
         end
         

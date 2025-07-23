@@ -1,7 +1,7 @@
 -- Particle System for Orbit Jump
 -- Manages all particle effects in the game
 
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 
 local ParticleSystem = {}
 
