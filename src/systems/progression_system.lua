@@ -1,6 +1,7 @@
 -- Progression System for Orbit Jump
 -- Handles persistent upgrades, achievements, and meta-progression
 
+local Utils = require("src.utils.utils")
 local ProgressionSystem = {}
 
 -- Persistent data structure

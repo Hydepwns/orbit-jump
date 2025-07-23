@@ -1,4 +1,5 @@
 -- Sound Manager for Orbit Jump
+local Utils = require("src.utils.utils")
 local SoundManager = {}
 SoundManager.__index = SoundManager
 
