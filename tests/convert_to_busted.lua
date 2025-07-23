@@ -2,7 +2,7 @@
 -- Helper script to convert legacy tests to Busted-style format
 -- Usage: lua convert_to_busted.lua <input_test_file> <output_test_file>
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 local function convertTest(inputFile, outputFile)
     local input = io.open(inputFile, "r")

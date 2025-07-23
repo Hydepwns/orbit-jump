@@ -1,9 +1,9 @@
 -- Tests for Collision System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local CollisionSystem = Utils.Utils.require("src.systems.collision_system")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local CollisionSystem = Utils.require("src.systems.collision_system")
 
 -- Setup mocks
 Mocks.setup()
@@ -208,7 +208,7 @@ local tests = {
         
         -- Mock ParticleSystem
         local particleCount = 0
-        local originalCreate = Utils.Utils.require("src.systems.particle_system").create
+        local originalCreate = Utils.require("src.systems.particle_system").create
         Utils.require("src.systems.particle_system").create = function()
             particleCount = particleCount + 1
         end
@@ -290,10 +290,10 @@ local tests = {
         }
         
         -- Mock systems
-        local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
-        local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
-        local MapSystem = Utils.Utils.require("src.systems.map_system")
-        local PlanetLore = Utils.Utils.require("src.systems.planet_lore")
+        local ProgressionSystem = Utils.require("src.systems.progression_system")
+        local AchievementSystem = Utils.require("src.systems.achievement_system")
+        local MapSystem = Utils.require("src.systems.map_system")
+        local PlanetLore = Utils.require("src.systems.planet_lore")
         
         local originalOnPlanetDiscovered = ProgressionSystem.onPlanetDiscovered
         local originalCheckPlanetAchievements = AchievementSystem.checkPlanetAchievements
@@ -380,7 +380,7 @@ local function run()
     local success = TestFramework.runSuite("Collision System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("collision_system", 10) -- All major functions tested
     
     return success

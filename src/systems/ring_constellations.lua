@@ -1,7 +1,7 @@
 -- Ring Constellations System for Orbit Jump
 -- Detects patterns in collected rings for bonus rewards
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local RingConstellations = {}
 
 -- Constellation patterns
@@ -332,7 +332,7 @@ function RingConstellations.completePattern(pattern, positions)
     })
     
     -- Calculate bonus
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local baseScore = 100 * pattern.requiredRings
     local bonus = math.floor(baseScore * pattern.bonusMultiplier)
     GameState.addScore(bonus)
@@ -344,7 +344,7 @@ function RingConstellations.completePattern(pattern, positions)
     GameState.addMessage(string.format("%s! +%d points!", pattern.name, bonus))
     
     -- Play special sound
-    local soundManager = Utils.Utils.require("src.audio.sound_manager")
+    local soundManager = Utils.require("src.audio.sound_manager")
     if soundManager.playConstellation then
         soundManager:playConstellation()
     else
@@ -352,7 +352,7 @@ function RingConstellations.completePattern(pattern, positions)
     end
     
     -- Achievement tracking
-    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
+    local AchievementSystem = Utils.require("src.systems.achievement_system")
     if AchievementSystem.onConstellationComplete then
         AchievementSystem.onConstellationComplete(pattern.id)
     end

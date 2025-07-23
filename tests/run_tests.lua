@@ -2,7 +2,7 @@
 -- Comprehensive Test Runner for Orbit Jump
 -- Runs all test suites and generates coverage reports
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 Utils.Logger.info("================================")
 Utils.Logger.info("Orbit Jump Comprehensive Test Suite")
@@ -11,16 +11,16 @@ Utils.Logger.info("================================\n")
 local allPassed = true
 
 -- Setup mocks for all tests
-local Mocks = Utils.Utils.require("tests.mocks")
+local Mocks = Utils.require("tests.mocks")
 Mocks.setup()
 
 -- Run Core Tests
 Utils.Logger.info("\n--- Core Tests ---")
 local coreTests = {
-    Utils.Utils.require("tests.core.test_game_logic"),
-    Utils.Utils.require("tests.core.test_game_state"),
-    Utils.Utils.require("tests.core.test_game_state_extended"),
-    Utils.Utils.require("tests.core.test_config")
+    Utils.require("tests.core.test_game_logic"),
+    Utils.require("tests.core.test_game_state"),
+    Utils.require("tests.core.test_game_state_extended"),
+    Utils.require("tests.core.test_config")
 }
 
 for _, test in ipairs(coreTests) do
@@ -32,9 +32,9 @@ end
 -- Run Utility Tests
 Utils.Logger.info("\n--- Utility Tests ---")
 local utilityTests = {
-    Utils.Utils.require("tests.utils.test_utils"),
-    Utils.Utils.require("tests.utils.test_camera"),
-    Utils.Utils.require("tests.utils.test_renderer")
+    Utils.require("tests.utils.test_utils"),
+    Utils.require("tests.utils.test_camera"),
+    Utils.require("tests.utils.test_renderer")
 }
 
 for _, test in ipairs(utilityTests) do
@@ -46,10 +46,10 @@ end
 -- Run System Tests
 Utils.Logger.info("\n--- System Tests ---")
 local systemTests = {
-    Utils.Utils.require("tests.systems.test_collision_system"),
-    Utils.Utils.require("tests.systems.test_particle_system"),
-    Utils.Utils.require("tests.systems.test_progression_system"),
-    Utils.Utils.require("tests.systems.test_ring_system")
+    Utils.require("tests.systems.test_collision_system"),
+    Utils.require("tests.systems.test_particle_system"),
+    Utils.require("tests.systems.test_progression_system"),
+    Utils.require("tests.systems.test_ring_system")
 }
 
 for _, test in ipairs(systemTests) do
@@ -61,8 +61,8 @@ end
 -- Run Audio Tests
 Utils.Logger.info("\n--- Audio Tests ---")
 local audioTests = {
-    Utils.Utils.require("tests.audio.test_sound_manager"),
-    Utils.Utils.require("tests.audio.test_sound_generator")
+    Utils.require("tests.audio.test_sound_manager"),
+    Utils.require("tests.audio.test_sound_generator")
 }
 
 for _, test in ipairs(audioTests) do
@@ -74,9 +74,9 @@ end
 -- Run UI Tests
 Utils.Logger.info("\n--- UI Tests ---")
 local uiTests = {
-    Utils.Utils.require("tests.ui.test_ui_system"),
-    Utils.Utils.require("tests.ui.test_achievement_system"),
-    Utils.Utils.require("tests.ui.test_upgrade_system")
+    Utils.require("tests.ui.test_ui_system"),
+    Utils.require("tests.ui.test_achievement_system"),
+    Utils.require("tests.ui.test_upgrade_system")
 }
 
 for _, test in ipairs(uiTests) do
@@ -88,10 +88,10 @@ end
 -- Run World Tests
 Utils.Logger.info("\n--- World Tests ---")
 local worldTests = {
-    Utils.Utils.require("tests.world.test_world_generator"),
-    Utils.Utils.require("tests.world.test_cosmic_events"),
-    Utils.Utils.require("tests.world.test_warp_zones"),
-    Utils.Utils.require("tests.world.test_planet_lore")
+    Utils.require("tests.world.test_world_generator"),
+    Utils.require("tests.world.test_cosmic_events"),
+    Utils.require("tests.world.test_warp_zones"),
+    Utils.require("tests.world.test_planet_lore")
 }
 
 for _, test in ipairs(worldTests) do
@@ -103,7 +103,7 @@ end
 -- Run Performance Tests
 Utils.Logger.info("\n--- Performance Tests ---")
 local performanceTests = {
-    Utils.Utils.require("tests.performance.test_performance_monitor")
+    Utils.require("tests.performance.test_performance_monitor")
 }
 
 for _, test in ipairs(performanceTests) do
@@ -115,7 +115,7 @@ end
 -- Run Development Tools Tests
 Utils.Logger.info("\n--- Development Tools Tests ---")
 local devTests = {
-    Utils.Utils.require("tests.dev.test_dev_tools")
+    Utils.require("tests.dev.test_dev_tools")
 }
 
 for _, test in ipairs(devTests) do
@@ -127,7 +127,7 @@ end
 -- Run Blockchain Tests
 Utils.Logger.info("\n--- Blockchain Tests ---")
 local blockchainTests = {
-    Utils.Utils.require("tests.blockchain.test_blockchain_integration")
+    Utils.require("tests.blockchain.test_blockchain_integration")
 }
 
 for _, test in ipairs(blockchainTests) do
@@ -139,7 +139,7 @@ end
 -- Run Integration Tests
 Utils.Logger.info("\n--- Integration Tests ---")
 local integrationTests = {
-    Utils.Utils.require("tests.integration_tests.test_integration")
+    Utils.require("tests.integration_tests.test_integration")
 }
 
 for _, test in ipairs(integrationTests) do
@@ -150,7 +150,7 @@ end
 
 -- Generate coverage report
 Utils.Logger.info("\n\n--- Coverage Report ---")
-local TestCoverage = Utils.Utils.require("tests.test_coverage")
+local TestCoverage = Utils.require("tests.test_coverage")
 TestCoverage.generateReport()
 
 Utils.Logger.info("\n================================")

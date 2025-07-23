@@ -1,8 +1,8 @@
 -- Test script to verify tutorial fixes
-local Utils = Utils.Utils.require("src.utils.utils")
-local Game = Utils.Utils.require("src.core.game")
-local GameState = Utils.Utils.require("src.core.game_state")
-local TutorialSystem = Utils.Utils.require("src.ui.tutorial_system")
+local Utils = require("src.utils.utils")
+local Game = Utils.require("src.core.game")
+local GameState = Utils.require("src.core.game_state")
+local TutorialSystem = Utils.require("src.ui.tutorial_system")
 
 Utils.Logger.info("=== Testing Tutorial Fix ===")
 

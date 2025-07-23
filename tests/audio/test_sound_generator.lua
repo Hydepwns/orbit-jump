@@ -1,8 +1,8 @@
 -- Tests for Sound Generator
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
@@ -20,7 +20,7 @@ love.sound = {
     end
 }
 
-local SoundGenerator = Utils.Utils.require("src.audio.sound_generator")
+local SoundGenerator = Utils.require("src.audio.sound_generator")
 
 -- Initialize test framework
 TestFramework.init()
@@ -193,7 +193,7 @@ local function run()
     local success = TestFramework.runSuite("Sound Generator Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("sound_generator", 6) -- All major functions tested
     
     return success

@@ -1,12 +1,12 @@
 -- Tests for Warp Zones system
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local WarpZones = Utils.Utils.require("src.systems.warp_zones")
+local WarpZones = Utils.require("src.systems.warp_zones")
 
 -- Initialize test framework
 TestFramework.init()
@@ -172,7 +172,7 @@ local function run()
     local success = TestFramework.runSuite("Warp Zones Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("warp_zones", 16) -- All major functions tested
     
     return success

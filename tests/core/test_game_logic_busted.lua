@@ -4,8 +4,8 @@ package.path = package.path .. ";../../?.lua"
 Utils.require("tests.busted")
 
 -- Ensure we're using the real Utils, not mocked ones
-local Utils = Utils.Utils.require("src.utils.utils")
-local GameLogic = Utils.Utils.require("src.core.game_logic")
+local Utils = require("src.utils.utils")
+local GameLogic = Utils.require("src.core.game_logic")
 
 describe("Game Logic", function()
     describe("Distance Calculations", function()

@@ -1,7 +1,7 @@
 -- Performance Monitor for Orbit Jump
 -- Tracks and reports performance metrics to help identify bottlenecks
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local PerformanceMonitor = {}
 
 -- Performance metrics

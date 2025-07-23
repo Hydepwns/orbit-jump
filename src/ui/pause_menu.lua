@@ -1,7 +1,7 @@
 -- Pause Menu System for Orbit Jump
 -- Handles game pausing and pause menu UI
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local PauseMenu = {}
 
 -- Pause state
@@ -21,7 +21,7 @@ PauseMenu.options = {
         text = "Settings",
         action = function()
             -- Open settings menu
-            local SettingsMenu = Utils.Utils.require("src.ui.settings_menu")
+            local SettingsMenu = Utils.require("src.ui.settings_menu")
             SettingsMenu.toggle()
             PauseMenu.resume()
         end
@@ -29,7 +29,7 @@ PauseMenu.options = {
     {
         text = "Save Game",
         action = function()
-            local SaveSystem = Utils.Utils.require("src.systems.save_system")
+            local SaveSystem = Utils.require("src.systems.save_system")
             SaveSystem.save()
             -- Stay paused to show save indicator
         end

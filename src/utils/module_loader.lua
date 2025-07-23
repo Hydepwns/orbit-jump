@@ -1,6 +1,6 @@
 -- Module loading utilities
-local Utils = Utils.Utils.require("src.utils.utils")
-local ErrorHandler = Utils.Utils.require("src.utils.error_handler")
+local Utils = require("src.utils.utils")
+local ErrorHandler = Utils.require("src.utils.error_handler")
 
 local ModuleLoader = {}
 

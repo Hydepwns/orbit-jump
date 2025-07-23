@@ -182,7 +182,7 @@ function Mocks.setup()
     end
     
     -- Mock Utils functions
-    local Utils = Utils.Utils.require("src.utils.utils")
+    local Utils = require("src.utils.utils")
     if Utils then
         Utils.distance = Mocks.utils.distance
         Utils.randomFloat = Mocks.utils.randomFloat

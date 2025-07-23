@@ -1,8 +1,8 @@
 -- Collision System for Orbit Jump
 -- Handles all collision detection and response
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local GameLogic = Utils.Utils.require("src.core.game_logic")
+local Utils = require("src.utils.utils")
+local GameLogic = Utils.require("src.core.game_logic")
 
 local CollisionSystem = {}
 
@@ -42,7 +42,7 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
     player.angle = Utils.atan2(dy, dx)
     
     -- Set player state - find planet index
-    local gameState = Utils.Utils.require("src.core.game_state")
+    local gameState = Utils.require("src.core.game_state")
     local planets = gameState.getPlanets()
     for i, p in ipairs(planets) do
         if p == planet then
@@ -76,8 +76,8 @@ end
 
 -- Handle quantum planet teleportation
 function CollisionSystem.handleQuantumTeleport(player, planet, gameState)
-    local CosmicEvents = Utils.Utils.require("src.systems.cosmic_events")
-    local WarpDrive = Utils.Utils.require("src.systems.warp_drive")
+    local CosmicEvents = Utils.require("src.systems.cosmic_events")
+    local WarpDrive = Utils.require("src.systems.warp_drive")
     
     -- Create quantum effect
     if CosmicEvents then
@@ -114,10 +114,10 @@ end
 
 -- Track planet discovery for progression
 function CollisionSystem.trackPlanetDiscovery(planet, gameState)
-    local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
-    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
-    local MapSystem = Utils.Utils.require("src.systems.map_system")
-    local PlanetLore = Utils.Utils.require("src.systems.planet_lore")
+    local ProgressionSystem = Utils.require("src.systems.progression_system")
+    local AchievementSystem = Utils.require("src.systems.achievement_system")
+    local MapSystem = Utils.require("src.systems.map_system")
+    local PlanetLore = Utils.require("src.systems.planet_lore")
     
     -- Mark planet as discovered
     if not planet.discovered then
@@ -162,7 +162,7 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
         )
     end
     
-    local RingSystem = Utils.Utils.require("src.systems.ring_system")
+    local RingSystem = Utils.require("src.systems.ring_system")
     local collectedRings = {}
     
     for _, ring in ipairs(nearbyRings) do
@@ -198,7 +198,7 @@ end
 
 -- Create particle burst when collecting ring
 function CollisionSystem.createRingBurst(ring, player)
-    local ParticleSystem = Utils.Utils.require("src.systems.particle_system")
+    local ParticleSystem = Utils.require("src.systems.particle_system")
     if not ParticleSystem then return end
     
     local burstCount = 20

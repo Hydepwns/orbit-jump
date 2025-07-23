@@ -1,12 +1,12 @@
 -- Tests for Cosmic Events system
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local CosmicEvents = Utils.Utils.require("src.systems.cosmic_events")
+local CosmicEvents = Utils.require("src.systems.cosmic_events")
 
 -- Initialize test framework
 TestFramework.init()
@@ -172,7 +172,7 @@ local function run()
     local success = TestFramework.runSuite("Cosmic Events Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("cosmic_events", 18) -- All major functions tested
     
     return success

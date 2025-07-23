@@ -1,7 +1,7 @@
 -- Map System for Orbit Jump
 -- Provides navigation and discovery tracking
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local MapSystem = {}
 
 -- Map state
@@ -215,7 +215,7 @@ function MapSystem.draw(player, planets, camera)
     end
     
     -- Draw warp zones if visible
-    local WarpZones = Utils.Utils.require("src.systems.warp_zones")
+    local WarpZones = Utils.require("src.systems.warp_zones")
     if WarpZones and WarpZones.activeZones then
         for _, zone in ipairs(WarpZones.activeZones) do
             local zx = centerX + (zone.x - player.x) * scale
@@ -236,7 +236,7 @@ function MapSystem.draw(player, planets, camera)
     end
     
     -- Draw artifacts on map
-    local ArtifactSystem = Utils.Utils.require("src.systems.artifact_system")
+    local ArtifactSystem = Utils.require("src.systems.artifact_system")
     if ArtifactSystem and ArtifactSystem.drawOnMap then
         ArtifactSystem.drawOnMap(camera, centerX, centerY, scale, MapSystem.mapAlpha)
     end

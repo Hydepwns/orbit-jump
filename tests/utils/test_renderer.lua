@@ -1,10 +1,10 @@
 -- Tests for Renderer System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local Renderer = Utils.Utils.require("src.core.renderer")
-local Utils = Utils.Utils.require("src.utils.utils")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local Renderer = Utils.require("src.core.renderer")
+local Utils = require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()
@@ -718,7 +718,7 @@ local function run()
     local success = TestFramework.runSuite("Renderer System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("renderer", 12) -- All major functions tested
     
     return success

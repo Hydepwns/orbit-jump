@@ -1,8 +1,8 @@
 -- Renderer module for Orbit Jump
 -- Centralizes all drawing operations for consistency
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local Camera = Utils.Utils.require("src.core.camera")
+local Utils = require("src.utils.utils")
+local Camera = Utils.require("src.core.camera")
 local Renderer = {}
 
 -- Font cache
@@ -176,7 +176,7 @@ function Renderer.drawPlanets(planets)
 end
 
 function Renderer.drawRings(rings)
-    local RingSystem = Utils.Utils.require("src.systems.ring_system")
+    local RingSystem = Utils.require("src.systems.ring_system")
     
     for _, ring in ipairs(rings) do
         if not ring.collected and (ring.visible == nil or ring.visible) then
@@ -280,7 +280,7 @@ function Renderer.drawRings(rings)
     end
     
     if RingSystem.isActive("multijump") then
-        local GameState = Utils.Utils.require("src.core.game_state")
+        local GameState = Utils.require("src.core.game_state")
         local player = GameState.player
         if player and player.extraJumps and player.extraJumps > 0 then
             Utils.setColor({1, 1, 0.2}, 0.8)
@@ -538,7 +538,7 @@ function Renderer.drawControlsHint(player, fonts)
     table.insert(hints, "L: Lore")
     
     -- Check if warp drive is unlocked
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     if UpgradeSystem.upgrades.warp_drive.currentLevel > 0 then
         table.insert(hints, "W: Warp")
     end

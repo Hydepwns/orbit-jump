@@ -1,7 +1,7 @@
 -- Performance Optimization System for Orbit Jump
 -- Handles spatial partitioning, culling, and efficient updates
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local PerformanceSystem = {}
 
 -- Configuration

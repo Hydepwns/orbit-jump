@@ -1,5 +1,5 @@
 -- Error handling utilities
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 local ErrorHandler = {}
 

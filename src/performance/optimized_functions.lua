@@ -1,7 +1,7 @@
 -- Optimized Functions for Orbit Jump
 -- Contains performance-optimized versions of critical functions
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local OptimizedFunctions = {}
 
 -- Optimized planet collision detection using spatial grid

@@ -1,7 +1,7 @@
 -- Test Coverage Tracker for Orbit Jump
 -- Monitors test coverage across all modules
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 local TestCoverage = {}
 

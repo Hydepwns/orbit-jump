@@ -11,7 +11,7 @@ function SoundManager:new()
 end
 
 function SoundManager:load()
-    local SoundGenerator = Utils.Utils.require("src.audio.sound_generator")
+    local SoundGenerator = Utils.require("src.audio.sound_generator")
     self.sounds = SoundGenerator.generateGameSounds()
     
     -- Start ambient sound

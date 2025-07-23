@@ -1,7 +1,7 @@
 -- Enhanced Ring System for Orbit Jump
 -- Manages special ring types and their effects
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local RingSystem = {}
 
 -- Ring type definitions
@@ -246,7 +246,7 @@ function RingSystem.updatePowers(dt)
             RingSystem.activePowers[power] = nil
             
             -- Deactivate effects
-            local GameState = Utils.Utils.require("src.core.game_state")
+            local GameState = Utils.require("src.core.game_state")
             if power == "shield" and GameState and GameState.player then
                 GameState.player.hasShield = false
             elseif power == "magnet" and GameState and GameState.player then
@@ -271,7 +271,7 @@ end
 
 function RingSystem.findWarpPair(ring)
     -- GameState needs to be passed in or required
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     for _, r in pairs(GameState.getRings()) do
         if r ~= ring and r.type == "warp" and r.pairId == ring.pairId then
             return r
@@ -307,7 +307,7 @@ function RingSystem.reset()
     RingSystem.currentChain = 1
     
     -- Generate initial rings
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local planets = GameState.getPlanets()
     if planets and #planets > 0 then
         local rings = RingSystem.generateRings(planets)

@@ -1,7 +1,7 @@
 -- Enhanced Test Framework for Orbit Jump
 -- Provides comprehensive testing utilities and reporting
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 local TestFramework = {}
 

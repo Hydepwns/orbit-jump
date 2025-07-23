@@ -1,7 +1,7 @@
 -- Settings Menu for Orbit Jump
 -- Allows players to configure volume, controls, and other preferences
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local SettingsMenu = {}
 
 -- Settings state
@@ -72,7 +72,7 @@ function SettingsMenu.load()
     if love.filesystem.getInfo(SettingsMenu.settingsFile) then
         local contents = love.filesystem.read(SettingsMenu.settingsFile)
         if contents then
-            local json = Utils.Utils.require("libs.json")
+            local json = Utils.require("libs.json")
             local success, settings  = Utils.ErrorHandler.safeCall(json.decode, contents)
             if success then
                 -- Merge with defaults to ensure all keys exist
@@ -96,7 +96,7 @@ end
 
 -- Save settings to file
 function SettingsMenu.save()
-    local json = Utils.Utils.require("libs.json")
+    local json = Utils.require("libs.json")
     local data = json.encode(SettingsMenu.current)
     love.filesystem.write(SettingsMenu.settingsFile, data)
     SettingsMenu.unsavedChanges = false
@@ -106,7 +106,7 @@ end
 -- Apply current settings to game
 function SettingsMenu.applySettings()
     -- Apply audio settings
-    local soundManager = Utils.Utils.require("src.audio.sound_manager")
+    local soundManager = Utils.require("src.audio.sound_manager")
     soundManager:setVolume(SettingsMenu.current.masterVolume * SettingsMenu.current.soundVolume)
     
     -- Apply graphics settings
@@ -114,19 +114,19 @@ function SettingsMenu.applySettings()
     love.window.setVSync(SettingsMenu.current.vsync and 1 or 0)
     
     -- Apply to performance system
-    local PerformanceSystem = Utils.Utils.require("src.performance.performance_system")
+    local PerformanceSystem = Utils.require("src.performance.performance_system")
     if PerformanceSystem.config then
         PerformanceSystem.config.showDebug = SettingsMenu.current.showFPS
     end
     
     -- Apply to camera
-    local Camera = Utils.Utils.require("src.core.camera")
+    local Camera = Utils.require("src.core.camera")
     if Camera.enableShake ~= nil then
         Camera.enableShake = SettingsMenu.current.screenShake
     end
     
     -- Apply auto-save settings
-    local SaveSystem = Utils.Utils.require("src.systems.save_system")
+    local SaveSystem = Utils.require("src.systems.save_system")
     if SaveSystem then
         SaveSystem.autoSaveInterval = SettingsMenu.current.autoSaveInterval
     end

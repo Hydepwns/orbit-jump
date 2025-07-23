@@ -1,12 +1,12 @@
 -- Tests for UI System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local UISystem = Utils.Utils.require("src.ui.ui_system")
+local UISystem = Utils.require("src.ui.ui_system")
 
 -- Initialize test framework
 TestFramework.init()
@@ -353,7 +353,7 @@ local function run()
     local success = TestFramework.runSuite("UI System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("ui_system", 14) -- All major functions tested
     
     return success

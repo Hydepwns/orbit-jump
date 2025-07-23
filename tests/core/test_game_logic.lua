@@ -1,12 +1,12 @@
 -- Tests for Game Logic
 package.path = package.path .. ";../../?.lua"
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local GameLogic = Utils.Utils.require("src.core.game_logic")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.test_framework")
+local GameLogic = Utils.require("src.core.game_logic")
 
 -- Setup mocks
-local Mocks = Utils.Utils.require("tests.mocks")
+local Mocks = Utils.require("tests.mocks")
 Mocks.setup()
 
 -- Initialize test framework

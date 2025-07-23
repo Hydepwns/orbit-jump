@@ -3,14 +3,14 @@
 
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local GameState = Utils.Utils.require("src.core.game_state")
-local GameLogic = Utils.Utils.require("src.core.game_logic")
-local RingSystem = Utils.Utils.require("src.systems.ring_system")
-local ProgressionSystem = Utils.Utils.require("src.systems.progression_system")
-local WorldGenerator = Utils.Utils.require("src.systems.world_generator")
-local Utils = Utils.Utils.require("src.utils.utils")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local GameState = Utils.require("src.core.game_state")
+local GameLogic = Utils.require("src.core.game_logic")
+local RingSystem = Utils.require("src.systems.ring_system")
+local ProgressionSystem = Utils.require("src.systems.progression_system")
+local WorldGenerator = Utils.require("src.systems.world_generator")
+local Utils = require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()
@@ -236,7 +236,7 @@ local tests = {
     ["camera and player interaction"] = function()
         -- Initialize systems
         GameState.init(800, 600)
-        local Camera = Utils.Utils.require("src.core.camera")
+        local Camera = Utils.require("src.core.camera")
         local camera = Camera:new()
         
         -- Set player position
@@ -254,7 +254,7 @@ local tests = {
     
     ["sound system integration"] = function()
         -- Initialize systems
-        local SoundManager = Utils.Utils.require("src.audio.sound_manager")
+        local SoundManager = Utils.require("src.audio.sound_manager")
         local soundManager = SoundManager:new()
         soundManager:load()
         
@@ -270,7 +270,7 @@ local tests = {
     
     ["performance monitoring integration"] = function()
         -- Initialize systems
-        local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
+        local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
         PerformanceMonitor.init({
             enabled = true,
             showOnScreen = false,
@@ -425,7 +425,7 @@ local function run()
     local success = TestFramework.runSuite("Integration Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("integration", 15) -- Integration test coverage
     
     return success

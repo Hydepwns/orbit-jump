@@ -1,9 +1,9 @@
 -- Tests for Config System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local Config = Utils.Utils.require("src.utils.config")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local Config = Utils.require("src.utils.config")
 
 -- Setup mocks
 Mocks.setup()
@@ -368,7 +368,7 @@ local function run()
     local success = TestFramework.runSuite("Config System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("config", 8) -- All major functions tested
     
     return success

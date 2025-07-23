@@ -1,5 +1,5 @@
 -- Game logic module - extracted from main.lua for testing
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local GameLogic = {}
 
 function GameLogic.normalizeVector(x, y)
@@ -72,7 +72,7 @@ function GameLogic.calculateComboBonus(combo, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     local comboMultiplierBoost = UpgradeSystem.getEffect("combo_multiplier")
     
     return baseBonus * comboMultiplierBoost
@@ -96,7 +96,7 @@ function GameLogic.calculateJumpPower(basePower, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     local jumpPowerBoost = UpgradeSystem.getEffect("jump_power")
     local jumpControl = UpgradeSystem.getEffect("jump_control")
     
@@ -112,7 +112,7 @@ function GameLogic.calculateDashPower(basePower, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     local dashPowerBoost = UpgradeSystem.getEffect("dash_power")
     
     return power * dashPowerBoost
@@ -126,7 +126,7 @@ function GameLogic.calculateRingValue(baseValue, combo, progressionSystem)
     end
     
     -- Apply upgrade system effects
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     local ringValueBoost = UpgradeSystem.getEffect("ring_value")
     
     return value * ringValueBoost

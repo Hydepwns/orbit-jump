@@ -1,7 +1,7 @@
 -- World Generator for Orbit Jump
 -- Procedurally generates planets as the player explores
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local WorldGenerator = {}
 
 -- Generation parameters
@@ -215,7 +215,7 @@ function WorldGenerator.generateAroundPosition(x, y, existingPlanets, radius)
 end
 
 function WorldGenerator.generateRingsForPlanet(planet)
-    local RingSystem = Utils.Utils.require("src.systems.ring_system")
+    local RingSystem = Utils.require("src.systems.ring_system")
     local rings = {}
     local ringCount = math.random(5, 15)
     
@@ -252,7 +252,7 @@ function WorldGenerator.reset()
     WorldGenerator.generatedSectors = {}
     
     -- Generate initial planets for game start
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local initialPlanets = WorldGenerator.generateInitialWorld()
     GameState.setPlanets(initialPlanets)
 end

@@ -1,7 +1,7 @@
 -- Tutorial System for Orbit Jump
 -- Guides new players through game mechanics
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local TutorialSystem = {}
 
 -- Tutorial state
@@ -117,7 +117,7 @@ function TutorialSystem.start()
     TutorialSystem.fadeAlpha = 0
     
     -- Give player some starting currency for tutorial
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     if UpgradeSystem.currency < 100 then
         UpgradeSystem.currency = 100
     end
@@ -140,8 +140,8 @@ function TutorialSystem.complete()
     TutorialSystem.saveTutorialState()
     
     -- Give completion bonus
-    local GameState = Utils.Utils.require("src.core.game_state")
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local GameState = Utils.require("src.core.game_state")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     GameState.addScore(100)
     UpgradeSystem.addCurrency(50)
     
@@ -249,7 +249,7 @@ function TutorialSystem.draw(player, camera)
             
         elseif step.highlight == "rings" then
             -- Highlight nearest ring
-            local GameState = Utils.Utils.require("src.core.game_state")
+            local GameState = Utils.require("src.core.game_state")
             local rings = GameState.getRings()
             local nearestRing = nil
             local nearestDist = math.huge

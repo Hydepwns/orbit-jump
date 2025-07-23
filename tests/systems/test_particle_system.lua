@@ -1,9 +1,9 @@
 -- Tests for Particle System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local ParticleSystem = Utils.Utils.require("src.systems.particle_system")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local ParticleSystem = Utils.require("src.systems.particle_system")
 
 -- Setup mocks
 Mocks.setup()
@@ -326,7 +326,7 @@ local function run()
     local success = TestFramework.runSuite("Particle System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("particle_system", 8) -- All major functions tested
     
     return success

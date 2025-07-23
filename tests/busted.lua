@@ -1,7 +1,7 @@
 -- Busted-style test framework for Orbit Jump
 -- Provides a simple testing framework similar to Busted
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 -- Test state
 local suites = {}

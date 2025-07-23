@@ -1,8 +1,8 @@
 #!/usr/bin/env lua
 -- Busted-style test runner for Orbit Jump
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local BustedLite = Utils.Utils.require("tests.busted")
+local Utils = require("src.utils.utils")
+local BustedLite = Utils.require("tests.busted")
 
 Utils.Logger.info("================================")
 Utils.Logger.info("Orbit Jump Test Suite (Busted-style)")
@@ -24,7 +24,7 @@ for _, testConfig in ipairs(testFiles) do
     
     -- Setup mocks if needed
     if testConfig.useMocks then
-        local Mocks = Utils.Utils.require("tests.mocks")
+        local Mocks = Utils.require("tests.mocks")
         Mocks.setup()
     end
     

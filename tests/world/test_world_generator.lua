@@ -1,12 +1,12 @@
 -- Tests for World Generator
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local WorldGenerator = Utils.Utils.require("src.systems.world_generator")
+local WorldGenerator = Utils.require("src.systems.world_generator")
 
 -- Initialize test framework
 TestFramework.init()
@@ -439,7 +439,7 @@ local function run()
     local success = TestFramework.runSuite("World Generator Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("world_generator", 8) -- All major functions tested
     
     return success

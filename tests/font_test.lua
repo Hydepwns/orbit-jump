@@ -1,5 +1,5 @@
 -- Font test for Monaspace Argon fonts
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 
 local fonts = {
     regular = nil,

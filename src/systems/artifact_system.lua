@@ -1,7 +1,7 @@
 -- Artifact System for Orbit Jump
 -- Collectible lore items scattered across the galaxy
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local ArtifactSystem = {}
 
 -- Artifact definitions
@@ -191,7 +191,7 @@ function ArtifactSystem.spawnArtifacts(player, planets)
                 
             elseif artifactDef.id == "explorer_log_2" then
                 -- Near warp zones
-                local WarpZones = Utils.Utils.require("src.systems.warp_zones")
+                local WarpZones = Utils.require("src.systems.warp_zones")
                 if WarpZones and #WarpZones.activeZones > 0 then
                     local zone = WarpZones.activeZones[1]
                     shouldSpawn = math.random() < 0.02
@@ -322,19 +322,19 @@ function ArtifactSystem.collectArtifact(artifact, index)
     ArtifactSystem.notificationTimer = 5
     
     -- Grant points
-    local GameState = Utils.Utils.require("src.core.game_state")
-    local UpgradeSystem = Utils.Utils.require("src.systems.upgrade_system")
+    local GameState = Utils.require("src.core.game_state")
+    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     GameState.addScore(1000)
     UpgradeSystem.addCurrency(100)
     
     -- Achievement
-    local AchievementSystem = Utils.Utils.require("src.systems.achievement_system")
+    local AchievementSystem = Utils.require("src.systems.achievement_system")
     if AchievementSystem.onArtifactCollected then
         AchievementSystem.onArtifactCollected(artifact.id)
     end
     
     -- Play collection sound
-    local soundManager = Utils.Utils.require("src.audio.sound_manager")
+    local soundManager = Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playEventWarning then
         soundManager:playEventWarning()
     end

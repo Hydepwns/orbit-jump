@@ -1,9 +1,9 @@
 -- Player System for Orbit Jump
 -- Handles player movement, physics, and state updates
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local GameLogic = Utils.Utils.require("src.core.game_logic")
-local Config = Utils.Utils.require("src.utils.config")
+local Utils = require("src.utils.utils")
+local GameLogic = Utils.require("src.core.game_logic")
+local Config = Utils.require("src.utils.config")
 
 local PlayerSystem = {}
 
@@ -142,7 +142,7 @@ function PlayerSystem.jump(player, pullPower, pullAngle, gameState, soundManager
     local jumpVx, jumpVy = GameLogic.calculateJumpVelocityFromAngle(pullAngle, jumpPower)
     
     -- Apply speed boost if active
-    local RingSystem = Utils.Utils.require("src.systems.ring_system")
+    local RingSystem = Utils.require("src.systems.ring_system")
     if RingSystem.isActive("speed") then
         jumpVx, jumpVy = GameLogic.applySpeedBoost(jumpVx, jumpVy)
     end
@@ -173,8 +173,8 @@ function PlayerSystem.dash(player, targetX, targetY, soundManager)
     end
     
     -- Check if multi-jump is active (skip check during tutorial)
-    local TutorialSystem = Utils.Utils.require("src.ui.tutorial_system")
-    local RingSystem = Utils.Utils.require("src.systems.ring_system")
+    local TutorialSystem = Utils.require("src.ui.tutorial_system")
+    local RingSystem = Utils.require("src.systems.ring_system")
     if not TutorialSystem.isActive and not RingSystem.isActive("multijump") then
         return false
     end
@@ -205,7 +205,7 @@ end
 
 -- Create visual effect for dash
 function PlayerSystem.createDashEffect(player)
-    local ParticleSystem = Utils.Utils.require("src.systems.particle_system")
+    local ParticleSystem = Utils.require("src.systems.particle_system")
     if ParticleSystem then
         for i = 1, 10 do
             local angle = (i / 10) * math.pi * 2

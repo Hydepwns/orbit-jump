@@ -1,12 +1,12 @@
 -- Tests for Blockchain Integration
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local BlockchainIntegration = Utils.Utils.require("src.blockchain.blockchain_integration")
+local BlockchainIntegration = Utils.require("src.blockchain.blockchain_integration")
 
 -- Initialize test framework
 TestFramework.init()
@@ -151,7 +151,7 @@ local function run()
     local success = TestFramework.runSuite("Blockchain Integration Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("blockchain_integration", 12) -- All major functions tested
     
     return success

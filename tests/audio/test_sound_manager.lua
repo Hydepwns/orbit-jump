@@ -1,13 +1,13 @@
 -- Tests for SoundManager module
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 -- Mock love.audio
 Mocks.setup()
 
-local SoundManager = Utils.Utils.require("src.audio.sound_manager")
+local SoundManager = Utils.require("src.audio.sound_manager")
 
 -- Initialize test framework
 TestFramework.init()
@@ -131,7 +131,7 @@ local function run()
     local success = TestFramework.runSuite("Sound Manager Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("sound_manager", 8) -- All major functions tested
     
     return success

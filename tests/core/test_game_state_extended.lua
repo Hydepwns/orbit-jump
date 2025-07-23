@@ -1,9 +1,9 @@
 -- Extended Tests for Game State
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local GameState = Utils.Utils.require("src.core.game_state")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local GameState = Utils.require("src.core.game_state")
 
 -- Setup mocks
 Mocks.setup()
@@ -204,7 +204,7 @@ local function run()
     local success = TestFramework.runSuite("Game State Extended Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("game_state", 8) -- Now testing all 8 functions
     
     return success

@@ -1,14 +1,14 @@
 -- Game State Manager for Orbit Jump
 -- Centralizes all game state management for consistency
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 -- Cache commonly used modules
-local TutorialSystem = Utils.Utils.require("src.ui.tutorial_system")
-local WorldGenerator = Utils.Utils.require("src.systems.world_generator")
-local PlayerSystem = Utils.Utils.require("src.systems.player_system")
-local ParticleSystem = Utils.Utils.require("src.systems.particle_system")
-local CollisionSystem = Utils.Utils.require("src.systems.collision_system")
-local RingSystem = Utils.Utils.require("src.systems.ring_system")
+local TutorialSystem = Utils.require("src.ui.tutorial_system")
+local WorldGenerator = Utils.require("src.systems.world_generator")
+local PlayerSystem = Utils.require("src.systems.player_system")
+local ParticleSystem = Utils.require("src.systems.particle_system")
+local CollisionSystem = Utils.require("src.systems.collision_system")
+local RingSystem = Utils.require("src.systems.ring_system")
 
 local GameState = {}
 

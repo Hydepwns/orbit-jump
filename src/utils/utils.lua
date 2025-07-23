@@ -608,7 +608,7 @@ function Utils.MobileInput.handleTouch(id, x, y, event)
         if touchCount == 0 and touchState.twoFingerStart and 
            currentTime - touchState.twoFingerStart < 1.0 then
             -- Two-finger gesture completed, toggle map
-            local MapSystem = Utils.Utils.require("src.systems.map_system")
+            local MapSystem = Utils.require("src.systems.map_system")
             MapSystem.toggle()
             touchState.twoFingerStart = nil
         end
@@ -658,10 +658,10 @@ end
 -- Handle double tap
 function Utils.MobileInput.handleDoubleTap(x, y)
     -- Double tap could be used for dash or special moves
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     if GameState.isPlayerInSpace() then
         -- Double tap to dash
-        local dash = Utils.Utils.require("main").dash
+        local dash = Utils.require("main").dash
         if dash then dash() end
     end
 end
@@ -675,7 +675,7 @@ end
 
 -- Get UI scale factor based on screen size
 function Utils.MobileInput.getUIScale()
-    local Config = Utils.Utils.require("src.utils.config")
+    local Config = Utils.require("src.utils.config")
     if not Config.responsive.enabled then
         return 1.0
     end

@@ -1,10 +1,10 @@
 -- Tests for Ring System
 package.path = package.path .. ";../../?.lua"
 
-local Utils = Utils.Utils.require("src.utils.utils")
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
-local RingSystem = Utils.Utils.require("src.systems.ring_system")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+local RingSystem = Utils.require("src.systems.ring_system")
 
 -- Setup mocks
 Mocks.setup()
@@ -440,7 +440,7 @@ local function run()
     local success = TestFramework.runSuite("Ring System Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("ring_system", 15) -- All major functions tested
     
     return success

@@ -3,7 +3,7 @@
 -- It is used to configure the blockchain, progression, game, UI, sound, and development settings
 -- It is also used to configure the achievement definitions, upgrade definitions, NFT definitions, and helper functions
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local Config = {}
 
 -- Configuration validation

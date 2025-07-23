@@ -1,7 +1,7 @@
 -- Development Tools for Orbit Jump
 -- Provides utilities for debugging, testing, and development workflow
 
-local Utils = Utils.Utils.require("src.utils.utils")
+local Utils = require("src.utils.utils")
 local DevTools = {}
 
 -- Development state
@@ -21,7 +21,7 @@ DevTools.debugDraw = {}
 function DevTools.debugDraw.hitboxes()
     if not DevTools.state.showHitboxes then return end
     
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
     local planets = GameState.getPlanets()
     local rings = GameState.getRings()
@@ -49,7 +49,7 @@ end
 function DevTools.debugDraw.vectors()
     if not DevTools.state.showDebugInfo then return end
     
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
     
     -- Draw velocity vector
@@ -66,7 +66,7 @@ function DevTools.debugDraw.vectors()
     -- Draw gravity vectors
     local planets = GameState.getPlanets()
     for _, planet in ipairs(planets) do
-        local gx, gy = Utils.Utils.require("src.core.game_logic").calculateGravity(player.x, player.y, planet.x, planet.y, planet.radius)
+        local gx, gy = Utils.require("src.core.game_logic").calculateGravity(player.x, player.y, planet.x, planet.y, planet.radius)
         if gx ~= 0 or gy ~= 0 then
             Utils.setColor(Utils.colors.red, 0.6)
             love.graphics.setLineWidth(1)
@@ -78,7 +78,7 @@ end
 function DevTools.debugDraw.info()
     if not DevTools.state.showDebugInfo then return end
     
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
     
     local info = {
@@ -130,7 +130,7 @@ end
 
 -- Debug functions
 function DevTools.resetGame()
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     GameState.reset()
     Utils.Logger.info("Game reset via debug command")
 end
@@ -168,7 +168,7 @@ function DevTools.generateDocumentation()
     Utils.Logger.info("Generating documentation...")
     
     local success, result  = Utils.ErrorHandler.safeCall(function()
-        local DocsGenerator = Utils.Utils.require("src.dev.docs_generator")
+        local DocsGenerator = Utils.require("src.dev.docs_generator")
         DocsGenerator.generateAll()
     end)
     
@@ -181,7 +181,7 @@ end
 
 -- Performance analysis
 function DevTools.analyzePerformance()
-    local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
+    local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
     local report = PerformanceMonitor.getReport()
     
     Utils.Logger.info("Performance Analysis:")
@@ -224,7 +224,7 @@ end
 
 -- Game state inspection
 function DevTools.inspectGameState()
-    local GameState = Utils.Utils.require("src.core.game_state")
+    local GameState = Utils.require("src.core.game_state")
     
     Utils.Logger.info("Game State Inspection:")
     Utils.Logger.info("  Current State: %s", GameState.current)
@@ -261,7 +261,7 @@ function DevTools.draw()
     DevTools.debugDraw.info()
     
     if DevTools.state.showPerformance then
-        local PerformanceMonitor = Utils.Utils.require("src.performance.performance_monitor")
+        local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
         PerformanceMonitor.draw()
     end
     

@@ -1,12 +1,12 @@
 -- Tests for Planet Lore System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.Utils.require("tests.test_framework")
-local Mocks = Utils.Utils.require("tests.mocks")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
 
-local PlanetLore = Utils.Utils.require("src.systems.planet_lore")
+local PlanetLore = Utils.require("src.systems.planet_lore")
 
 -- Initialize test framework
 TestFramework.init()
@@ -217,7 +217,7 @@ local function run()
     local success = TestFramework.runSuite("Planet Lore Tests", tests)
     
     -- Update coverage tracking
-    local TestCoverage = Utils.Utils.require("tests.test_coverage")
+    local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("planet_lore", 12) -- All major functions tested
     
     return success
