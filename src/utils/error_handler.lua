@@ -1,10 +1,10 @@
 -- Error handling utilities
-local Utils = require("src.utils.utils")
+local Utils = Utils.Utils.require("src.utils.utils")
 
 local ErrorHandler = {}
 
 function ErrorHandler.safeCall(func, ...)
-    local success, result = pcall(func, ...)
+    local success, result = Utils.ErrorHandler.rawPcall(func, ...)
     if not success then
         Utils.Logger.error("Function call failed: %s", tostring(result))
         return false, result

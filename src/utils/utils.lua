@@ -3,6 +3,22 @@
 
 local Utils = {}
 
+-- Module cache to prevent duplicate requires
+Utils.moduleCache = {}
+
+-- Cached require function
+function Utils.require(modulePath)
+    if not Utils.moduleCache[modulePath] then
+        Utils.moduleCache[modulePath] = require(modulePath)
+    end
+    return Utils.moduleCache[modulePath]
+end
+
+-- Clear module cache (useful for testing)
+function Utils.clearModuleCache()
+    Utils.moduleCache = {}
+end
+
 -- Compatibility helper for math.atan2
 local atan2 = math.atan2 or function(y, x)
     return math.atan(y, x)
@@ -43,10 +59,8 @@ function Utils.lerp(a, b, t)
 end
 
 function Utils.angleBetween(x1, y1, x2, y2)
-    -- Use math.atan with two arguments (compatible with Lua 5.3+)
-    -- Falls back to math.atan2 if available (Lua 5.2 and earlier)
-    local atan = math.atan2 or math.atan
-    return atan(y2 - y1, x2 - x1)
+    -- Use Utils.atan2 for consistency across the codebase
+    return Utils.atan2(y2 - y1, x2 - x1)
 end
 
 function Utils.rotatePoint(x, y, centerX, centerY, angle)
@@ -83,6 +97,15 @@ end
 function Utils.randomFloat(min, max)
     return min + math.random() * (max - min)
 end
+
+-- Centralized math constants
+Utils.MATH = {
+    PI = math.pi,
+    TWO_PI = math.pi * 2,
+    HALF_PI = math.pi / 2,
+    DEG_TO_RAD = math.pi / 180,
+    RAD_TO_DEG = 180 / math.pi
+}
 
 -- Drawing utilities
 function Utils.setColor(color, alpha)
@@ -159,12 +182,19 @@ function Utils.Logger.log(level, message, ...)
         local timestamp = os.date("%Y-%m-%d %H:%M:%S")
         local logMessage = string.format("[%s] %s: %s", timestamp, level, formatted)
         
-        print(logMessage)
+        Utils.Logger.output(logMessage)
         if Utils.Logger.logFile then
             Utils.Logger.logFile:write(logMessage .. "\n")
             Utils.Logger.logFile:flush()
         end
     end
+end
+
+-- Separate output function for easier testing and mocking
+function Utils.Logger.output(message)
+    -- Use io.write for direct output without newline
+    io.write(message .. "\n")
+    io.flush()
 end
 
 function Utils.Logger.debug(message, ...)
@@ -194,12 +224,17 @@ end
 Utils.ErrorHandler = {}
 
 function Utils.ErrorHandler.safeCall(func, ...)
-    local success, result = pcall(func, ...)
+    local success, result = Utils.ErrorHandler.rawPcall(func, ...)
     if not success then
         Utils.Logger.error("Function call failed: %s", result)
         return false, result
     end
     return true, result
+end
+
+-- Raw pcall wrapper for internal use
+function Utils.ErrorHandler.rawPcall(func, ...)
+    return pcall(func, ...)
 end
 
 function Utils.ErrorHandler.validateInput(value, expectedType, name)
@@ -573,7 +608,7 @@ function Utils.MobileInput.handleTouch(id, x, y, event)
         if touchCount == 0 and touchState.twoFingerStart and 
            currentTime - touchState.twoFingerStart < 1.0 then
             -- Two-finger gesture completed, toggle map
-            local MapSystem = require("src.systems.map_system")
+            local MapSystem = Utils.Utils.require("src.systems.map_system")
             MapSystem.toggle()
             touchState.twoFingerStart = nil
         end
@@ -601,7 +636,7 @@ end
 function Utils.MobileInput.handleSwipe(startX, startY, endX, endY, distance, duration)
     local dx = endX - startX
     local dy = endY - startY
-    local angle = math.atan2(dy, dx) * 180 / math.pi
+    local angle = Utils.atan2(dy, dx) * 180 / math.pi
     
     -- Normalize distance for power calculation
     local normalizedDistance = math.min(distance / Config.mobile.maxSwipeDistance, 1.0)
@@ -623,10 +658,10 @@ end
 -- Handle double tap
 function Utils.MobileInput.handleDoubleTap(x, y)
     -- Double tap could be used for dash or special moves
-    local GameState = require("src.core.game_state")
+    local GameState = Utils.Utils.require("src.core.game_state")
     if GameState.isPlayerInSpace() then
         -- Double tap to dash
-        local dash = require("main").dash
+        local dash = Utils.Utils.require("main").dash
         if dash then dash() end
     end
 end
@@ -640,7 +675,7 @@ end
 
 -- Get UI scale factor based on screen size
 function Utils.MobileInput.getUIScale()
-    local Config = require("src.utils.config")
+    local Config = Utils.Utils.require("src.utils.config")
     if not Config.responsive.enabled then
         return 1.0
     end
