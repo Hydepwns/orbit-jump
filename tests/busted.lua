@@ -1,7 +1,7 @@
--- Minimal Busted-style test framework for Orbit Jump
--- Provides describe/it syntax similar to Busted without external dependencies
+-- Busted-style test framework for Orbit Jump
+-- Provides a simple testing framework similar to Busted
 
-local BustedLite = {}
+local Utils = Utils.Utils.require("src.utils.utils")
 
 -- Test state
 local suites = {}
@@ -23,7 +23,7 @@ local colors = {
 
 -- Helper to print colored text
 local function printColored(color, text)
-    print(colors[color] .. text .. colors.reset)
+    Utils.Logger.output(colors[color] .. text .. colors.reset)
 end
 
 -- Test assertions
@@ -61,7 +61,7 @@ function assert.is_not_nil(value, message)
 end
 
 function assert.has_error(fn, message)
-    local success = pcall(fn)
+    local success = Utils.ErrorHandler.safeCall(fn)
     if success then
         error(message or "Expected function to throw error", 2)
     end
@@ -169,63 +169,52 @@ function after_each(fn)
 end
 
 -- Test runner
-function BustedLite.run()
+local function runTest(testName, testFn)
     local startTime = os.clock()
+    local success = Utils.ErrorHandler.safeCall(testFn)
+    local duration = os.clock() - startTime
     
-    for _, suite in ipairs(suites) do
-        print("\n" .. suite.name)
-        
-        for _, test in ipairs(suite.tests) do
-            results.total = results.total + 1
-            
-            -- Run beforeEach if defined
-            if suite.beforeEach then
-                suite.beforeEach()
-            end
-            
-            -- Run the test
-            local success, err = pcall(test.fn)
-            
-            -- Run afterEach if defined
-            if suite.afterEach then
-                suite.afterEach()
-            end
-            
-            if success then
-                results.passed = results.passed + 1
-                printColored("green", "  ✓ " .. test.name)
-            else
-                results.failed = results.failed + 1
-                printColored("red", "  ✗ " .. test.name)
-                table.insert(results.errors, {
-                    suite = suite.name,
-                    test = test.name,
-                    error = err
-                })
-            end
+    if success then
+        printColored("green", string.format("✓ %s (%.3fs)", testName, duration))
+        return true
+    else
+        printColored("red", string.format("✗ %s (%.3fs) - %s", testName, duration, success))
+        return false
+    end
+end
+
+-- Test suite runner
+local function runSuite(suiteName, tests)
+    Utils.Logger.info("\n" .. suiteName)
+    
+    local passed = 0
+    local failed = 0
+    
+    for testName, testFn in pairs(tests) do
+        if runTest(testName, testFn) then
+            passed = passed + 1
+        else
+            failed = failed + 1
         end
     end
     
-    -- Print summary
-    local endTime = os.clock()
-    local duration = endTime - startTime
+    return passed, failed
+end
+
+-- Report generator
+local function generateReport(stats)
+    Utils.Logger.info("\n" .. string.rep("=", 50))
+    Utils.Logger.info(string.format("Total: %d | Passed: %d | Failed: %d | Time: %.3fs",
+        stats.total, stats.passed, stats.failed, stats.time))
     
-    print("\n" .. string.rep("=", 50))
-    print(string.format("Total: %d | Passed: %d | Failed: %d | Time: %.3fs",
-        results.total, results.passed, results.failed, duration))
-    
-    if results.failed > 0 then
-        print("\nFailures:")
-        for _, err in ipairs(results.errors) do
-            printColored("red", string.format("\n%s > %s", err.suite, err.test))
-            print("  " .. err.error)
+    if stats.failed > 0 then
+        Utils.Logger.info("\nFailures:")
+        for _, err in ipairs(stats.errors) do
+            Utils.Logger.error("  " .. err.error)
         end
     end
     
-    print(string.rep("=", 50))
-    
-    -- Return success status
-    return results.failed == 0
+    Utils.Logger.info(string.rep("=", 50))
 end
 
 -- Reset function for running multiple test files

@@ -1,6 +1,8 @@
 -- Enhanced Test Framework for Orbit Jump
 -- Provides comprehensive testing utilities and reporting
 
+local Utils = Utils.Utils.require("src.utils.utils")
+
 local TestFramework = {}
 
 -- Test statistics
@@ -98,7 +100,7 @@ function TestFramework.utils.benchmark(name, iterations, func)
         operationsPerSecond = iterations / duration
     }
     
-    return avgTime
+    return TestFramework.benchmarks[name]
 end
 
 -- Mock utilities
@@ -138,86 +140,77 @@ function TestFramework.mock.createMock()
     return mock
 end
 
--- Test runner
+-- Test execution
 function TestFramework.runTest(testName, testFunc)
-    TestFramework.stats.total = TestFramework.stats.total + 1
+    local startTime = os.clock()
+    local success, error = Utils.ErrorHandler.safeCall(testFunc)
+    local endTime = os.clock()
+    local duration = endTime - startTime
     
     local result = {
         name = testName,
-        status = "unknown",
-        error = nil,
-        duration = 0
+        success = success,
+        error = error,
+        duration = duration
     }
     
-    local startTime = os.clock()
-    
-    local success, error = pcall(testFunc)
-    result.duration = os.clock() - startTime
-    
     if success then
-        result.status = "passed"
         TestFramework.stats.passed = TestFramework.stats.passed + 1
-        print(string.format("✓ %s (%.3fs)", testName, result.duration))
+        Utils.Logger.info("✓ %s (%.3fs)", testName, result.duration)
     else
-        result.status = "failed"
         TestFramework.stats.failed = TestFramework.stats.failed + 1
-        result.error = error
-        print(string.format("✗ %s (%.3fs) - %s", testName, result.duration, error))
+        Utils.Logger.error("✗ %s (%.3fs) - %s", testName, result.duration, error)
     end
     
+    TestFramework.stats.total = TestFramework.stats.total + 1
     table.insert(TestFramework.results, result)
-    return success
+    
+    return result
 end
 
--- Test suite runner
+-- Test suite execution
 function TestFramework.runSuite(suiteName, tests)
-    print(string.format("\n--- %s ---", suiteName))
+    Utils.Logger.info("\n--- %s ---", suiteName)
     
-    local allPassed = true
     for testName, testFunc in pairs(tests) do
-        if not TestFramework.runTest(testName, testFunc) then
-            allPassed = false
-        end
+        TestFramework.runTest(testName, testFunc)
     end
-    
-    return allPassed
 end
 
 -- Generate test report
 function TestFramework.generateReport()
-    TestFramework.stats.endTime = os.clock()
     local totalTime = TestFramework.stats.endTime - TestFramework.stats.startTime
     
-    print("\n" .. string.rep("=", 50))
-    print("TEST REPORT")
-    print(string.rep("=", 50))
-    print(string.format("Total Tests: %d", TestFramework.stats.total))
-    print(string.format("Passed: %d", TestFramework.stats.passed))
-    print(string.format("Failed: %d", TestFramework.stats.failed))
-    print(string.format("Skipped: %d", TestFramework.stats.skipped))
-    print(string.format("Success Rate: %.1f%%", (TestFramework.stats.passed / TestFramework.stats.total) * 100))
-    print(string.format("Total Time: %.3fs", totalTime))
+    Utils.Logger.info("\n" .. string.rep("=", 50))
+    Utils.Logger.info("TEST REPORT")
+    Utils.Logger.info(string.rep("=", 50))
+    Utils.Logger.info("Total Tests: %d", TestFramework.stats.total)
+    Utils.Logger.info("Passed: %d", TestFramework.stats.passed)
+    Utils.Logger.info("Failed: %d", TestFramework.stats.failed)
+    Utils.Logger.info("Skipped: %d", TestFramework.stats.skipped)
+    Utils.Logger.info("Success Rate: %.1f%%", (TestFramework.stats.passed / TestFramework.stats.total) * 100)
+    Utils.Logger.info("Total Time: %.3fs", totalTime)
     
+    -- Show failed tests
     if TestFramework.stats.failed > 0 then
-        print("\nFAILED TESTS:")
+        Utils.Logger.info("\nFAILED TESTS:")
         for _, result in ipairs(TestFramework.results) do
-            if result.status == "failed" then
-                print(string.format("  - %s: %s", result.name, result.error))
+            if not result.success then
+                Utils.Logger.error("  - %s: %s", result.name, result.error)
             end
         end
     end
     
+    -- Show performance benchmarks
     if next(TestFramework.benchmarks) then
-        print("\nPERFORMANCE BENCHMARKS:")
+        Utils.Logger.info("\nPERFORMANCE BENCHMARKS:")
         for name, benchmark in pairs(TestFramework.benchmarks) do
-            print(string.format("  %s: %.3fms avg, %.0f ops/sec", 
-                name, benchmark.averageTime * 1000, benchmark.operationsPerSecond))
+            Utils.Logger.info("  %s: %.3fms avg, %.0f ops/sec", 
+                name, benchmark.averageTime * 1000, benchmark.operationsPerSecond)
         end
     end
     
-    print(string.rep("=", 50))
-    
-    return TestFramework.stats.failed == 0
+    Utils.Logger.info(string.rep("=", 50))
 end
 
 -- Initialize test framework

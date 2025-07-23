@@ -2,6 +2,8 @@
 -- Helper script to convert legacy tests to Busted-style format
 -- Usage: lua convert_to_busted.lua <input_test_file> <output_test_file>
 
+local Utils = Utils.Utils.require("src.utils.utils")
+
 local function convertTest(inputFile, outputFile)
     local input = io.open(inputFile, "r")
     if not input then
@@ -21,7 +23,7 @@ local function convertTest(inputFile, outputFile)
     local output = {}
     table.insert(output, "-- Converted to Busted-style test")
     table.insert(output, 'package.path = package.path .. ";../../?.lua"\n')
-    table.insert(output, 'require("tests.busted")')
+    table.insert(output, 'Utils.require("tests.busted")')
     
     -- Extract requires
     for line in content:gmatch("local%s+(%w+)%s*=%s*require%s*%(.-%)") do
@@ -109,13 +111,13 @@ local function convertTest(inputFile, outputFile)
     out:write(table.concat(output, "\n"))
     out:close()
     
-    print("Converted " .. inputFile .. " to " .. outputFile)
+    Utils.Logger.info("Converted %s to %s", inputFile, outputFile)
 end
 
 -- Main
 local args = {...}
 if #args ~= 2 then
-    print("Usage: lua convert_to_busted.lua <input_test_file> <output_test_file>")
+    Utils.Logger.info("Usage: lua convert_to_busted.lua <input_test_file> <output_test_file>")
     os.exit(1)
 end
 
