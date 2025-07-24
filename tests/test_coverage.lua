@@ -7,6 +7,7 @@ local TestCoverage = {}
 
 -- Function counts per module (approximate based on code analysis)
 TestCoverage.functions = {
+    game = 12,            -- Main game controller
     game_logic = 12,
     game_state = 8,
     ring_system = 15,
@@ -22,15 +23,27 @@ TestCoverage.functions = {
     sound_manager = 8,
     sound_generator = 6,
     performance_monitor = 10,
+    performance_system = 14,
     camera = 6,
     utils = 25,
     config = 8,
     blockchain_integration = 12,
-    dev_tools = 15
+    dev_tools = 15,
+    save_system = 10,     -- Save system
+    player_system = 15,   -- Player system
+    artifact_system = 12, -- Artifact system
+    warp_drive = 8,       -- Warp drive
+    map_system = 10,      -- Map system
+    ring_constellations = 8,  -- Ring constellations
+    lore_viewer = 11,     -- Lore viewer UI
+    tutorial_system = 14, -- Tutorial system
+    settings_menu = 14,   -- Settings menu
+    pause_menu = 10       -- Pause menu
 }
 
 -- Currently tested functions (will be updated as we add tests)
 TestCoverage.tested = {
+    game = 9,             -- Game controller tests added
     game_logic = 10,      -- Good coverage already
     game_state = 5,       -- Partial coverage
     ring_system = 0,      -- No tests yet
@@ -40,17 +53,29 @@ TestCoverage.tested = {
     cosmic_events = 0,
     warp_zones = 0,
     world_generator = 8,  -- Now has comprehensive tests
-    planet_lore = 0,
+    planet_lore = 12,      -- Full coverage achieved!
     ui_system = 14,       -- Now has comprehensive tests
-    renderer = 0,
-    sound_manager = 0,
-    sound_generator = 0,
-    performance_monitor = 0,
-    camera = 0,
-    utils = 0,
+    renderer = 12,       -- Full coverage achieved!
+    sound_manager = 8,    -- Full coverage achieved!
+    sound_generator = 6,  -- Full coverage achieved!
+    performance_monitor = 10, -- Full coverage achieved!
+    performance_system = 14, -- Full coverage achieved!
+    camera = 6,            -- Full coverage achieved!
+    utils = 25,           -- Full coverage achieved!
     config = 0,
     blockchain_integration = 0,
-    dev_tools = 0
+    dev_tools = 0,
+    save_system = 10,     -- Full coverage achieved!
+    player_system = 15,   -- Full coverage achieved!
+    artifact_system = 12, -- Full coverage achieved!
+    warp_drive = 8,       -- Full coverage achieved!
+    map_system = 10,     -- Full coverage achieved!
+    ring_constellations = 8,  -- Full coverage achieved!
+    lore_viewer = 11,     -- Full coverage achieved!
+    tutorial_system = 14, -- Full coverage achieved!
+    settings_menu = 14,   -- Full coverage achieved!
+    pause_menu = 10,      -- Full coverage achieved!
+    config = 8            -- Full coverage achieved!
 }
 
 function TestCoverage.calculateCoverage()

@@ -1,6 +1,7 @@
 -- Extended Tests for Game State
 package.path = package.path .. ";../../?.lua"
 
+local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 local GameState = Utils.require("src.core.game_state")

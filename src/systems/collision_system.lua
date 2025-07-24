@@ -36,19 +36,29 @@ end
 
 -- Handle landing on a planet
 function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundManager)
-    -- Calculate landing angle
+    if not player or not planet then return end
+    
+    -- Calculate angle to planet center
     local dx = player.x - planet.x
     local dy = player.y - planet.y
     player.angle = Utils.atan2(dy, dx)
     
     -- Set player state - find planet index
-    local gameState = Utils.require("src.core.game_state")
-    local planets = gameState.getPlanets()
+    local planets = {}
+    if gameState and gameState.getPlanets then
+        planets = gameState.getPlanets()
+    end
+    
     for i, p in ipairs(planets) do
         if p == planet then
             player.onPlanet = i  -- Set to planet index, not boolean
             break
         end
+    end
+    
+    -- If we couldn't find the planet in the list, just set onPlanet to true
+    if not player.onPlanet then
+        player.onPlanet = true
     end
     
     -- Adjust position to planet surface
@@ -89,13 +99,17 @@ function CollisionSystem.handleQuantumTeleport(player, planet, gameState)
     local targetPlanet = nil
     local maxAttempts = 10
     
-    for i = 1, maxAttempts do
-        local candidate = planets[math.random(#planets)]
-        local distance = Utils.distance(planet.x, planet.y, candidate.x, candidate.y)
-        
-        if distance > 1000 and candidate ~= planet then
-            targetPlanet = candidate
-            break
+    if planets and #planets > 0 then
+        for i = 1, maxAttempts do
+            local candidate = planets[math.random(#planets)]
+            if candidate then
+                local distance = Utils.distance(planet.x, planet.y, candidate.x, candidate.y)
+                
+                if distance > 1000 and candidate ~= planet then
+                    targetPlanet = candidate
+                    break
+                end
+            end
         end
     end
     
@@ -166,12 +180,20 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
     local collectedRings = {}
     
     for _, ring in ipairs(nearbyRings) do
-        if not ring.collected and Utils.circleCollision(
-            player.x, player.y, player.radius,
-            ring.x, ring.y, ring.radius
-        ) then
+        -- Check if player is within the ring (between inner and outer radius)
+        local distance = Utils.distance(player.x, player.y, ring.x, ring.y)
+        local innerRadius = ring.innerRadius or 0
+        local outerRadius = ring.radius
+        
+        -- Player collides if it's within the ring (not in center hole, not outside ring)
+        if not ring.collected and distance <= outerRadius and distance >= innerRadius then
             -- Collect ring
-            local value = RingSystem.collectRing(ring, gameState)
+            local value = 10  -- Default value
+            if RingSystem and RingSystem.collectRing then
+                value = RingSystem.collectRing(ring, gameState)
+            else
+                ring.collected = true
+            end
             
             -- Update score and combo
             if gameState and gameState.addScore then
@@ -186,7 +208,12 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
             
             -- Play sound
             if soundManager then
-                soundManager:playCollectRing()
+                if soundManager.playRingCollect then
+                    local combo = gameState and gameState.getCombo and gameState.getCombo() or 0
+                    soundManager:playRingCollect(combo)
+                elseif soundManager.playCollectRing then
+                    soundManager:playCollectRing()
+                end
             end
             
             table.insert(collectedRings, ring)
@@ -227,7 +254,7 @@ end
 -- Check if player is inside a ring (for special ring types)
 function CollisionSystem.isPlayerInRing(player, ring)
     local distance = Utils.distance(player.x, player.y, ring.x, ring.y)
-    return distance < ring.outerRadius and distance > ring.innerRadius - player.radius
+    return distance < ring.radius and distance > ring.innerRadius - player.radius
 end
 
 -- Update spatial grid with current positions

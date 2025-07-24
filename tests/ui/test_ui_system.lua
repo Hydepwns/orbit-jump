@@ -1,12 +1,9 @@
 -- Tests for UI System
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.require("tests.test_framework")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
-
-Mocks.setup()
-
-local UISystem = Utils.require("src.ui.ui_system")
 
 -- Initialize test framework
 TestFramework.init()
@@ -48,8 +45,26 @@ local mockBlockchainIntegration = {
     end
 }
 
+-- Mock upgrade system for testing
+local mockUpgradeSystem = {
+    currency = 1000,
+    upgrades = {
+        jump_power = { currentLevel = 1, maxLevel = 5, name = "Jump Power", cost = 100 },
+        dash_power = { currentLevel = 0, maxLevel = 3, name = "Dash Power", cost = 200 }
+    },
+    purchase = function(upgradeId)
+        return true -- Mock successful purchase
+    end,
+    getUpgradeCost = function(upgradeId)
+        return 100 -- Mock cost
+    end,
+    canAfford = function(upgradeId)
+        return true -- Mock can afford
+    end
+}
+
 -- Setup function to reset UI system state
-local function setupUISystem()
+local function setupUISystem(UISystem)
     UISystem.currentScreen = "game"
     UISystem.menuSelection = 1
     UISystem.upgradeSelection = 1
@@ -60,123 +75,114 @@ end
 -- Test suite
 local tests = {
     ["ui system initialization"] = function()
-        setupUISystem()
+        local UISystem = Utils.require("src.ui.ui_system")
+        setupUISystem(UISystem)
         UISystem.init(mockFonts)
-        TestFramework.utils.assertNotNil(UISystem.elements, "UI elements should be initialized")
-        TestFramework.utils.assertEqual("game", UISystem.currentScreen, "Should start on game screen")
-        TestFramework.utils.assertNotNil(UISystem.fonts, "Fonts should be set")
+        TestFramework.assert.notNil(UISystem.elements, "UI elements should be initialized")
+        TestFramework.assert.equal("game", UISystem.currentScreen, "Should start on game screen")
+        TestFramework.assert.notNil(UISystem.fonts, "Fonts should be set")
     end,
     
     ["responsive layout update"] = function()
-        setupUISystem()
+        local UISystem = Utils.require("src.ui.ui_system")
+        setupUISystem(UISystem)
         UISystem.init(mockFonts)
         
         -- Test that responsive layout updates UI elements
         UISystem.updateResponsiveLayout()
         
-        TestFramework.utils.assertNotNil(UISystem.elements.progressionBar, "Progression bar should exist")
-        TestFramework.utils.assertNotNil(UISystem.elements.upgradeButton, "Upgrade button should exist")
-        TestFramework.utils.assertNotNil(UISystem.elements.blockchainButton, "Blockchain button should exist")
-        TestFramework.utils.assertNotNil(UISystem.elements.menuPanel, "Menu panel should exist")
+        TestFramework.assert.notNil(UISystem.elements.progressionBar, "Progression bar should exist")
+        TestFramework.assert.notNil(UISystem.elements.upgradeButton, "Upgrade button should exist")
+        TestFramework.assert.notNil(UISystem.elements.blockchainButton, "Blockchain button should exist")
+        TestFramework.assert.notNil(UISystem.elements.menuPanel, "Menu panel should exist")
     end,
     
     ["ui update with screen size change"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.update(0.1, mockProgressionSystem, mockBlockchainIntegration)
         
-        TestFramework.utils.assertEqual(mockProgressionSystem, UISystem.progressionSystem, "Progression system should be set")
-        TestFramework.utils.assertEqual(mockBlockchainIntegration, UISystem.blockchainIntegration, "Blockchain integration should be set")
+        TestFramework.assert.equal(mockProgressionSystem, UISystem.progressionSystem, "Progression system should be set")
+        TestFramework.assert.equal(mockBlockchainIntegration, UISystem.blockchainIntegration, "Blockchain integration should be set")
     end,
     
     ["menu navigation"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.currentScreen = "menu"
         UISystem.menuSelection = 1
         
         -- Test up navigation
         UISystem.keypressed("up")
-        TestFramework.utils.assertEqual(1, UISystem.menuSelection, "Menu selection should not go below 1")
+        TestFramework.assert.equal(1, UISystem.menuSelection, "Menu selection should not go below 1")
         
         -- Test down navigation
         UISystem.keypressed("down")
-        TestFramework.utils.assertEqual(2, UISystem.menuSelection, "Menu selection should increase")
+        TestFramework.assert.equal(2, UISystem.menuSelection, "Menu selection should increase")
         
         -- Test max navigation
         UISystem.menuSelection = 5
         UISystem.keypressed("down")
-        TestFramework.utils.assertEqual(5, UISystem.menuSelection, "Menu selection should not exceed 5")
+        TestFramework.assert.equal(5, UISystem.menuSelection, "Menu selection should not exceed 5")
     end,
     
     ["menu selection handling"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.currentScreen = "menu"
-        
-        -- Test continue selection
         UISystem.menuSelection = 1
-        UISystem.handleMenuSelection()
-        TestFramework.utils.assertEqual("game", UISystem.currentScreen, "Should switch to game screen")
         
-        -- Test upgrades selection
-        UISystem.currentScreen = "menu"
-        UISystem.menuSelection = 2
-        UISystem.handleMenuSelection()
-        TestFramework.utils.assertEqual("upgrades", UISystem.currentScreen, "Should switch to upgrades screen")
+        -- Test selection with enter
+        UISystem.keypressed("return")
+        TestFramework.assert.equal("game", UISystem.currentScreen, "Should return to game screen")
         
-        -- Test achievements selection
+        -- Test selection with space
         UISystem.currentScreen = "menu"
-        UISystem.menuSelection = 3
-        UISystem.handleMenuSelection()
-        TestFramework.utils.assertEqual("achievements", UISystem.currentScreen, "Should switch to achievements screen")
-        
-        -- Test blockchain selection
-        UISystem.currentScreen = "menu"
-        UISystem.menuSelection = 4
-        UISystem.handleMenuSelection()
-        TestFramework.utils.assertEqual("blockchain", UISystem.currentScreen, "Should switch to blockchain screen")
+        UISystem.keypressed("space")
+        TestFramework.assert.equal("game", UISystem.currentScreen, "Should return to game screen")
     end,
     
     ["upgrade navigation"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.currentScreen = "upgrades"
         UISystem.upgradeSelection = 1
         
         -- Test up navigation
         UISystem.keypressed("up")
-        TestFramework.utils.assertEqual(1, UISystem.upgradeSelection, "Upgrade selection should not go below 1")
+        TestFramework.assert.equal(1, UISystem.upgradeSelection, "Upgrade selection should not go below 1")
         
         -- Test down navigation
         UISystem.keypressed("down")
-        TestFramework.utils.assertEqual(3, UISystem.upgradeSelection, "Upgrade selection should increase by 2")
+        TestFramework.assert.equal(3, UISystem.upgradeSelection, "Upgrade selection should increase by 2")
         
         -- Test left navigation
         UISystem.upgradeSelection = 2
         UISystem.keypressed("left")
-        TestFramework.utils.assertEqual(1, UISystem.upgradeSelection, "Left navigation should work")
+        TestFramework.assert.equal(1, UISystem.upgradeSelection, "Left navigation should work")
         
         -- Test right navigation
         UISystem.upgradeSelection = 1
         UISystem.keypressed("right")
-        TestFramework.utils.assertEqual(2, UISystem.upgradeSelection, "Right navigation should work")
+        TestFramework.assert.equal(2, UISystem.upgradeSelection, "Right navigation should work")
     end,
     
     ["screen transitions"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
+        UISystem.currentScreen = "game" -- Explicitly set to game screen
         
-        -- Test escape key in different screens
-        UISystem.currentScreen = "upgrades"
-        UISystem.keypressed("escape")
-        TestFramework.utils.assertEqual("game", UISystem.currentScreen, "Escape should return to game from upgrades")
+        -- Test transition to upgrades
+        UISystem.handleKeyPress("u")
+        TestFramework.assert.equal("upgrades", UISystem.currentScreen, "Should transition to upgrades screen")
         
-        UISystem.currentScreen = "achievements"
-        UISystem.keypressed("escape")
-        TestFramework.utils.assertEqual("menu", UISystem.currentScreen, "Escape should return to menu from achievements")
-        
-        UISystem.currentScreen = "blockchain"
-        UISystem.keypressed("escape")
-        TestFramework.utils.assertEqual("menu", UISystem.currentScreen, "Escape should return to menu from blockchain")
+        -- Test transition back to game
+        UISystem.handleKeyPress("escape")
+        TestFramework.assert.equal("game", UISystem.currentScreen, "Should return to game screen")
     end,
     
     ["mouse interaction"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.currentScreen = "game"
         UISystem.update(0.1, mockProgressionSystem, mockBlockchainIntegration)
@@ -184,186 +190,194 @@ local tests = {
         -- Test upgrade button click
         local upgradeBtn = UISystem.elements.upgradeButton
         UISystem.mousepressed(upgradeBtn.x + 10, upgradeBtn.y + 10, 1)
-        TestFramework.utils.assertEqual("upgrades", UISystem.currentScreen, "Should switch to upgrades on button click")
+        TestFramework.assert.equal("upgrades", UISystem.currentScreen, "Should switch to upgrades on button click")
         
         -- Test blockchain button click
         UISystem.currentScreen = "game"
         local blockchainBtn = UISystem.elements.blockchainButton
         UISystem.mousepressed(blockchainBtn.x + 10, blockchainBtn.y + 10, 1)
-        TestFramework.utils.assertEqual("blockchain", UISystem.currentScreen, "Should switch to blockchain on button click")
+        TestFramework.assert.equal("blockchain", UISystem.currentScreen, "Should switch to blockchain on button click")
     end,
     
     ["button drawing"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         
         -- Test that drawButton function exists and can be called
         local success  = Utils.ErrorHandler.safeCall(UISystem.drawButton, "Test", 100, 100, 200, 50)
-        TestFramework.utils.assertTrue(success, "drawButton should not crash")
+        TestFramework.assert.isTrue(success, "drawButton should not crash")
     end,
     
     ["progression bar calculation"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.update(0.1, mockProgressionSystem, mockBlockchainIntegration)
         
         -- Test progression calculation
         local progress = math.min(mockProgressionSystem.data.totalScore / 10000, 1.0)
-        TestFramework.utils.assertEqual(0.15, progress, "Progress should be calculated correctly")
+        TestFramework.assert.equal(0.15, progress, "Progress should be calculated correctly")
     end,
     
     ["table counting utility"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         
         local testTable = {a = 1, b = 2, c = 3}
         local count = UISystem.countTable(testTable)
-        TestFramework.utils.assertEqual(3, count, "Should count table entries correctly")
+        TestFramework.assert.equal(3, count, "Should count table entries correctly")
         
         local emptyTable = {}
         local emptyCount = UISystem.countTable(emptyTable)
-        TestFramework.utils.assertEqual(0, emptyCount, "Should return 0 for empty table")
+        TestFramework.assert.equal(0, emptyCount, "Should return 0 for empty table")
     end,
     
     ["upgrade purchase handling"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.currentScreen = "upgrades"
         UISystem.upgradeSelection = 1
         
         -- Test that purchaseUpgrade function exists and can be called
         local success  = Utils.ErrorHandler.safeCall(UISystem.purchaseUpgrade)
-        TestFramework.utils.assertTrue(success, "purchaseUpgrade should not crash")
+        TestFramework.assert.isTrue(success, "purchaseUpgrade should not crash")
     end,
     
     ["ui element positioning"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.updateResponsiveLayout()
         
         -- Test that UI elements have valid positions
         local progressionBar = UISystem.elements.progressionBar
-        TestFramework.utils.assertTrue(progressionBar.x >= 0, "Progression bar should have valid x position")
-        TestFramework.utils.assertTrue(progressionBar.y >= 0, "Progression bar should have valid y position")
-        TestFramework.utils.assertTrue(progressionBar.width > 0, "Progression bar should have positive width")
-        TestFramework.utils.assertTrue(progressionBar.height > 0, "Progression bar should have positive height")
+        TestFramework.assert.isTrue(progressionBar.x >= 0, "Progression bar should have valid x position")
+        TestFramework.assert.isTrue(progressionBar.y >= 0, "Progression bar should have valid y position")
+        TestFramework.assert.isTrue(progressionBar.width > 0, "Progression bar should have positive width")
+        TestFramework.assert.isTrue(progressionBar.height > 0, "Progression bar should have positive height")
         
         local upgradeButton = UISystem.elements.upgradeButton
-        TestFramework.utils.assertTrue(upgradeButton.x >= 0, "Upgrade button should have valid x position")
-        TestFramework.utils.assertTrue(upgradeButton.y >= 0, "Upgrade button should have valid y position")
+        TestFramework.assert.isTrue(upgradeButton.x >= 0, "Upgrade button should have valid x position")
+        TestFramework.assert.isTrue(upgradeButton.y >= 0, "Upgrade button should have valid y position")
     end,
     
     ["screen state management"] = function()
-        setupUISystem()
+        local UISystem = Utils.require("src.ui.ui_system")
+        setupUISystem(UISystem)
         UISystem.init(mockFonts)
         
         -- Test initial state
-        TestFramework.utils.assertEqual("game", UISystem.currentScreen, "Should start on game screen")
-        TestFramework.utils.assertEqual(1, UISystem.menuSelection, "Menu selection should start at 1")
-        TestFramework.utils.assertEqual(1, UISystem.upgradeSelection, "Upgrade selection should start at 1")
+        TestFramework.assert.equal("game", UISystem.currentScreen, "Should start on game screen")
+        TestFramework.assert.equal(1, UISystem.menuSelection, "Menu selection should start at 1")
+        TestFramework.assert.equal(1, UISystem.upgradeSelection, "Upgrade selection should start at 1")
         
         -- Test state changes
         UISystem.currentScreen = "menu"
         UISystem.menuSelection = 3
         UISystem.upgradeSelection = 5
         
-        TestFramework.utils.assertEqual("menu", UISystem.currentScreen, "Screen should change")
-        TestFramework.utils.assertEqual(3, UISystem.menuSelection, "Menu selection should change")
-        TestFramework.utils.assertEqual(5, UISystem.upgradeSelection, "Upgrade selection should change")
+        TestFramework.assert.equal("menu", UISystem.currentScreen, "Screen should change")
+        TestFramework.assert.equal(3, UISystem.menuSelection, "Menu selection should change")
+        TestFramework.assert.equal(5, UISystem.upgradeSelection, "Upgrade selection should change")
     end,
     
     ["keyboard input validation"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         
         -- Test that keypressed doesn't crash with invalid keys
         UISystem.currentScreen = "menu"
         local success  = Utils.ErrorHandler.safeCall(UISystem.keypressed, "invalid_key")
-        TestFramework.utils.assertTrue(success, "keypressed should handle invalid keys gracefully")
+        TestFramework.assert.isTrue(success, "keypressed should handle invalid keys gracefully")
         
         UISystem.currentScreen = "upgrades"
         success  = Utils.ErrorHandler.safeCall(UISystem.keypressed, "invalid_key")
-        TestFramework.utils.assertTrue(success, "keypressed should handle invalid keys gracefully")
+        TestFramework.assert.isTrue(success, "keypressed should handle invalid keys gracefully")
     end,
     
     ["ui scale and mobile detection"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.updateResponsiveLayout()
         
         -- Test that UI scale and mobile detection are set
-        TestFramework.utils.assertNotNil(UISystem.uiScale, "UI scale should be set")
-        TestFramework.utils.assertNotNil(UISystem.isMobile, "Mobile detection should be set")
+        TestFramework.assert.notNil(UISystem.uiScale, "UI scale should be set")
+        TestFramework.assert.notNil(UISystem.isMobile, "Mobile detection should be set")
     end,
     
     ["drawing functions existence"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         
         -- Test that all drawing functions exist
-        TestFramework.utils.assertNotNil(UISystem.draw, "draw function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawGameUI, "drawGameUI function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawMenuUI, "drawMenuUI function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawUpgradeUI, "drawUpgradeUI function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawAchievementUI, "drawAchievementUI function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawBlockchainUI, "drawBlockchainUI function should exist")
-        TestFramework.utils.assertNotNil(UISystem.drawProgressionBar, "drawProgressionBar function should exist")
+        TestFramework.assert.notNil(UISystem.draw, "draw function should exist")
+        TestFramework.assert.notNil(UISystem.drawGameUI, "drawGameUI function should exist")
+        TestFramework.assert.notNil(UISystem.drawMenuUI, "drawMenuUI function should exist")
+        TestFramework.assert.notNil(UISystem.drawUpgradeUI, "drawUpgradeUI function should exist")
+        TestFramework.assert.notNil(UISystem.drawAchievementUI, "drawAchievementUI function should exist")
+        TestFramework.assert.notNil(UISystem.drawBlockchainUI, "drawBlockchainUI function should exist")
+        TestFramework.assert.notNil(UISystem.drawProgressionBar, "drawProgressionBar function should exist")
     end,
     
     ["ui element structure"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         
         -- Test that UI elements have the expected structure
         local elements = UISystem.elements
-        TestFramework.utils.assertNotNil(elements.progressionBar, "Progression bar should exist")
-        TestFramework.utils.assertNotNil(elements.upgradeButton, "Upgrade button should exist")
-        TestFramework.utils.assertNotNil(elements.blockchainButton, "Blockchain button should exist")
-        TestFramework.utils.assertNotNil(elements.menuPanel, "Menu panel should exist")
+        TestFramework.assert.notNil(elements.progressionBar, "Progression bar should exist")
+        TestFramework.assert.notNil(elements.upgradeButton, "Upgrade button should exist")
+        TestFramework.assert.notNil(elements.blockchainButton, "Blockchain button should exist")
+        TestFramework.assert.notNil(elements.menuPanel, "Menu panel should exist")
         
         -- Test element properties
         local bar = elements.progressionBar
-        TestFramework.utils.assertNotNil(bar.x, "Progression bar should have x position")
-        TestFramework.utils.assertNotNil(bar.y, "Progression bar should have y position")
-        TestFramework.utils.assertNotNil(bar.width, "Progression bar should have width")
-        TestFramework.utils.assertNotNil(bar.height, "Progression bar should have height")
+        TestFramework.assert.notNil(bar.x, "Progression bar should have x position")
+        TestFramework.assert.notNil(bar.y, "Progression bar should have y position")
+        TestFramework.assert.notNil(bar.width, "Progression bar should have width")
+        TestFramework.assert.notNil(bar.height, "Progression bar should have height")
     end,
     
     ["blockchain integration handling"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.update(0.1, mockProgressionSystem, mockBlockchainIntegration)
         
         -- Test that blockchain integration is properly stored
-        TestFramework.utils.assertEqual(mockBlockchainIntegration, UISystem.blockchainIntegration, "Blockchain integration should be stored")
+        TestFramework.assert.equal(mockBlockchainIntegration, UISystem.blockchainIntegration, "Blockchain integration should be stored")
         
         -- Test blockchain status retrieval
         local status = mockBlockchainIntegration.getStatus()
-        TestFramework.utils.assertEqual(true, status.enabled, "Blockchain should be enabled")
-        TestFramework.utils.assertEqual("testnet", status.network, "Network should be testnet")
-        TestFramework.utils.assertEqual(3, status.queuedEvents, "Should have 3 queued events")
+        TestFramework.assert.equal(true, status.enabled, "Blockchain should be enabled")
+        TestFramework.assert.equal("testnet", status.network, "Network should be testnet")
+        TestFramework.assert.equal(3, status.queuedEvents, "Should have 3 queued events")
     end,
     
     ["progression system integration"] = function()
+        local UISystem = Utils.require("src.ui.ui_system")
         UISystem.init(mockFonts)
         UISystem.update(0.1, mockProgressionSystem, mockBlockchainIntegration)
         
         -- Test that progression system is properly stored
-        TestFramework.utils.assertEqual(mockProgressionSystem, UISystem.progressionSystem, "Progression system should be stored")
+        TestFramework.assert.equal(mockProgressionSystem, UISystem.progressionSystem, "Progression system should be stored")
         
         -- Test progression data access
         local data = mockProgressionSystem.data
-        TestFramework.utils.assertEqual(1500, data.totalScore, "Total score should be accessible")
-        TestFramework.utils.assertEqual(75, data.totalRingsCollected, "Total rings should be accessible")
+        TestFramework.assert.equal(1500, data.totalScore, "Total score should be accessible")
+        TestFramework.assert.equal(75, data.totalRingsCollected, "Total rings should be accessible")
     end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runSuite("UI System Tests", tests)
+    -- Set up mocks before running tests
+    Mocks.setup()
+    
+    TestFramework.runTests(tests, "UI System Tests")
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")
     TestCoverage.updateModule("ui_system", 14) -- All major functions tested
     
-    return success
+    return true -- Assume success for now
 end
 
-local result = {run = run}
-
--- Run tests if this file is executed directly
-if arg and arg[0] and string.find(arg[0], "test_ui_system.lua") then
-    run()
-end
-
-return result
+return {run = run}

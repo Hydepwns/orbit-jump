@@ -37,15 +37,19 @@ end
 
 -- Open to specific artifact
 function LoreViewer.openToArtifact(artifactId)
+    if not artifactId then return end
+    
     LoreViewer.isVisible = true
     LoreViewer.scrollY = 0
     
     -- Find and select the artifact
     local ArtifactSystem = Utils.require("src.systems.artifact_system")
-    for _, artifact in ipairs(ArtifactSystem.artifacts) do
-        if artifact.id == artifactId then
-            LoreViewer.selectedArtifact = artifact
-            break
+    if ArtifactSystem and ArtifactSystem.artifacts then
+        for _, artifact in ipairs(ArtifactSystem.artifacts) do
+            if artifact.id == artifactId then
+                LoreViewer.selectedArtifact = artifact
+                break
+            end
         end
     end
 end
@@ -115,13 +119,15 @@ function LoreViewer.mousepressed(x, y, button)
             local ArtifactSystem = Utils.require("src.systems.artifact_system")
             local listY = viewerY + 80 - LoreViewer.scrollY
             
-            for _, artifact in ipairs(ArtifactSystem.artifacts) do
-                if artifact.discovered then
-                    if y >= listY and y <= listY + LoreViewer.itemHeight then
-                        LoreViewer.selectedArtifact = artifact
-                        return true
+            if ArtifactSystem and ArtifactSystem.artifacts then
+                for _, artifact in ipairs(ArtifactSystem.artifacts) do
+                    if artifact.discovered then
+                        if y >= listY and y <= listY + LoreViewer.itemHeight then
+                            LoreViewer.selectedArtifact = artifact
+                            return true
+                        end
+                        listY = listY + LoreViewer.itemHeight + 10
                     end
-                    listY = listY + LoreViewer.itemHeight + 10
                 end
             end
         end
@@ -143,6 +149,11 @@ end
 -- Draw lore viewer
 function LoreViewer.draw()
     if LoreViewer.fadeAlpha <= 0 then return end
+    
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    if not love or not love.graphics or not love.graphics.rectangle then
+        return -- Skip drawing in test environment
+    end
     
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
@@ -187,6 +198,11 @@ end
 
 -- Draw artifact list
 function LoreViewer.drawArtifactList(x, y)
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    if not love or not love.graphics or not love.graphics.rectangle then
+        return -- Skip drawing in test environment
+    end
+    
     -- Title
     Utils.setColor({1, 1, 1}, LoreViewer.fadeAlpha)
     love.graphics.setFont(love.graphics.newFont(28))
@@ -269,6 +285,11 @@ end
 
 -- Draw artifact detail
 function LoreViewer.drawArtifactDetail(x, y)
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    if not love or not love.graphics or not love.graphics.rectangle then
+        return -- Skip drawing in test environment
+    end
+    
     local artifact = LoreViewer.selectedArtifact
     
     -- Back button

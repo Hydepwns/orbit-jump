@@ -3,6 +3,9 @@
 
 local Utils = require("src.utils.utils")
 
+-- BustedLite table
+local BustedLite = {}
+
 -- Test state
 local suites = {}
 local currentSuite = nil
@@ -190,8 +193,8 @@ local function runSuite(suiteName, tests)
     local passed = 0
     local failed = 0
     
-    for testName, testFn in pairs(tests) do
-        if runTest(testName, testFn) then
+    for i, test in ipairs(tests) do
+        if runTest(test.name, test.fn) then
             passed = passed + 1
         else
             failed = failed + 1
@@ -227,6 +230,32 @@ function BustedLite.reset()
         failed = 0,
         errors = {}
     }
+end
+
+-- Run all test suites
+function BustedLite.run()
+    local startTime = os.clock()
+    local totalPassed = 0
+    local totalFailed = 0
+    
+    for _, suite in ipairs(suites) do
+        local passed, failed = runSuite(suite.name, suite.tests)
+        totalPassed = totalPassed + passed
+        totalFailed = totalFailed + failed
+    end
+    
+    local endTime = os.clock()
+    local stats = {
+        total = totalPassed + totalFailed,
+        passed = totalPassed,
+        failed = totalFailed,
+        time = endTime - startTime,
+        errors = results.errors
+    }
+    
+    generateReport(stats)
+    
+    return totalFailed == 0
 end
 
 -- Export global functions

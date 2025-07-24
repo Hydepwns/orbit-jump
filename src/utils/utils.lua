@@ -311,7 +311,7 @@ end
 -- Enhanced color palette for better readability
 Utils.colors = {
     -- Core game colors
-    background = {0.05, 0.05, 0.1},
+    background = {0.1, 0.1, 0.15},
     player = {1, 1, 1},
     playerDashing = {0.3, 0.7, 1},
     planet1 = {0.8, 0.3, 0.3},
@@ -324,7 +324,6 @@ Utils.colors = {
     text = {1, 1, 1},
     textSecondary = {0.8, 0.8, 0.8},
     textMuted = {0.6, 0.6, 0.6},
-    background = {0.1, 0.1, 0.15},
     backgroundSecondary = {0.15, 0.15, 0.2},
     accent = {0.2, 0.6, 1.0},
     success = {0.2, 0.8, 0.4},
@@ -385,6 +384,11 @@ end
 
 -- Enhanced button drawing with better visual feedback
 function Utils.drawButton(text, x, y, width, height, color, hoverColor, isHovered)
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    if not love or not love.graphics or not love.graphics.rectangle then
+        return -- Skip drawing in test environment
+    end
+    
     color = color or Utils.colors.accent
     hoverColor = hoverColor or {color[1] * 1.2, color[2] * 1.2, color[3] * 1.2}
     
@@ -432,13 +436,19 @@ end
 
 -- Collision utilities
 function Utils.circleCollision(x1, y1, r1, x2, y2, r2)
+    -- Handle edge cases
+    if r1 <= 0 or r2 <= 0 then
+        return false
+    end
     local distance = Utils.distance(x1, y1, x2, y2)
     return distance <= r1 + r2
 end
 
 function Utils.ringCollision(x, y, radius, ringX, ringY, ringRadius, ringInnerRadius)
     local distance = Utils.distance(x, y, ringX, ringY)
-    return distance < ringRadius and distance > ringInnerRadius - radius
+    -- Check if player is within the ring (between inner and outer radius)
+    -- Player is in the ring if: innerRadius <= distance <= outerRadius
+    return distance <= ringRadius and distance >= ringInnerRadius
 end
 
 function Utils.pointInRect(x, y, rectX, rectY, rectWidth, rectHeight)
@@ -531,13 +541,21 @@ end
 
 -- Detect if device is mobile
 function Utils.MobileInput.isMobile()
-    local width, height = love.graphics.getDimensions()
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    local width, height = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getDimensions then
+        width, height = love.graphics.getDimensions()
+    end
     return width < 768 or height < 768
 end
 
 -- Get device orientation
 function Utils.MobileInput.getOrientation()
-    local width, height = love.graphics.getDimensions()
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    local width, height = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getDimensions then
+        width, height = love.graphics.getDimensions()
+    end
     if width > height then
         return "landscape"
     else
@@ -675,12 +693,17 @@ end
 
 -- Get UI scale factor based on screen size
 function Utils.MobileInput.getUIScale()
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    local width = 800 -- Default width
+    if love and love.graphics and love.graphics.getWidth then
+        width = love.graphics.getWidth()
+    end
+    
     local Config = Utils.require("src.utils.config")
-    if not Config.responsive.enabled then
+    if not Config or not Config.responsive or not Config.responsive.enabled then
         return 1.0
     end
     
-    local width = love.graphics.getWidth()
     local breakpoints = Config.responsive.breakpoints
     
     if width <= breakpoints.mobile then
@@ -694,11 +717,16 @@ end
 
 -- Get appropriate font sizes for current device
 function Utils.MobileInput.getFontSizes()
-    if not Config.responsive.enabled then
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    local width = 800 -- Default width
+    if love and love.graphics and love.graphics.getWidth then
+        width = love.graphics.getWidth()
+    end
+    
+    if not Config or not Config.responsive or not Config.responsive.enabled then
         return Config.responsive.fontSizes.desktop
     end
     
-    local width = love.graphics.getWidth()
     local breakpoints = Config.responsive.breakpoints
     
     if width <= breakpoints.mobile then

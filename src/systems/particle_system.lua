@@ -175,6 +175,11 @@ function ParticleSystem.getParticles()
     return ParticleSystem.particles
 end
 
+-- Get all particles (alias for getParticles for compatibility)
+function ParticleSystem.get()
+    return ParticleSystem.particles
+end
+
 -- Clear all particles
 function ParticleSystem.clear()
     if ParticleSystem.particlePool then

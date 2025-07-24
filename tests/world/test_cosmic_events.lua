@@ -1,7 +1,8 @@
 -- Tests for Cosmic Events system
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.require("tests.test_framework")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()

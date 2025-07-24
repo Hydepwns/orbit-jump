@@ -60,8 +60,10 @@ function Camera:follow(target, dt)
     -- Update shake
     if self.shakeDuration > 0 then
         self.shakeDuration = self.shakeDuration - dt
-    else
-        self.shakeIntensity = 0
+        if self.shakeDuration <= 0 then
+            self.shakeIntensity = 0
+            self.shakeDuration = 0
+        end
     end
 end
 

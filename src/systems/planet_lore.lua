@@ -1,6 +1,7 @@
 -- Planet Lore System for Orbit Jump
 -- Collectible logs and story fragments scattered across planets
 
+local Utils = require("src.utils.utils")
 local PlanetLore = {}
 
 -- Lore entries for different planet types

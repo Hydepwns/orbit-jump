@@ -6,6 +6,13 @@ function GameLogic.normalizeVector(x, y)
     return Utils.normalize(x, y)
 end
 
+function GameLogic.calculateDistance(x1, y1, x2, y2)
+    if not x1 or not y1 or not x2 or not y2 then
+        return 0, 0, 0
+    end
+    return Utils.distance(x1, y1, x2, y2)
+end
+
 function GameLogic.calculateGravity(playerX, playerY, planetX, planetY, planetRadius)
     local distance, dx, dy = Utils.distance(playerX, playerY, planetX, planetY)
     

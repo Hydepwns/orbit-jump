@@ -325,18 +325,19 @@ end
 function Renderer.drawPullIndicator(player, mouseX, mouseY, mouseStartX, mouseStartY, pullPower, maxPullDistance)
     if not player.onPlanet then return end
     
-    -- Draw pull line (from player to mouse)
-    Utils.setColor(Utils.colors.white, 0.5)
-    love.graphics.setLineWidth(3)
-    love.graphics.line(player.x, player.y, mouseX, mouseY)
-    
-    -- Power indicator at mouse position
-    local powerPercent = pullPower / maxPullDistance
-    Utils.setColor(Utils.colors.red, powerPercent)
-    love.graphics.circle("fill", mouseX, mouseY, 5 + powerPercent * 10)
-    
-    -- Draw jump direction indicator (opposite of pull)
+    -- Only draw if there's pull power
     if pullPower > 0 then
+        -- Draw pull line (from player to mouse)
+        Utils.setColor(Utils.colors.white, 0.5)
+        love.graphics.setLineWidth(3)
+        love.graphics.line(player.x, player.y, mouseX, mouseY)
+    
+        -- Power indicator at mouse position
+        local powerPercent = pullPower / maxPullDistance
+        Utils.setColor(Utils.colors.red, powerPercent)
+        love.graphics.circle("fill", mouseX, mouseY, 5 + powerPercent * 10)
+        
+        -- Draw jump direction indicator (opposite of pull)
         local swipeX = mouseX - mouseStartX
         local swipeY = mouseY - mouseStartY
         local swipeDistance = Utils.vectorLength(swipeX, swipeY)

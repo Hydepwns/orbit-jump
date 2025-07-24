@@ -1,6 +1,7 @@
 -- Integration tests for game state
 package.path = package.path .. ";../../?.lua"
 
+local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.test_framework")
 local GameState = Utils.require("src.core.game_state")
 

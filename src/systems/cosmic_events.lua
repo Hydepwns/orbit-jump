@@ -437,4 +437,27 @@ function CosmicEvents.drawUI()
     end
 end
 
+-- Trigger quantum teleport effect
+function CosmicEvents.triggerQuantumTeleport(x, y)
+    -- Create quantum teleport visual effect
+    local ParticleSystem = Utils.require("src.systems.particle_system")
+    if ParticleSystem then
+        -- Create teleport particles
+        for i = 1, 30 do
+            local angle = (i / 30) * math.pi * 2
+            local speed = 200 + math.random() * 300
+            local vx = math.cos(angle) * speed
+            local vy = math.sin(angle) * speed
+            
+            ParticleSystem.create(
+                x, y,
+                vx, vy,
+                {0.5, 0.2, 1, 1}, -- Purple quantum color
+                1.0 + math.random() * 0.5,
+                3 + math.random() * 2
+            )
+        end
+    end
+end
+
 return CosmicEvents

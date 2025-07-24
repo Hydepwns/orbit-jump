@@ -1,6 +1,6 @@
 #!/bin/bash
 # Comprehensive test runner for Orbit Jump
-# Runs both legacy and Busted-style tests
+# Runs unit, integration, and legacy tests
 
 echo "================================"
 echo "Orbit Jump Complete Test Suite"
@@ -9,12 +9,21 @@ echo "================================"
 # Track overall success
 overall_success=true
 
-# Run Busted-style tests
+# Run Busted-style tests (fast unit tests)
 echo -e "\n--- Running Busted-style tests ---"
 if lua tests/run_busted_tests.lua; then
     echo "✅ Busted tests passed"
 else
     echo "❌ Busted tests failed"
+    overall_success=false
+fi
+
+# Run Unit tests (comprehensive unit tests with new framework)
+echo -e "\n--- Running Unit tests ---"
+if lua tests/run_unit_tests.lua; then
+    echo "✅ Unit tests passed"
+else
+    echo "❌ Unit tests failed"
     overall_success=false
 fi
 

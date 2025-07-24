@@ -169,7 +169,7 @@ function RingSystem.collectRing(ring, player)
     ring.collected = true
     
     -- Track constellation patterns
-    local success, RingConstellations  = Utils.ErrorHandler.safeCall(require, "ring_constellations")
+    local success, RingConstellations  = Utils.ErrorHandler.safeCall(require, "src.systems.ring_constellations")
     if success and RingConstellations.onRingCollected then
         RingConstellations.onRingCollected(ring, player)
     end

@@ -1,10 +1,10 @@
 -- Tests for Renderer System
 package.path = package.path .. ";../../?.lua"
 
+local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 local Renderer = Utils.require("src.core.renderer")
-local Utils = require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()

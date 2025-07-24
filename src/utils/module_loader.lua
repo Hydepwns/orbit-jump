@@ -15,9 +15,16 @@ function ModuleLoader.initModule(moduleName, initFunction, ...)
     -- Initialize module
     if initFunction and module[initFunction] then
         local args = {...}
-        local initSuccess = ErrorHandler.safeCall(module[initFunction], unpack(args))
+        -- Handle Lua 5.1/5.2+ compatibility for unpack
+        local unpack = unpack or table.unpack
+        local initSuccess, initResult = ErrorHandler.safeCall(module[initFunction], unpack(args))
         if not initSuccess then
             Utils.Logger.error("Failed to initialize module %s", moduleName)
+            return false
+        end
+        -- Check if init function returned false or nil (indicating failure)
+        if initResult == false or initResult == nil then
+            Utils.Logger.error("Module %s initialization returned false/nil", moduleName)
             return false
         end
     end

@@ -3,6 +3,7 @@
 
 package.path = package.path .. ";../../?.lua"
 
+local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 local GameState = Utils.require("src.core.game_state")
@@ -10,7 +11,6 @@ local GameLogic = Utils.require("src.core.game_logic")
 local RingSystem = Utils.require("src.systems.ring_system")
 local ProgressionSystem = Utils.require("src.systems.progression_system")
 local WorldGenerator = Utils.require("src.systems.world_generator")
-local Utils = require("src.utils.utils")
 
 -- Setup mocks
 Mocks.setup()

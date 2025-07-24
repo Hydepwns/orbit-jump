@@ -21,9 +21,22 @@ UISystem.elements = {
 
 -- Responsive UI scaling
 function UISystem.updateResponsiveLayout()
-    local screenWidth, screenHeight = love.graphics.getDimensions()
-    local uiScale = Utils.MobileInput.getUIScale()
-    local isMobile = Utils.MobileInput.isMobile()
+    -- Handle case where love.graphics is not available (e.g., in test environment)
+    local screenWidth, screenHeight = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getDimensions then
+        screenWidth, screenHeight = love.graphics.getDimensions()
+    end
+    
+    local uiScale = 1.0 -- Default scale
+    local isMobile = false -- Default to desktop
+    
+    -- Safely get UI scale and mobile detection
+    if Utils.MobileInput and Utils.MobileInput.getUIScale then
+        uiScale = Utils.MobileInput.getUIScale()
+    end
+    if Utils.MobileInput and Utils.MobileInput.isMobile then
+        isMobile = Utils.MobileInput.isMobile()
+    end
     
     -- Update UI element positions and sizes based on screen size
     if isMobile then
@@ -67,7 +80,10 @@ function UISystem.update(dt, progressionSystem, blockchainIntegration)
     UISystem.blockchainIntegration = blockchainIntegration
     
     -- Update responsive layout if screen size changed
-    local currentWidth, currentHeight = love.graphics.getDimensions()
+    local currentWidth, currentHeight = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getDimensions then
+        currentWidth, currentHeight = love.graphics.getDimensions()
+    end
     if not UISystem.lastScreenSize then
         UISystem.lastScreenSize = { width = currentWidth, height = currentHeight }
     elseif UISystem.lastScreenSize.width ~= currentWidth or UISystem.lastScreenSize.height ~= currentHeight then
@@ -96,8 +112,13 @@ end
 
 function UISystem.drawGameUI()
     local GameState = Utils.require("src.core.game_state")
-    local screenWidth = love.graphics.getWidth()
-    local screenHeight = love.graphics.getHeight()
+    local screenWidth, screenHeight = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getWidth then
+        screenWidth = love.graphics.getWidth()
+    end
+    if love and love.graphics and love.graphics.getHeight then
+        screenHeight = love.graphics.getHeight()
+    end
     
     -- Draw score and combo
     Utils.setColor({1, 1, 1}, 1)
@@ -139,7 +160,17 @@ function UISystem.drawProgressionBar()
 end
 
 function UISystem.drawButton(text, x, y, width, height)
-    Utils.drawButton(text, x, y, width, height)
+    -- Handle case where Utils.drawButton is not available or love.graphics is not available
+    if not Utils.drawButton then
+        return -- Skip drawing if function not available
+    end
+    
+    -- Use pcall to safely call the drawButton function
+    local success, result = pcall(Utils.drawButton, text, x, y, width, height)
+    if not success then
+        -- If drawing fails, just return without error
+        return
+    end
 end
 
 function UISystem.drawMenuUI()
@@ -174,7 +205,10 @@ function UISystem.drawUpgradeUI()
     local panel = UISystem.elements.menuPanel
     
     -- Center panel on screen
-    local screenWidth, screenHeight = love.graphics.getDimensions()
+    local screenWidth, screenHeight = 800, 600 -- Default values
+    if love and love.graphics and love.graphics.getDimensions then
+        screenWidth, screenHeight = love.graphics.getDimensions()
+    end
     panel.x = (screenWidth - panel.width) / 2
     panel.y = (screenHeight - panel.height) / 2
     
@@ -433,6 +467,12 @@ end
 
 function UISystem.purchaseUpgrade()
     local UpgradeSystem = Utils.require("src.systems.upgrade_system")
+    
+    -- Handle case where upgrade system is not available (e.g., in test environment)
+    if not UpgradeSystem or not UpgradeSystem.purchase then
+        return false
+    end
+    
     local upgradeList = {
         "jump_power", "jump_control", "dash_power", "dash_cooldown",
         "ring_magnet", "ring_value", "combo_timer", "combo_multiplier",
@@ -442,8 +482,10 @@ function UISystem.purchaseUpgrade()
     local upgradeId = upgradeList[UISystem.upgradeSelection]
     if upgradeId and UpgradeSystem.purchase(upgradeId) then
         -- Success - upgrade purchased
+        return true
     else
         -- Cannot afford or max level
+        return false
     end
 end
 

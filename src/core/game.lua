@@ -103,7 +103,7 @@ function Game.initSystems()
     ModuleLoader.initModule("systems.particle_system", "init")
     
     -- Initialize UI systems
-    ModuleLoader.initModule("ui.ui_system", "init")
+    UISystem.init(fonts)
     ModuleLoader.initModule("ui.pause_menu", "init")
     
     -- Initialize audio
@@ -217,7 +217,7 @@ function Game.draw()
     
     -- Reset camera transform for UI
     if Game.camera then
-        Game.camera:reset()
+        Game.camera:clear()
     end
     
     -- Draw UI elements
@@ -228,7 +228,7 @@ function Game.draw()
     
     -- Draw mobile controls if needed
     if Utils.MobileInput.isMobile() then
-        Renderer.drawMobileControls()
+        Renderer.drawMobileControls(GameState.player, fonts)
     end
 end
 

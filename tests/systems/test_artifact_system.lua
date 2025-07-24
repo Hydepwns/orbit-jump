@@ -1,0 +1,556 @@
+-- Comprehensive tests for Artifact System
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.test_framework")
+local Mocks = Utils.require("tests.mocks")
+
+-- Setup mocks before requiring ArtifactSystem
+Mocks.setup()
+
+-- Initialize test framework
+TestFramework.init()
+
+-- Mock love functions
+love.timer = {
+    currentTime = 0,
+    getTime = function()
+        return love.timer.currentTime
+    end
+}
+
+love.graphics = {
+    getWidth = function() return 800 end,
+    getHeight = function() return 600 end,
+    circle = function() end,
+    polygon = function() end,
+    rectangle = function() end,
+    printf = function() end,
+    setFont = function() end,
+    newFont = function() return {} end,
+    setLineWidth = function() end,
+    push = function() end,
+    pop = function() end,
+    translate = function() end,
+    rotate = function() end
+}
+
+-- Mock Utils functions
+Utils.distance = function(x1, y1, x2, y2)
+    local dx = x2 - x1
+    local dy = y2 - y1
+    return math.sqrt(dx*dx + dy*dy)
+end
+
+Utils.setColor = function() end
+
+-- Require ArtifactSystem after mocks are set up
+local ArtifactSystem = Utils.require("src.systems.artifact_system")
+
+-- Mock dependencies
+mockGameState = {
+    addScore = function(score)
+        mockGameState.lastScoreAdded = score
+    end,
+    lastScoreAdded = 0
+}
+
+mockUpgradeSystem = {
+    addCurrency = function(amount)
+        mockUpgradeSystem.lastCurrencyAdded = amount
+    end,
+    lastCurrencyAdded = 0
+}
+
+mockAchievementSystem = {
+    artifactsCollected = {},
+    onArtifactCollected = function(id)
+        table.insert(mockAchievementSystem.artifactsCollected, id)
+    end,
+    allArtifactsCollected = false,
+    onAllArtifactsCollected = function()
+        mockAchievementSystem.allArtifactsCollected = true
+    end
+}
+
+mockSoundManager = {
+    eventWarningPlayed = false,
+    playEventWarning = function(self)
+        self.eventWarningPlayed = true
+    end
+}
+
+local mockWarpZones = {
+    activeZones = {}
+}
+
+-- Test helper functions
+local function createTestPlayer(x, y)
+    return {
+        x = x or 0,
+        y = y or 0
+    }
+end
+
+local function createTestPlanet(x, y, type, discovered)
+    return {
+        x = x,
+        y = y,
+        type = type,
+        discovered = discovered == nil and true or discovered
+    }
+end
+
+local function resetMocks()
+    mockGameState.lastScoreAdded = 0
+    mockUpgradeSystem.lastCurrencyAdded = 0
+    mockAchievementSystem.artifactsCollected = {}
+    mockAchievementSystem.allArtifactsCollected = false
+    mockSoundManager.eventWarningPlayed = false
+    mockWarpZones.activeZones = {}
+end
+
+-- Test suite
+local tests = {
+    ["test initialization"] = function()
+        ArtifactSystem.init()
+        
+        -- Check all artifacts are not discovered
+        for _, artifact in ipairs(ArtifactSystem.artifacts) do
+            TestFramework.utils.assertFalse(artifact.discovered, "Artifacts should start undiscovered")
+        end
+        
+        TestFramework.utils.assertEqual(0, #ArtifactSystem.spawnedArtifacts, "No artifacts should be spawned initially")
+        TestFramework.utils.assertEqual(0, ArtifactSystem.collectedCount, "Collected count should be 0")
+        TestFramework.utils.assertEqual(0, #ArtifactSystem.notificationQueue, "Notification queue should be empty")
+    end,
+    
+    ["test artifact definitions"] = function()
+        -- Check all artifacts have required fields
+        for _, artifact in ipairs(ArtifactSystem.artifacts) do
+            TestFramework.utils.assertNotNil(artifact.id, "Artifact should have id")
+            TestFramework.utils.assertNotNil(artifact.name, "Artifact should have name")
+            TestFramework.utils.assertNotNil(artifact.description, "Artifact should have description")
+            TestFramework.utils.assertNotNil(artifact.hint, "Artifact should have hint")
+            TestFramework.utils.assertNotNil(artifact.color, "Artifact should have color")
+            TestFramework.utils.assertEqual(3, #artifact.color, "Color should have 3 components")
+        end
+        
+        -- Check unique IDs
+        local ids = {}
+        for _, artifact in ipairs(ArtifactSystem.artifacts) do
+            TestFramework.utils.assertNil(ids[artifact.id], "Artifact IDs should be unique")
+            ids[artifact.id] = true
+        end
+    end,
+    
+    ["test spawn origin fragment near center"] = function()
+        ArtifactSystem.init()
+        local player = createTestPlayer(100, 100) -- Near origin
+        local planets = {}
+        
+        -- Force random to return value that triggers spawn
+        local oldRandom = math.random
+        math.random = function()
+            return 0.005 -- Below 0.01 threshold
+        end
+        
+        ArtifactSystem.spawnArtifacts(player, planets)
+        
+        -- Check if origin fragment spawned
+        local spawned = false
+        for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
+            if artifact.id == "origin_fragment_1" then
+                spawned = true
+                TestFramework.utils.assertTrue(math.abs(artifact.x) <= 500, "Should spawn within range")
+                TestFramework.utils.assertTrue(math.abs(artifact.y) <= 500, "Should spawn within range")
+            end
+        end
+        
+        TestFramework.utils.assertTrue(spawned, "Origin fragment should spawn near center")
+        
+        -- Restore
+        math.random = oldRandom
+    end,
+    
+    ["test spawn ice planet artifact"] = function()
+        ArtifactSystem.init()
+        local player = createTestPlayer(2500, 0)
+        local planets = {
+            createTestPlanet(2500, 0, "ice", true)
+        }
+        
+        -- Force spawn
+        local oldRandom = math.random
+        local callCount = 0
+        math.random = function(min, max)
+            callCount = callCount + 1
+            if min == nil then
+                return 0.01 -- Trigger spawn
+            else
+                return (min + max) / 2 -- Return middle value for position
+            end
+        end
+        
+        ArtifactSystem.spawnArtifacts(player, planets)
+        
+        -- Check if ice artifact spawned
+        local spawned = false
+        for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
+            if artifact.id == "origin_fragment_2" then
+                spawned = true
+                -- Should spawn near ice planet
+                local dist = Utils.distance(artifact.x, artifact.y, planets[1].x, planets[1].y)
+                TestFramework.utils.assertTrue(dist <= 300, "Should spawn near ice planet")
+            end
+        end
+        
+        TestFramework.utils.assertTrue(spawned, "Ice artifact should spawn near ice planet")
+        
+        -- Restore
+        math.random = oldRandom
+    end,
+    
+    ["test spawn tech planet artifact"] = function()
+        ArtifactSystem.init()
+        local player = createTestPlayer(0, 0)
+        local planets = {
+            createTestPlanet(500, 500, "tech", true)
+        }
+        
+        -- Force spawn
+        local oldRandom = math.random
+        math.random = function(min, max)
+            if min == nil then
+                return 0.01
+            else
+                return (min + max) / 2
+            end
+        end
+        
+        ArtifactSystem.spawnArtifacts(player, planets)
+        
+        -- Check if tech artifact spawned
+        local spawned = false
+        for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
+            if artifact.id == "origin_fragment_3" then
+                spawned = true
+            end
+        end
+        
+        TestFramework.utils.assertTrue(spawned, "Tech artifact should spawn near tech planet")
+        
+        -- Restore
+        math.random = oldRandom
+    end,
+    
+    ["test is artifact spawned"] = function()
+        ArtifactSystem.init()
+        
+        -- Add test artifact
+        table.insert(ArtifactSystem.spawnedArtifacts, {
+            id = "test_artifact",
+            x = 100,
+            y = 100
+        })
+        
+        TestFramework.utils.assertTrue(
+            ArtifactSystem.isArtifactSpawned("test_artifact"),
+            "Should find spawned artifact"
+        )
+        
+        TestFramework.utils.assertFalse(
+            ArtifactSystem.isArtifactSpawned("non_existent"),
+            "Should not find non-existent artifact"
+        )
+    end,
+    
+    ["test artifact collection"] = function()
+        ArtifactSystem.init()
+        resetMocks()
+        
+        -- Mock dependencies
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.core.game_state" then return mockGameState
+            elseif path == "src.systems.upgrade_system" then return mockUpgradeSystem
+            elseif path == "src.systems.achievement_system" then return mockAchievementSystem
+            elseif path == "src.audio.sound_manager" then return mockSoundManager
+            else return oldRequire(path) end
+        end
+        
+        -- Create and add artifact
+        local artifactDef = ArtifactSystem.artifacts[1]
+        local artifact = {
+            x = 100,
+            y = 100,
+            id = artifactDef.id,
+            definition = artifactDef,
+            collected = false,
+            glowRadius = 50,
+            particles = {}
+        }
+        table.insert(ArtifactSystem.spawnedArtifacts, artifact)
+        
+        -- Collect it
+        ArtifactSystem.collectArtifact(artifact, 1)
+        
+        TestFramework.utils.assertTrue(artifact.collected, "Artifact should be marked collected")
+        TestFramework.utils.assertTrue(artifactDef.discovered, "Artifact definition should be marked discovered")
+        TestFramework.utils.assertEqual(1, ArtifactSystem.collectedCount, "Collected count should increase")
+        TestFramework.utils.assertEqual(0, #ArtifactSystem.spawnedArtifacts, "Artifact should be removed from spawned list")
+        TestFramework.utils.assertEqual(1, #ArtifactSystem.notificationQueue, "Notification should be added")
+        TestFramework.utils.assertEqual(1000, mockGameState.lastScoreAdded, "Score should be awarded")
+        TestFramework.utils.assertEqual(100, mockUpgradeSystem.lastCurrencyAdded, "Currency should be awarded")
+        TestFramework.utils.assertTrue(mockSoundManager.eventWarningPlayed, "Sound should play")
+        TestFramework.utils.assertEqual(artifactDef.id, mockAchievementSystem.artifactsCollected[1], "Achievement should track collection")
+        
+        -- Restore
+        Utils.require = oldRequire
+    end,
+    
+    ["test collection triggers all artifacts achievement"] = function()
+        ArtifactSystem.init()
+        resetMocks()
+        
+        -- Mock dependencies
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.core.game_state" then return mockGameState
+            elseif path == "src.systems.upgrade_system" then return mockUpgradeSystem
+            elseif path == "src.systems.achievement_system" then return mockAchievementSystem
+            elseif path == "src.audio.sound_manager" then return mockSoundManager
+            else return oldRequire(path) end
+        end
+        
+        -- Set collected count to max - 1
+        ArtifactSystem.collectedCount = #ArtifactSystem.artifacts - 1
+        
+        -- Collect final artifact
+        local artifactDef = ArtifactSystem.artifacts[1]
+        local artifact = {
+            x = 100,
+            y = 100,
+            id = artifactDef.id,
+            definition = artifactDef,
+            collected = false,
+            glowRadius = 50,
+            particles = {}
+        }
+        table.insert(ArtifactSystem.spawnedArtifacts, artifact)
+        
+        ArtifactSystem.collectArtifact(artifact, 1)
+        
+        TestFramework.utils.assertTrue(mockAchievementSystem.allArtifactsCollected, "Should trigger all artifacts achievement")
+        
+        -- Restore
+        Utils.require = oldRequire
+    end,
+    
+    ["test update with player nearby"] = function()
+        ArtifactSystem.init()
+        resetMocks()
+        
+        -- Mock dependencies
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.core.game_state" then return mockGameState
+            elseif path == "src.systems.upgrade_system" then return mockUpgradeSystem
+            elseif path == "src.systems.achievement_system" then return mockAchievementSystem
+            elseif path == "src.audio.sound_manager" then return mockSoundManager
+            else return oldRequire(path) end
+        end
+        
+        -- Add artifact
+        local artifactDef = ArtifactSystem.artifacts[1]
+        local artifact = {
+            x = 100,
+            y = 100,
+            id = artifactDef.id,
+            definition = artifactDef,
+            collected = false,
+            glowRadius = 50,
+            particles = {}
+        }
+        table.insert(ArtifactSystem.spawnedArtifacts, artifact)
+        
+        -- Player far away - should not collect
+        local player = createTestPlayer(200, 200)
+        ArtifactSystem.update(0.1, player, {})
+        TestFramework.utils.assertEqual(1, #ArtifactSystem.spawnedArtifacts, "Artifact should not be collected when far")
+        
+        -- Player close - should collect
+        player.x = 110
+        player.y = 110
+        ArtifactSystem.update(0.1, player, {})
+        TestFramework.utils.assertEqual(0, #ArtifactSystem.spawnedArtifacts, "Artifact should be collected when close")
+        TestFramework.utils.assertEqual(1, ArtifactSystem.collectedCount, "Collected count should increase")
+        
+        -- Restore
+        Utils.require = oldRequire
+    end,
+    
+    ["test particle effects update"] = function()
+        ArtifactSystem.init()
+        
+        -- Add artifact
+        local artifact = {
+            x = 100,
+            y = 100,
+            collected = false,
+            glowRadius = 50,
+            particles = {}
+        }
+        table.insert(ArtifactSystem.spawnedArtifacts, artifact)
+        
+        -- Update to trigger particle creation
+        ArtifactSystem.particleTimer = 0.11 -- Above threshold
+        local player = createTestPlayer(500, 500)
+        ArtifactSystem.update(0.01, player, {}) -- Small dt to minimize life decrease
+        
+        TestFramework.utils.assertTrue(#artifact.particles > 0, "Particles should be created")
+        
+        local particle = artifact.particles[1]
+        TestFramework.utils.assertTrue(math.abs(particle.x - 100) < 1, "Particle should start near artifact X position")
+        TestFramework.utils.assertTrue(math.abs(particle.y - 100) < 1, "Particle should start near artifact Y position")
+        TestFramework.utils.assertTrue(particle.life >= 0.99, "Particle should have nearly full life")
+        
+        -- Update particle
+        local oldX = particle.x
+        ArtifactSystem.update(0.1, createTestPlayer(500, 500), {})
+        
+        TestFramework.utils.assertTrue(particle.x ~= oldX or particle.y ~= 100, "Particle should move")
+        TestFramework.utils.assertTrue(particle.life < 1.0, "Particle life should decrease")
+    end,
+    
+    ["test notification system"] = function()
+        ArtifactSystem.init()
+        
+        -- Add notification
+        local artifact = ArtifactSystem.artifacts[1]
+        table.insert(ArtifactSystem.notificationQueue, {
+            artifact = artifact,
+            time = love.timer.getTime()
+        })
+        ArtifactSystem.notificationTimer = 5
+        
+        -- Update timer
+        ArtifactSystem.update(1, createTestPlayer(0, 0), {})
+        TestFramework.utils.assertEqual(4, ArtifactSystem.notificationTimer, "Timer should decrease")
+        
+        -- Update until expired
+        ArtifactSystem.update(5, createTestPlayer(0, 0), {})
+        TestFramework.utils.assertEqual(0, #ArtifactSystem.notificationQueue, "Notification should be removed when expired")
+    end,
+    
+    ["test visual effects update"] = function()
+        ArtifactSystem.init()
+        
+        local oldPhase = ArtifactSystem.pulsePhase
+        ArtifactSystem.update(0.5, createTestPlayer(0, 0), {})
+        
+        TestFramework.utils.assertTrue(ArtifactSystem.pulsePhase > oldPhase, "Pulse phase should increase")
+    end,
+    
+    ["test get artifact by id"] = function()
+        local artifact = ArtifactSystem.getArtifact("origin_fragment_1")
+        TestFramework.utils.assertNotNil(artifact, "Should find artifact by ID")
+        TestFramework.utils.assertEqual("Origin Fragment I", artifact.name, "Should return correct artifact")
+        
+        local nonExistent = ArtifactSystem.getArtifact("fake_id")
+        TestFramework.utils.assertNil(nonExistent, "Should return nil for non-existent ID")
+    end,
+    
+    ["test get discovered artifacts"] = function()
+        ArtifactSystem.init()
+        
+        -- No artifacts discovered initially
+        local discovered = ArtifactSystem.getDiscoveredArtifacts()
+        TestFramework.utils.assertEqual(0, #discovered, "No artifacts should be discovered initially")
+        
+        -- Mark some as discovered
+        ArtifactSystem.artifacts[1].discovered = true
+        ArtifactSystem.artifacts[3].discovered = true
+        
+        discovered = ArtifactSystem.getDiscoveredArtifacts()
+        TestFramework.utils.assertEqual(2, #discovered, "Should return only discovered artifacts")
+        TestFramework.utils.assertEqual("origin_fragment_1", discovered[1].id, "Should return correct artifacts")
+    end,
+    
+    ["test final truth spawn condition"] = function()
+        ArtifactSystem.init()
+        
+        -- Set collected count to trigger final artifact
+        ArtifactSystem.collectedCount = #ArtifactSystem.artifacts - 1
+        
+        -- Force spawn check
+        local oldRandom = math.random
+        math.random = function() return 0 end
+        
+        ArtifactSystem.spawnArtifacts(createTestPlayer(0, 0), {})
+        
+        -- Check if final artifact spawned
+        local spawned = false
+        for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
+            if artifact.id == "final_truth" then
+                spawned = true
+                TestFramework.utils.assertEqual(0, artifact.x, "Final artifact should spawn at origin X")
+                TestFramework.utils.assertEqual(-5000, artifact.y, "Final artifact should spawn far above")
+            end
+        end
+        
+        TestFramework.utils.assertTrue(spawned, "Final artifact should spawn when all others collected")
+        
+        -- Restore
+        math.random = oldRandom
+    end,
+    
+    ["test warp zone artifact spawn"] = function()
+        ArtifactSystem.init()
+        
+        -- Mock warp zones
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.systems.warp_zones" then
+                return {
+                    activeZones = {{x = 1000, y = 1000}}
+                }
+            else
+                return oldRequire(path)
+            end
+        end
+        
+        -- Force spawn
+        local oldRandom = math.random
+        math.random = function(min, max)
+            if min == nil then
+                return 0.01
+            else
+                return (min + max) / 2
+            end
+        end
+        
+        ArtifactSystem.spawnArtifacts(createTestPlayer(0, 0), {})
+        
+        -- Check if explorer log 2 spawned near warp zone
+        local spawned = false
+        for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
+            if artifact.id == "explorer_log_2" then
+                spawned = true
+                local dist = Utils.distance(artifact.x, artifact.y, 1000, 1000)
+                TestFramework.utils.assertTrue(dist <= 400, "Should spawn near warp zone")
+            end
+        end
+        
+        TestFramework.utils.assertTrue(spawned, "Explorer log should spawn near warp zone")
+        
+        -- Restore
+        Utils.require = oldRequire
+        math.random = oldRandom
+    end
+}
+
+-- Run the test suite
+local function run()
+    return TestFramework.runSuite("Artifact System Tests", tests)
+end
+
+return {run = run}

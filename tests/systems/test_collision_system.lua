@@ -1,12 +1,28 @@
 -- Tests for Collision System
 package.path = package.path .. ";../../?.lua"
 
+local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 local CollisionSystem = Utils.require("src.systems.collision_system")
 
 -- Setup mocks
 Mocks.setup()
+
+-- Mock ring system to avoid ring_constellations dependency
+local originalRequire = Utils.require
+Utils.require = function(path)
+    if path == "src.systems.ring_system" then
+        return {
+            collectRing = function(ring, gameState)
+                ring.collected = true
+                return 10
+            end
+        }
+    else
+        return originalRequire(path)
+    end
+end
 
 -- Initialize test framework
 TestFramework.init()
@@ -18,8 +34,15 @@ local tests = {
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
+        local gameState = {
+            addScore = function() end,
+            getPlanets = function() return planets end
+        }
+        local soundManager = {
+            playLand = function() end
+        }
         
-        local result = CollisionSystem.checkPlanetCollisions(player, planets, nil, {}, {})
+        local result = CollisionSystem.checkPlanetCollisions(player, planets, nil, gameState, soundManager)
         
         TestFramework.utils.assertNotNil(result, "Should detect collision with planet")
         TestFramework.utils.assertEqual(planet, result, "Should return the collided planet")
@@ -29,6 +52,13 @@ local tests = {
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
+        local gameState = {
+            addScore = function() end,
+            getPlanets = function() return planets end
+        }
+        local soundManager = {
+            playLand = function() end
+        }
         
         local spatialGrid = {
             getObjectsInRadius = function(x, y, radius)
@@ -36,7 +66,7 @@ local tests = {
             end
         }
         
-        local result = CollisionSystem.checkPlanetCollisions(player, planets, spatialGrid, {}, {})
+        local result = CollisionSystem.checkPlanetCollisions(player, planets, spatialGrid, gameState, soundManager)
         
         TestFramework.utils.assertNotNil(result, "Should detect collision using spatial grid")
         TestFramework.utils.assertEqual(planet, result, "Should return the collided planet")
@@ -125,6 +155,18 @@ local tests = {
             playLand = function() end
         }
         
+        -- Mock the required modules
+        local originalRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.systems.cosmic_events" then
+                return { triggerQuantumTeleport = function() end }
+            elseif path == "src.systems.warp_drive" then
+                return { createWarpEffect = function() end }
+            else
+                return originalRequire(path)
+            end
+        end
+        
         -- Mock random to return target planet
         local originalRandom = math.random
         math.random = function() return 2 end
@@ -135,17 +177,25 @@ local tests = {
         TestFramework.utils.assertTrue(player.x > 1000, "Player should be teleported to distant planet")
         TestFramework.utils.assertTrue(player.y > 1000, "Player should be teleported to distant planet")
         
-        -- Restore random function
+        -- Restore functions
         math.random = originalRandom
+        Utils.require = originalRequire
     end,
     
     -- Test ring collision detection
     ["ring collision detection"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = false}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
+        local gameState = {
+            addScore = function() end,
+            addCombo = function() end
+        }
+        local soundManager = {
+            playCollectRing = function() end
+        }
         
-        local result = CollisionSystem.checkRingCollisions(player, rings, nil, {}, {})
+        local result = CollisionSystem.checkRingCollisions(player, rings, nil, gameState, soundManager)
         
         TestFramework.utils.assertNotNil(result, "Should detect collision with ring")
         TestFramework.utils.assertEqual(1, #result, "Should return one collected ring")
@@ -153,9 +203,16 @@ local tests = {
     end,
     
     ["ring collision detection with spatial grid"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = false}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
+        local gameState = {
+            addScore = function() end,
+            addCombo = function() end
+        }
+        local soundManager = {
+            playCollectRing = function() end
+        }
         
         local spatialGrid = {
             getObjectsInRadius = function(x, y, radius)
@@ -163,39 +220,60 @@ local tests = {
             end
         }
         
-        local result = CollisionSystem.checkRingCollisions(player, rings, spatialGrid, {}, {})
+        local result = CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameState, soundManager)
         
         TestFramework.utils.assertNotNil(result, "Should detect collision using spatial grid")
         TestFramework.utils.assertEqual(1, #result, "Should return one collected ring")
     end,
     
     ["no ring collision when player on planet"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = true}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = true, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false}
         local rings = {ring}
+        local gameState = {
+            addScore = function() end,
+            addCombo = function() end
+        }
+        local soundManager = {
+            playCollectRing = function() end
+        }
         
-        local result = CollisionSystem.checkRingCollisions(player, rings, nil, {}, {})
+        local result = CollisionSystem.checkRingCollisions(player, rings, nil, gameState, soundManager)
         
-        TestFramework.utils.assertNil(result, "Should not detect collision when player is on planet")
+        TestFramework.utils.assertEqual(0, #result, "Should not detect collision when player is on planet")
     end,
     
     ["no ring collision with collected ring"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = false}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = true}
         local rings = {ring}
+        local gameState = {
+            addScore = function() end,
+            addCombo = function() end
+        }
+        local soundManager = {
+            playCollectRing = function() end
+        }
         
-        local result = CollisionSystem.checkRingCollisions(player, rings, nil, {}, {})
+        local result = CollisionSystem.checkRingCollisions(player, rings, nil, gameState, soundManager)
         
-        TestFramework.utils.assertNil(result, "Should not detect collision with collected ring")
+        TestFramework.utils.assertEqual(0, #result, "Should not detect collision with collected ring")
     end,
     
     ["multiple ring collisions"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = false}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring1 = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local ring2 = {x = 110, y = 110, radius = 30, innerRadius = 15, collected = false, color = {0, 1, 0, 1}}
         local rings = {ring1, ring2}
+        local gameState = {
+            addScore = function() end,
+            addCombo = function() end
+        }
+        local soundManager = {
+            playCollectRing = function() end
+        }
         
-        local result = CollisionSystem.checkRingCollisions(player, rings, nil, {}, {})
+        local result = CollisionSystem.checkRingCollisions(player, rings, nil, gameState, soundManager)
         
         TestFramework.utils.assertNotNil(result, "Should detect multiple collisions")
         TestFramework.utils.assertEqual(2, #result, "Should return two collected rings")
@@ -224,7 +302,11 @@ local tests = {
     -- Test player in ring detection
     ["player in ring detection"] = function()
         local player = {x = 100, y = 100, radius = 10}
-        local ring = {x = 100, y = 100, outerRadius = 50, innerRadius = 20}
+        local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
+        
+        -- Move player to be in the ring (not in center hole)
+        player.x = 130
+        player.y = 100
         
         local result = CollisionSystem.isPlayerInRing(player, ring)
         
@@ -233,7 +315,7 @@ local tests = {
     
     ["player not in ring detection"] = function()
         local player = {x = 1000, y = 1000, radius = 10}
-        local ring = {x = 100, y = 100, outerRadius = 50, innerRadius = 20}
+        local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
         
         local result = CollisionSystem.isPlayerInRing(player, ring)
         
@@ -242,7 +324,7 @@ local tests = {
     
     ["player in ring center hole"] = function()
         local player = {x = 100, y = 100, radius = 5}
-        local ring = {x = 100, y = 100, outerRadius = 50, innerRadius = 20}
+        local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
         
         local result = CollisionSystem.isPlayerInRing(player, ring)
         
@@ -354,7 +436,7 @@ local tests = {
     end,
     
     ["ring collision with game state integration"] = function()
-        local player = {x = 100, y = 100, radius = 10, onPlanet = false}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
         

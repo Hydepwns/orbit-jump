@@ -60,7 +60,7 @@ function SaveSystem.collectSaveData()
     
     -- Get player stats from GameState
     local GameState = Utils.require("src.core.game_state")
-    if GameState then
+    if GameState and GameState.data then
         saveData.player.totalScore = GameState.data.score or 0
         saveData.player.gameTime = GameState.data.gameTime or 0
     end
@@ -82,10 +82,12 @@ function SaveSystem.collectSaveData()
         saveData.currency = UpgradeSystem.currency or 0
         saveData.upgrades = {}
         
-        for id, upgrade in pairs(UpgradeSystem.upgrades) do
-            saveData.upgrades[id] = {
-                currentLevel = upgrade.currentLevel or 0
-            }
+        if UpgradeSystem.upgrades then
+            for id, upgrade in pairs(UpgradeSystem.upgrades) do
+                saveData.upgrades[id] = {
+                    currentLevel = upgrade.currentLevel or 0
+                }
+            end
         end
     end
     
@@ -95,12 +97,14 @@ function SaveSystem.collectSaveData()
         saveData.achievements = {}
         
         -- Save achievement unlock status
-        for id, achievement in pairs(AchievementSystem.achievements) do
-            if achievement.unlocked then
-                saveData.achievements[id] = {
-                    unlocked = true,
-                    unlockedAt = achievement.unlockedAt
-                }
+        if AchievementSystem.achievements then
+            for id, achievement in pairs(AchievementSystem.achievements) do
+                if achievement.unlocked then
+                    saveData.achievements[id] = {
+                        unlocked = true,
+                        unlockedAt = achievement.unlockedAt
+                    }
+                end
             end
         end
         
@@ -126,9 +130,11 @@ function SaveSystem.collectSaveData()
     local ArtifactSystem = Utils.require("src.systems.artifact_system")
     if ArtifactSystem then
         saveData.collectedArtifacts = {}
-        for _, artifact in ipairs(ArtifactSystem.artifacts) do
-            if artifact.discovered then
-                saveData.collectedArtifacts[artifact.id] = true
+        if ArtifactSystem.artifacts then
+            for _, artifact in ipairs(ArtifactSystem.artifacts) do
+                if artifact.discovered then
+                    saveData.collectedArtifacts[artifact.id] = true
+                end
             end
         end
         saveData.artifactCount = ArtifactSystem.collectedCount or 0
@@ -168,6 +174,7 @@ function SaveSystem.save()
         SaveSystem.saveIndicatorTimer = 2.0 -- Show for 2 seconds
     else
         Utils.Logger.error("Failed to save game: %s", message)
+        SaveSystem.showSaveIndicator = false
     end
     
     return success, message

@@ -1,126 +1,197 @@
 # Orbit Jump Test Suite
 
-This directory contains the comprehensive test suite for Orbit Jump, featuring a custom Busted-style test framework.
+This directory contains the comprehensive test suite for Orbit Jump, organized by test type and purpose.
 
-## Test Framework
+## Test Structure
 
-We use a custom implementation of Busted-style syntax (`tests/busted.lua`) that provides:
+```
+tests/
+├── README.md                    # This file
+├── run_tests.sh                 # Main test runner (runs all test types)
+├── run_busted_tests.lua         # Fast unit tests using Busted-style framework
+├── run_unit_tests.lua           # Comprehensive unit tests using new framework
+├── run_tests.lua                # Legacy tests (being phased out)
+├── modern_test_framework.lua    # New test framework with advanced features
+├── mocks.lua                    # Comprehensive mocking system
+├── test_framework.lua           # Legacy test framework
+├── mocks.lua                    # Legacy mocks
+├── unit/                        # Unit tests (isolated, fast)
+│   ├── game_logic_tests.lua
+│   ├── renderer_tests.lua
+│   ├── save_system_tests.lua
+│   ├── utils_tests.lua
+│   ├── camera_tests.lua
+│   └── collision_tests.lua
+├── integration/                 # Integration tests (end-to-end flows)
+│   └── (future integration tests)
+└── performance/                 # Performance and benchmark tests
+    └── (future performance tests)
+```
 
-- **BDD-style syntax**: `describe`, `it`, `before_each`, `after_each`
-- **Rich assertions**: `assert.equals`, `assert.is_true`, `assert.is_false`, `assert.is_nil`, `assert.are_same`
-- **Spy/Mock support**: `spy()` for function mocking and call tracking
-- **Colored output**: Green for passing tests, red for failures
-- **Detailed error reporting**: Shows exact assertion failures with expected vs actual values
+## Test Types
+
+### 1. **Unit Tests** (`tests/unit/`)
+
+- **Purpose**: Test individual functions and modules in isolation
+- **Framework**: Custom modern framework with comprehensive mocking
+- **Speed**: Fast (milliseconds per test)
+- **Coverage**: Deep coverage of edge cases and error conditions
+- **Dependencies**: Fully mocked external dependencies
+
+**Features:**
+
+- Call tracking and verification
+- Comprehensive assertion library
+- Performance benchmarking
+- Test decorators (beforeEach, afterEach, skip)
+- Detailed error reporting
+
+### 2. **Busted Tests** (`tests/run_busted_tests.lua`)
+
+- **Purpose**: Fast unit tests using Busted-style syntax
+- **Framework**: Lightweight Busted-compatible framework
+- **Speed**: Very fast
+- **Coverage**: Basic functionality testing
+- **Dependencies**: Minimal mocking
+
+### 3. **Legacy Tests** (`tests/run_tests.lua`)
+
+- **Purpose**: Original test suite (being phased out)
+- **Framework**: Custom legacy framework
+- **Status**: Deprecated, maintained for compatibility
+- **Dependencies**: Some external dependencies
+
+### 4. **Integration Tests** (`tests/integration/`)
+
+- **Purpose**: Test complete game flows and system interactions
+- **Status**: Planned for future development
+- **Scope**: End-to-end game scenarios
+
+### 5. **Performance Tests** (`tests/performance/`)
+
+- **Purpose**: Benchmark critical game systems
+- **Status**: Planned for future development
+- **Scope**: Frame rate, memory usage, load times
 
 ## Running Tests
 
-### Run all tests
+### Run All Tests
+
 ```bash
 ./run_tests.sh
 ```
 
-### Run only Busted-style tests
-```bash
-lua tests/run_busted_tests.lua
-```
+### Run Specific Test Types
 
-### Run legacy tests (if available)
 ```bash
+# Unit tests only
+lua tests/run_unit_tests.lua
+
+# Busted tests only
+lua tests/run_busted_tests.lua
+
+# Legacy tests only
 lua tests/run_tests.lua
 ```
 
-## Writing Tests
+## Test Framework Comparison
 
-### Basic Test Structure
+| Feature | Unit Tests | Busted Tests | Legacy Tests |
+|---------|------------|--------------|--------------|
+| **Speed** | Fast | Very Fast | Medium |
+| **Mocking** | Comprehensive | Basic | Limited |
+| **Assertions** | Rich library | Basic | Basic |
+| **Call Tracking** | ✅ Yes | ❌ No | ❌ No |
+| **Performance Testing** | ✅ Yes | ❌ No | ❌ No |
+| **Error Reporting** | Detailed | Basic | Basic |
+| **Test Decorators** | ✅ Yes | ❌ No | ❌ No |
+| **Maintenance** | Active | Active | Deprecated |
 
-```lua
-require("tests.busted")
-local MyModule = require("src.my_module")
+## Migration Strategy
 
-describe("MyModule", function()
-    describe("functionality group", function()
-        local testData
-        
-        before_each(function()
-            -- Setup before each test
-            testData = {value = 42}
-        end)
-        
-        after_each(function()
-            -- Cleanup after each test
-            testData = nil
-        end)
-        
-        it("should do something", function()
-            local result = MyModule.doSomething(testData.value)
-            assert.equals(84, result)
-        end)
-        
-        it("should handle edge cases", function()
-            assert.has_error(function()
-                MyModule.doSomething(nil)
-            end)
-        end)
-    end)
-end)
-```
+### Current State
 
-### Available Assertions
+- **Unit Tests**: Primary test suite (comprehensive, well-maintained)
+- **Busted Tests**: Fast feedback tests (complementary)
+- **Legacy Tests**: Deprecated (maintained for compatibility)
 
-- `assert.equals(expected, actual, [message])` - Check equality
-- `assert.is_true(value, [message])` - Check if value is true
-- `assert.is_false(value, [message])` - Check if value is false
-- `assert.is_nil(value, [message])` - Check if value is nil
-- `assert.is_not_nil(value, [message])` - Check if value is not nil
-- `assert.has_error(fn, [message])` - Check if function throws error
-- `assert.are_same(expected, actual, [message])` - Deep table comparison
+### Future Plan
 
-### Using Spies
+1. **Phase 1**: ✅ Complete unit test coverage
+2. **Phase 2**: Add integration tests for game flows
+3. **Phase 3**: Add performance benchmarks
+4. **Phase 4**: Remove legacy tests when no longer needed
 
-```lua
-it("should call callback", function()
-    local callback = spy()
-    
-    MyModule.processWithCallback(callback)
-    
-    assert.equals(1, callback.callCount())
-    assert.equals("expected_arg", callback.calls[1][1])
-end)
-```
+## Why This Structure?
 
-## Test Organization
+### **Not "Modern" vs "Old"**
 
-Tests are organized by module type:
+The tests aren't "modern" vs "legacy" - they serve different purposes:
 
-- `core/` - Core game systems (game logic, state, rendering)
-- `systems/` - Game systems (collision, particles, progression)
-- `utils/` - Utility modules
-- `audio/` - Audio system tests
-- `ui/` - User interface tests
-- `world/` - World generation tests
-- `performance/` - Performance monitoring tests
-- `blockchain/` - Blockchain integration tests
-- `integration_tests/` - Full integration tests
+- **Unit Tests**: Deep, isolated testing with comprehensive mocking
+- **Busted Tests**: Fast feedback during development
+- **Legacy Tests**: Compatibility during transition
 
-## Converting Legacy Tests
+### **Complementary, Not Replacement**
 
-To convert a legacy test to Busted format:
+Each test type serves a specific purpose:
 
-```bash
-lua tests/convert_to_busted.lua tests/old_test.lua tests/new_test_busted.lua
-```
+- **Unit Tests**: Catch bugs in individual functions
+- **Busted Tests**: Quick feedback during development
+- **Integration Tests**: Catch bugs in system interactions
+- **Performance Tests**: Catch performance regressions
 
-## Mocking
+### **Clear Organization**
 
-Some tests require mocking Love2D functions. Configure mocks in test runner:
+- `unit/`: Isolated function testing
+- `integration/`: System interaction testing
+- `performance/`: Benchmark testing
+
+## Best Practices
+
+### Writing Unit Tests
 
 ```lua
-local testFiles = {
-    {file = "tests/core/test_game_logic_busted.lua", useMocks = false},
-    {file = "tests/ui/test_ui_system_busted.lua", useMocks = true},
-}
+-- Use descriptive test names
+["should calculate distance correctly"] = function()
+    local distance = Utils.distance(0, 0, 3, 4)
+    ModernTestFramework.assert.equal(5, distance)
+end
+
+-- Test edge cases
+["should handle nil inputs gracefully"] = function()
+    local distance = Utils.distance(nil, 0, 3, 4)
+    ModernTestFramework.assert.equal(0, distance)
+end
+
+-- Use call tracking for verification
+["should call graphics functions"] = function()
+    ModernTestFramework.utils.resetCalls()
+    Renderer.drawPlayer(player)
+    ModernTestFramework.assert.calledAtLeast("setColor", 1)
+end
 ```
 
-## CI/CD Integration
+### Test Organization
 
-The test suite is automatically run on GitHub Actions for every push and pull request. See `.github/workflows/test.yml` for configuration.
+- Group related tests together
+- Use descriptive test names
+- Test both success and failure cases
+- Test edge cases and error conditions
+- Keep tests independent and fast
+
+## Contributing
+
+When adding new tests:
+
+1. **Unit Tests**: Add to `tests/unit/` for isolated function testing
+2. **Integration Tests**: Add to `tests/integration/` for system testing
+3. **Performance Tests**: Add to `tests/performance/` for benchmarks
+4. **Update Documentation**: Keep this README current
+
+## Test Coverage Goals
+
+- **Unit Tests**: >80% function coverage
+- **Integration Tests**: >70% game flow coverage
+- **Performance Tests**: Critical path benchmarks
+- **Overall**: >90% combined coverage

@@ -20,7 +20,8 @@ local coreTests = {
     Utils.require("tests.core.test_game_logic"),
     Utils.require("tests.core.test_game_state"),
     Utils.require("tests.core.test_game_state_extended"),
-    Utils.require("tests.core.test_config")
+    Utils.require("tests.core.test_config"),
+    Utils.require("tests.core.test_game_simple")
 }
 
 for _, test in ipairs(coreTests) do
@@ -34,7 +35,8 @@ Utils.Logger.info("\n--- Utility Tests ---")
 local utilityTests = {
     Utils.require("tests.utils.test_utils"),
     Utils.require("tests.utils.test_camera"),
-    Utils.require("tests.utils.test_renderer")
+    Utils.require("tests.utils.test_renderer"),
+    Utils.require("tests.core.test_renderer")
 }
 
 for _, test in ipairs(utilityTests) do
@@ -49,7 +51,13 @@ local systemTests = {
     Utils.require("tests.systems.test_collision_system"),
     Utils.require("tests.systems.test_particle_system"),
     Utils.require("tests.systems.test_progression_system"),
-    Utils.require("tests.systems.test_ring_system")
+    Utils.require("tests.systems.test_ring_system"),
+    Utils.require("tests.systems.test_save_system"),
+    Utils.require("tests.systems.test_player_system"),
+    Utils.require("tests.systems.test_artifact_system"),
+    Utils.require("tests.systems.test_warp_drive"),
+    Utils.require("tests.systems.test_map_system"),
+    Utils.require("tests.systems.test_ring_constellations")
 }
 
 for _, test in ipairs(systemTests) do
@@ -76,7 +84,11 @@ Utils.Logger.info("\n--- UI Tests ---")
 local uiTests = {
     Utils.require("tests.ui.test_ui_system"),
     Utils.require("tests.ui.test_achievement_system"),
-    Utils.require("tests.ui.test_upgrade_system")
+    Utils.require("tests.ui.test_upgrade_system"),
+    Utils.require("tests.ui.test_lore_viewer"),
+    Utils.require("tests.ui.test_tutorial_system"),
+    Utils.require("tests.ui.test_settings_menu"),
+    Utils.require("tests.ui.test_pause_menu")
 }
 
 for _, test in ipairs(uiTests) do
@@ -103,7 +115,8 @@ end
 -- Run Performance Tests
 Utils.Logger.info("\n--- Performance Tests ---")
 local performanceTests = {
-    Utils.require("tests.performance.test_performance_monitor")
+    Utils.require("tests.performance.test_performance_monitor"),
+    Utils.require("tests.performance.test_performance_system")
 }
 
 for _, test in ipairs(performanceTests) do

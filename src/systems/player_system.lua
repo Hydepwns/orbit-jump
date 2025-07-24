@@ -144,7 +144,7 @@ function PlayerSystem.jump(player, pullPower, pullAngle, gameState, soundManager
     -- Apply speed boost if active
     local RingSystem = Utils.require("src.systems.ring_system")
     if RingSystem.isActive("speed") then
-        jumpVx, jumpVy = GameLogic.applySpeedBoost(jumpVx, jumpVy)
+        jumpVx, jumpVy = GameLogic.applySpeedBoost(jumpVx, jumpVy, 1.5)
     end
     
     -- Set player state

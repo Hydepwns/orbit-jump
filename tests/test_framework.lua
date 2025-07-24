@@ -143,6 +143,13 @@ end
 -- Test execution
 function TestFramework.runTest(testName, testFunc)
     local startTime = os.clock()
+    
+    -- Reset mocks before each test for isolation
+    local Mocks = Utils.require("tests.mocks")
+    if Mocks and Mocks.reset then
+        Mocks.reset()
+    end
+    
     local success, error = Utils.ErrorHandler.safeCall(testFunc)
     local endTime = os.clock()
     local duration = endTime - startTime
