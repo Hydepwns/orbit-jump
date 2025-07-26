@@ -4,7 +4,7 @@
 package.path = package.path .. ";../?.lua"
 
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.test_framework")
+local TestFramework = Utils.require("tests.modern_test_framework")
 
 -- Initialize test framework
 TestFramework.init()

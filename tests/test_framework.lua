@@ -176,7 +176,7 @@ function TestFramework.runTest(testName, testFunc)
 end
 
 -- Test suite execution
-function TestFramework.runSuite(suiteName, tests)
+function TestFramework.runTests(tests, suiteName)
     Utils.Logger.info("\n--- %s ---", suiteName)
     
     for testName, testFunc in pairs(tests) do

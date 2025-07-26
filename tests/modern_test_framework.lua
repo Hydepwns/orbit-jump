@@ -187,6 +187,14 @@ ModernTestFramework.assert = {
     end
 }
 
+-- Add aliases for backward compatibility with old test framework
+ModernTestFramework.assert.assertEqual = ModernTestFramework.assert.equal
+ModernTestFramework.assert.assertNotEqual = ModernTestFramework.assert.notEqual
+ModernTestFramework.assert.assertTrue = ModernTestFramework.assert.isTrue
+ModernTestFramework.assert.assertFalse = ModernTestFramework.assert.isFalse
+ModernTestFramework.assert.assertNil = ModernTestFramework.assert.isNil
+ModernTestFramework.assert.assertNotNil = ModernTestFramework.assert.notNil
+
 -- Test utilities
 ModernTestFramework.utils = {
     -- Reset call tracker

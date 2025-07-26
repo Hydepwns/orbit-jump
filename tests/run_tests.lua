@@ -25,7 +25,7 @@ local coreTests = {
 }
 
 for _, test in ipairs(coreTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -40,7 +40,7 @@ local utilityTests = {
 }
 
 for _, test in ipairs(utilityTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -61,7 +61,7 @@ local systemTests = {
 }
 
 for _, test in ipairs(systemTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -74,7 +74,7 @@ local audioTests = {
 }
 
 for _, test in ipairs(audioTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -92,7 +92,7 @@ local uiTests = {
 }
 
 for _, test in ipairs(uiTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -107,7 +107,7 @@ local worldTests = {
 }
 
 for _, test in ipairs(worldTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -120,7 +120,7 @@ local performanceTests = {
 }
 
 for _, test in ipairs(performanceTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -132,7 +132,7 @@ local devTests = {
 }
 
 for _, test in ipairs(devTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -144,7 +144,7 @@ local blockchainTests = {
 }
 
 for _, test in ipairs(blockchainTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
@@ -156,7 +156,7 @@ local integrationTests = {
 }
 
 for _, test in ipairs(integrationTests) do
-    if not test:run() then
+    if not test.run() then
         allPassed = false
     end
 end
