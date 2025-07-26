@@ -404,12 +404,30 @@ local tests = {
     end,
     
     ["test hover detection"] = function()
-        -- Mock WarpZones before loading MapSystem
+        -- Mock WarpZones and ArtifactSystem before loading MapSystem
         local originalRequire = Utils.require
         Utils.require = function(module)
             if module == "src.systems.warp_zones" then
                 return {
                     activeZones = {}
+                }
+            elseif module == "src.systems.artifact_system" then
+                return {
+                    spawnedArtifacts = {
+                        {
+                            x = 100,
+                            y = 100,
+                            collected = false,
+                            definition = {
+                                color = {1, 0, 1},
+                                name = "Test Artifact"
+                            }
+                        }
+                    },
+                    drawOnMap = function(camera, mapCenterX, mapCenterY, scale, alpha)
+                        -- Mock implementation that tests the hover logic
+                        return true
+                    end
                 }
             end
             return originalRequire and originalRequire(module) or require(module)
