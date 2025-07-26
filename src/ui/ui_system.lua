@@ -139,6 +139,92 @@ function UISystem.drawGameUI()
     if not GameState.player.onPlanet then
         love.graphics.print("Press R to reset if stuck", screenWidth - 200, screenHeight - 30)
     end
+    
+    -- Draw learning system status (101% feature)
+    UISystem.drawLearningIndicator(screenWidth, screenHeight)
+end
+
+-- Draw learning system indicator
+function UISystem.drawLearningIndicator(screenWidth, screenHeight)
+    --[[
+        Learning Awareness: Making the Invisible Visible
+        
+        This indicator shows the player that the game is learning and adapting
+        to their behavior. It's a small but important piece of the 101% experience -
+        letting players know that their unique style is being recognized and valued.
+    --]]
+    
+    -- Get learning status from various systems
+    local WarpDrive = Utils.require("src.systems.warp_drive")
+    local PlayerAnalytics = Utils.require("src.systems.player_analytics")
+    local PlayerSystem = Utils.require("src.systems.player_system")
+    
+    local isLearning = false
+    local learningInfo = {}
+    
+    -- Check if WarpDrive is learning
+    if WarpDrive and WarpDrive.memory then
+        local stats = WarpDrive.getMemoryStats()
+        if stats.totalWarps > 0 then
+            isLearning = true
+            table.insert(learningInfo, string.format("Route Memory: %d paths", stats.knownRoutes))
+            if stats.efficiency > 0.5 then
+                table.insert(learningInfo, string.format("Efficiency: %.0f%%", stats.efficiency * 100))
+            end
+        end
+    end
+    
+    -- Check if PlayerAnalytics is learning
+    if PlayerAnalytics and PlayerAnalytics.memory then
+        local profile = PlayerAnalytics.getPlayerProfile()
+        if profile and profile.skillLevel and profile.skillLevel > 0 then
+            isLearning = true
+            table.insert(learningInfo, string.format("Skill: %.0f%%", profile.skillLevel * 100))
+            table.insert(learningInfo, string.format("Style: %s", profile.movementStyle or "learning"))
+        end
+    end
+    
+    -- Check if physics are adapting
+    if PlayerSystem and PlayerSystem.getAdaptivePhysicsStatus then
+        local physicsStatus = PlayerSystem.getAdaptivePhysicsStatus()
+        if physicsStatus.isAdapting then
+            isLearning = true
+            table.insert(learningInfo, "Physics: Adapted")
+        end
+    end
+    
+    -- Draw the indicator if systems are learning
+    if isLearning then
+        local indicatorX = screenWidth - 220
+        local indicatorY = screenHeight - 120
+        local indicatorWidth = 200
+        local indicatorHeight = 80
+        
+        -- Background with subtle pulse
+        local pulseAlpha = 0.3 + 0.2 * math.sin(love.timer.getTime() * 2)
+        Utils.setColor({0.1, 0.3, 0.6}, pulseAlpha)
+        love.graphics.rectangle("fill", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
+        
+        -- Border
+        Utils.setColor({0.3, 0.6, 1.0}, 0.8)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle("line", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
+        
+        -- Title with brain icon effect
+        Utils.setColor({0.8, 0.9, 1.0}, 1.0)
+        love.graphics.setFont(love.graphics.newFont(12))
+        local brainPulse = 1.0 + 0.1 * math.sin(love.timer.getTime() * 3)
+        love.graphics.print("🧠 Learning...", indicatorX + 8, indicatorY + 8)
+        
+        -- Learning details
+        Utils.setColor({0.7, 0.8, 0.9}, 0.9)
+        love.graphics.setFont(love.graphics.newFont(10))
+        for i, info in ipairs(learningInfo) do
+            if i <= 3 then -- Show max 3 lines to fit
+                love.graphics.print(info, indicatorX + 8, indicatorY + 25 + (i-1) * 15)
+            end
+        end
+    end
 end
 
 function UISystem.drawProgressionBar()

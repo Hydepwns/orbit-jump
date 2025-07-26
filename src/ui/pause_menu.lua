@@ -54,6 +54,7 @@ function PauseMenu.init()
     PauseMenu.isPaused = false
     PauseMenu.selectedOption = 1
     PauseMenu.fadeAlpha = 0
+    return true
 end
 
 -- Toggle pause
