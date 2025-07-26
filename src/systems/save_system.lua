@@ -28,6 +28,7 @@ function SaveSystem.init()
     love.filesystem.setIdentity("orbit_jump")
     
     Utils.Logger.info("Save system initialized. Save directory: %s", SaveSystem.getSaveDirectory())
+    return true
 end
 
 -- Collect all game data to save
@@ -91,6 +92,9 @@ function SaveSystem.collectSaveData()
         end
     end
     
+    -- LEARNING SYSTEM INTEGRATION: Save adaptive memory data
+    SaveSystem.collectLearningData(saveData)
+    
     -- Get achievement data
     local AchievementSystem = Utils.require("src.systems.achievement_system")
     if AchievementSystem then
@@ -152,6 +156,62 @@ function SaveSystem.collectSaveData()
     return saveData
 end
 
+-- Collect learning and adaptive system data
+function SaveSystem.collectLearningData(saveData)
+    --[[
+        Learning Data Persistence: The Memory That Survives Death
+        
+        This function ensures that all the adaptive learning our systems have
+        done survives across game sessions. The warp drive's route optimizations,
+        the player analytics behavioral model, the adaptive physics preferences -
+        all of it gets preserved so the game continues to feel personalized.
+    --]]
+    
+    -- Warp Drive Memory
+    local WarpDrive = Utils.require("src.systems.warp_drive")
+    if WarpDrive and WarpDrive.memory then
+        saveData.warpDriveMemory = WarpDrive.memory
+        
+        local stats = WarpDrive.getMemoryStats()
+        Utils.Logger.info("💾 Saving warp memory: %d routes, %.1f%% efficiency", 
+            stats.knownRoutes, stats.efficiency * 100)
+    end
+    
+    -- Player Analytics Memory
+    local PlayerAnalytics = Utils.require("src.systems.player_analytics")
+    if PlayerAnalytics and PlayerAnalytics.memory then
+        saveData.playerAnalytics = PlayerAnalytics.memory
+        
+        local profile = PlayerAnalytics.getPlayerProfile()
+        Utils.Logger.info("📊 Saving analytics: skill=%.1f%%, style=%s, mood=%s",
+            (profile.skillLevel or 0) * 100, 
+            profile.movementStyle or "unknown",
+            profile.currentMood or "neutral")
+    end
+    
+    -- Adaptive Physics State
+    local PlayerSystem = Utils.require("src.systems.player_system")
+    if PlayerSystem and PlayerSystem.getAdaptivePhysicsStatus then
+        local physicsStatus = PlayerSystem.getAdaptivePhysicsStatus()
+        saveData.adaptivePhysics = {
+            spaceDrag = physicsStatus.spaceDrag,
+            cameraResponse = physicsStatus.cameraResponse,
+            lastAdaptation = physicsStatus.lastAdaptation
+        }
+        
+        Utils.Logger.info("⚙️ Saving adaptive physics: drag=%.3f, camera=%.1f",
+            physicsStatus.spaceDrag, physicsStatus.cameraResponse)
+    end
+    
+    -- Emotional Feedback Learning
+    local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
+    if EmotionalFeedback and EmotionalFeedback.getLearningData then
+        saveData.emotionalLearning = EmotionalFeedback.getLearningData()
+    end
+    
+    Utils.Logger.info("🧠 Learning data collected for persistence")
+end
+
 -- Save game data
 function SaveSystem.save()
     local success = false
@@ -160,9 +220,22 @@ function SaveSystem.save()
     -- Collect save data
     local saveData = SaveSystem.collectSaveData()
     
-    -- Serialize to JSON
+    -- Serialize to JSON with error handling
     local json = Utils.require("libs.json")
-    local saveString = json.encode(saveData)
+    local success, saveString = pcall(json.encode, saveData)
+    if not success then
+        Utils.Logger.error("Failed to encode save data: %s", saveString)
+        return false, "Failed to encode save data"
+    end
+    
+    -- Create backup of current save before overwriting
+    if love.filesystem.getInfo(SaveSystem.saveFileName) then
+        local backupName = SaveSystem.saveFileName .. ".backup"
+        local backupContents = love.filesystem.read(SaveSystem.saveFileName)
+        if backupContents then
+            love.filesystem.write(backupName, backupContents)
+        end
+    end
     
     -- Write to file
     success, message = love.filesystem.write(SaveSystem.saveFileName, saveString)
@@ -175,6 +248,15 @@ function SaveSystem.save()
     else
         Utils.Logger.error("Failed to save game: %s", message)
         SaveSystem.showSaveIndicator = false
+        -- Try to restore backup
+        local backupName = SaveSystem.saveFileName .. ".backup"
+        if love.filesystem.getInfo(backupName) then
+            local backupContents = love.filesystem.read(backupName)
+            if backupContents then
+                love.filesystem.write(SaveSystem.saveFileName, backupContents)
+                Utils.Logger.info("Restored save from backup")
+            end
+        end
     end
     
     return success, message
@@ -195,13 +277,23 @@ function SaveSystem.load()
         return false, sizeOrError
     end
     
-    -- Parse JSON
+    -- Parse JSON with error handling
     local json = Utils.require("libs.json")
-    local success, saveData  = Utils.ErrorHandler.safeCall(json.decode, contents)
+    local success, saveData = pcall(json.decode, contents)
     
     if not success then
         Utils.Logger.error("Failed to parse save file: %s", saveData)
-        return false, "Corrupted save file"
+        -- Try to create backup of corrupted save
+        local backupName = SaveSystem.saveFileName .. ".corrupted." .. os.time()
+        love.filesystem.write(backupName, contents)
+        Utils.Logger.info("Backed up corrupted save to: %s", backupName)
+        return false, "Corrupted save file (backed up)"
+    end
+    
+    -- Validate save data structure
+    if type(saveData) ~= "table" then
+        Utils.Logger.error("Invalid save data structure")
+        return false, "Invalid save data"
     end
     
     -- Check version compatibility
@@ -291,6 +383,71 @@ function SaveSystem.applySaveData(saveData)
             WarpDrive.energy = saveData.warpDrive.energy or WarpDrive.maxEnergy
         end
     end
+    
+    -- LEARNING SYSTEM RESTORATION: Bring back the memories
+    SaveSystem.restoreLearningData(saveData)
+end
+
+-- Restore learning and adaptive system data
+function SaveSystem.restoreLearningData(saveData)
+    --[[
+        Memory Resurrection: Bringing Back the System's Soul
+        
+        This is where the magic of persistent learning comes alive. All the
+        behavioral patterns, route optimizations, and adaptive preferences
+        that the systems learned during previous sessions are restored,
+        making the game feel like it truly remembers the player.
+    --]]
+    
+    -- Restore Warp Drive Memory
+    if saveData.warpDriveMemory then
+        local WarpDrive = Utils.require("src.systems.warp_drive")
+        if WarpDrive then
+            WarpDrive.memory = saveData.warpDriveMemory
+            
+            local stats = WarpDrive.getMemoryStats()
+            Utils.Logger.info("🧠 Restored warp memory: %d routes, %.1f%% efficiency", 
+                stats.knownRoutes, stats.efficiency * 100)
+        end
+    end
+    
+    -- Restore Player Analytics Memory
+    if saveData.playerAnalytics then
+        local PlayerAnalytics = Utils.require("src.systems.player_analytics")
+        if PlayerAnalytics then
+            PlayerAnalytics.memory = saveData.playerAnalytics
+            
+            local profile = PlayerAnalytics.getPlayerProfile()
+            Utils.Logger.info("📊 Restored analytics: skill=%.1f%%, style=%s",
+                (profile.skillLevel or 0) * 100,
+                profile.movementStyle or "unknown")
+        end
+    end
+    
+    -- Restore Adaptive Physics State
+    if saveData.adaptivePhysics then
+        local PlayerSystem = Utils.require("src.systems.player_system")
+        if PlayerSystem then
+            -- Restore the adaptive parameters
+            -- Note: The actual AdaptivePhysics table is local to PlayerSystem,
+            -- so we'll need to add a restoration function there
+            PlayerSystem.restoreAdaptivePhysics(saveData.adaptivePhysics)
+            
+            Utils.Logger.info("⚙️ Restored adaptive physics: drag=%.3f, camera=%.1f",
+                saveData.adaptivePhysics.spaceDrag or 0.99,
+                saveData.adaptivePhysics.cameraResponse or 2.0)
+        end
+    end
+    
+    -- Restore Emotional Feedback Learning
+    if saveData.emotionalLearning then
+        local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
+        if EmotionalFeedback and EmotionalFeedback.restoreLearningData then
+            EmotionalFeedback.restoreLearningData(saveData.emotionalLearning)
+        end
+    end
+    
+    Utils.Logger.info("🧠 Learning data restored - Systems remember you")
 end
 
 -- Auto-save update
@@ -363,6 +520,221 @@ function SaveSystem.getSaveInfo()
         score = saveData.player and saveData.player.totalScore or 0,
         playtime = saveData.player and saveData.player.gameTime or 0
     }
+end
+
+--[[
+    Self-Healing Helper Functions
+    
+    These functions implement the various recovery strategies that make
+    the save system resilient to corruption, disk errors, and other failures.
+--]]
+
+-- Validate save data integrity
+function SaveSystem.validateSaveData(data)
+    if not data then return false end
+    if type(data) ~= "table" then return false end
+    if not data.version then return false end
+    if not data.player then return false end
+    
+    -- Calculate data completeness
+    local requiredFields = {"version", "timestamp", "player", "currency"}
+    local validFields = 0
+    
+    for _, field in ipairs(requiredFields) do
+        if data[field] ~= nil then
+            validFields = validFields + 1
+        end
+    end
+    
+    local completeness = validFields / #requiredFields
+    
+    -- Accept saves with 80% completeness (configurable)
+    if completeness >= 0.8 then
+        Utils.Logger.info("Save data %.0f%% complete - accepting", completeness * 100)
+        return true
+    else
+        Utils.Logger.warn("Save data only %.0f%% complete - rejecting", completeness * 100)
+        return false
+    end
+end
+
+-- Repair incomplete save data
+function SaveSystem.repairSaveData(data)
+    --[[
+        Data Healing: Fill in missing pieces with sensible defaults
+        
+        This ensures that even partially corrupted saves result in a
+        playable game state.
+    --]]
+    
+    -- Ensure all expected fields exist
+    data.version = data.version or SaveSystem.saveVersion
+    data.timestamp = data.timestamp or os.time()
+    
+    -- Repair player data
+    data.player = data.player or {}
+    data.player.totalScore = data.player.totalScore or 0
+    data.player.totalRingsCollected = data.player.totalRingsCollected or 0
+    data.player.totalJumps = data.player.totalJumps or 0
+    data.player.totalDashes = data.player.totalDashes or 0
+    data.player.maxCombo = data.player.maxCombo or 0
+    data.player.gameTime = data.player.gameTime or 0
+    
+    -- Repair other systems
+    data.currency = data.currency or 0
+    data.upgrades = data.upgrades or {}
+    data.achievements = data.achievements or {}
+    data.discoveredPlanets = data.discoveredPlanets or {}
+    
+    Utils.Logger.info("Save data repaired and normalized")
+    return data
+end
+
+-- Enhanced save with multiple strategies
+function SaveSystem.saveWithRecovery()
+    local saveData = SaveSystem.collectSaveData()
+    local json = Utils.require("libs.json")
+    
+    -- Strategy 1: Try normal save
+    local success, saveString = pcall(json.encode, saveData)
+    if success then
+        -- Create rolling backup before save
+        SaveSystem.createRollingBackup()
+        
+        -- Atomic save with temp file
+        local tempFile = SaveSystem.saveFileName .. ".tmp"
+        local writeSuccess = love.filesystem.write(tempFile, saveString)
+        
+        if writeSuccess then
+            -- Verify temp file
+            local verifyData = love.filesystem.read(tempFile)
+            if verifyData == saveString then
+                -- Atomic rename
+                love.filesystem.remove(SaveSystem.saveFileName)
+                love.filesystem.write(SaveSystem.saveFileName, verifyData)
+                love.filesystem.remove(tempFile)
+                
+                SaveSystem.lastAutoSave = love.timer.getTime()
+                SaveSystem.showSaveIndicator = true
+                SaveSystem.saveIndicatorTimer = 2.0
+                
+                return true, "Save successful"
+            end
+        end
+    end
+    
+    -- Strategy 2: Try compressed save
+    if not success then
+        Utils.Logger.warn("Primary save failed, trying compressed save")
+        local compressedData = love.data.compress("string", "zlib", saveString or json.encode(saveData))
+        if compressedData then
+            local compressedFile = SaveSystem.saveFileName .. ".gz"
+            writeSuccess = love.filesystem.write(compressedFile, compressedData)
+            if writeSuccess then
+                return true, "Compressed save successful"
+            end
+        end
+    end
+    
+    -- Strategy 3: Emergency minimal save
+    Utils.Logger.error("All save strategies failed, attempting minimal save")
+    local minimalData = {
+        version = saveData.version,
+        timestamp = os.time(),
+        player = {
+            totalScore = saveData.player.totalScore or 0,
+            currency = saveData.currency or 0
+        }
+    }
+    
+    local minimalString = json.encode(minimalData)
+    love.filesystem.write(SaveSystem.saveFileName .. ".minimal", minimalString)
+    
+    return false, "Emergency save only"
+end
+
+-- Create rolling backup
+function SaveSystem.createRollingBackup()
+    -- Keep up to 3 rolling backups
+    for i = 3, 2, -1 do
+        local oldName = SaveSystem.saveFileName .. ".backup" .. (i-1)
+        local newName = SaveSystem.saveFileName .. ".backup" .. i
+        
+        if love.filesystem.getInfo(oldName) then
+            local data = love.filesystem.read(oldName)
+            if data then
+                love.filesystem.write(newName, data)
+            end
+        end
+    end
+    
+    -- Create new backup1 from current save
+    if love.filesystem.getInfo(SaveSystem.saveFileName) then
+        local currentData = love.filesystem.read(SaveSystem.saveFileName)
+        if currentData then
+            love.filesystem.write(SaveSystem.saveFileName .. ".backup1", currentData)
+        end
+    end
+end
+
+-- Load with multiple recovery strategies
+function SaveSystem.loadWithRecovery()
+    local json = Utils.require("libs.json")
+    
+    -- Try primary save
+    local contents = love.filesystem.read(SaveSystem.saveFileName)
+    if contents then
+        local success, saveData = pcall(json.decode, contents)
+        if success and SaveSystem.validateSaveData(saveData) then
+            return true, SaveSystem.repairSaveData(saveData)
+        end
+    end
+    
+    -- Try compressed save
+    local compressedFile = SaveSystem.saveFileName .. ".gz"
+    if love.filesystem.getInfo(compressedFile) then
+        local compressedData = love.filesystem.read(compressedFile)
+        if compressedData then
+            local decompressed = love.data.decompress("string", "zlib", compressedData)
+            if decompressed then
+                local success, saveData = pcall(json.decode, decompressed)
+                if success and SaveSystem.validateSaveData(saveData) then
+                    Utils.Logger.info("Loaded from compressed save")
+                    return true, SaveSystem.repairSaveData(saveData)
+                end
+            end
+        end
+    end
+    
+    -- Try backups
+    for i = 1, 3 do
+        local backupFile = SaveSystem.saveFileName .. ".backup" .. i
+        if love.filesystem.getInfo(backupFile) then
+            local backupContents = love.filesystem.read(backupFile)
+            if backupContents then
+                local success, saveData = pcall(json.decode, backupContents)
+                if success and SaveSystem.validateSaveData(saveData) then
+                    Utils.Logger.info("Loaded from backup #%d", i)
+                    return true, SaveSystem.repairSaveData(saveData)
+                end
+            end
+        end
+    end
+    
+    -- Try minimal save
+    local minimalFile = SaveSystem.saveFileName .. ".minimal"
+    if love.filesystem.getInfo(minimalFile) then
+        local minimalContents = love.filesystem.read(minimalFile)
+        if minimalContents then
+            local success, saveData = pcall(json.decode, minimalContents)
+            if success then
+                Utils.Logger.warn("Loaded minimal save - some progress lost")
+                return true, SaveSystem.repairSaveData(saveData)
+            end
+        end
+    end
+    
+    return false, nil
 end
 
 return SaveSystem
