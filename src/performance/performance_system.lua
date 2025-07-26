@@ -52,6 +52,7 @@ PerformanceSystem.spatialGrid = {}
 function PerformanceSystem.init()
     PerformanceSystem.clearGrid()
     Utils.Logger.info("Performance system initialized")
+    return true
 end
 
 -- Clear spatial grid
@@ -331,6 +332,65 @@ end
 function PerformanceSystem.needsUpdate(object, player, updateDistance)
     local dist = Utils.distance(player.x, player.y, object.x, object.y)
     return dist <= updateDistance
+end
+
+-- Determine if entity should be updated based on distance
+function PerformanceSystem.shouldUpdateEntity(entity, camera, updateDistance)
+    if not entity or not camera then return false end
+    
+    local dist = Utils.distance(camera.x, camera.y, entity.x, entity.y)
+    local adjustedDistance = updateDistance * camera.scale
+    
+    -- Always update entities very close to camera
+    if dist < 200 then
+        return true, 1.0 -- Full update rate
+    end
+    
+    -- Update at reduced rate for medium distance
+    if dist < adjustedDistance * 0.5 then
+        return true, 0.5 -- Half update rate
+    end
+    
+    -- Update occasionally for far entities
+    if dist < adjustedDistance then
+        return true, 0.25 -- Quarter update rate
+    end
+    
+    -- Don't update very far entities
+    return false, 0
+end
+
+-- Cull entities for updates
+function PerformanceSystem.cullForUpdate(entities, camera, updateDistance)
+    local toUpdate = {}
+    local culled = 0
+    
+    for _, entity in ipairs(entities) do
+        local shouldUpdate, updateRate = PerformanceSystem.shouldUpdateEntity(entity, camera, updateDistance)
+        
+        if shouldUpdate then
+            -- Store update rate for entity
+            entity.updateRate = updateRate
+            entity.updateTimer = (entity.updateTimer or 0) + love.timer.getDelta()
+            
+            -- Update based on rate
+            if entity.updateTimer >= (1 / (60 * updateRate)) then
+                entity.updateTimer = 0
+                table.insert(toUpdate, entity)
+            end
+        else
+            culled = culled + 1
+        end
+    end
+    
+    -- Update metrics
+    if not PerformanceSystem.metrics then
+        PerformanceSystem.metrics = {}
+    end
+    PerformanceSystem.metrics.updatedEntities = #toUpdate
+    PerformanceSystem.metrics.culledEntities = culled
+    
+    return toUpdate
 end
 
 return PerformanceSystem

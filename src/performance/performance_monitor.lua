@@ -275,6 +275,7 @@ function PerformanceMonitor.init(config)
     
     PerformanceMonitor.reset()
     Utils.Logger.info("Performance monitor initialized")
+    return true
 end
 
 return PerformanceMonitor 
