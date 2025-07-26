@@ -3,6 +3,7 @@
 
 local Utils = require("src.utils.utils")
 local GameLogic = Utils.require("src.core.game_logic")
+local WarpDrive = Utils.require("src.systems.warp_drive")
 
 local CollisionSystem = {}
 

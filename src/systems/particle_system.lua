@@ -43,7 +43,7 @@ function ParticleSystem.init()
 end
 
 -- Create a new particle
-function ParticleSystem.create(x, y, vx, vy, color, lifetime, size, type)
+function ParticleSystem.create(x, y, vx, vy, color, lifetime, size, particleType)
     -- Check particle limit
     if #ParticleSystem.particles >= ParticleSystem.maxParticles then
         -- Remove oldest particle
@@ -70,7 +70,7 @@ function ParticleSystem.create(x, y, vx, vy, color, lifetime, size, type)
     particle.maxLifetime = lifetime or 1
     particle.size = size or 2
     particle.color = color or {1, 1, 1, 1}
-    particle.type = type or "default"
+    particle.type = particleType or "default"
     
     table.insert(ParticleSystem.particles, particle)
     return particle
