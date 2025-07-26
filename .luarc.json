@@ -1,22 +1,120 @@
 {
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
   "workspace": {
-    "ignoreDir": [".git"],
-    "ignoreSubmodules": true
+    "library": [
+      "${3rd}/love2d/library"
+    ],
+    "ignoreDir": [".git", "build", "dist"],
+    "ignoreSubmodules": true,
+    "preloadFileSize": 500,
+    "maxPreload": 5000,
+    "checkThirdParty": false
   },
   "diagnostics": {
-    "globals": ["love"],
-    "disable": ["lowercase-global"]
+    "enable": true,
+    "globals": [
+      "love",
+      "jit",
+      "bit"
+    ],
+    "disable": [
+      "lowercase-global",
+      "undefined-global"
+    ],
+    "severity": {
+      "redefined-local": "Warning",
+      "trailing-space": "Hint",
+      "unused-local": "Information",
+      "unused-function": "Hint",
+      "empty-block": "Hint",
+      "duplicate-doc-field": "Warning"
+    },
+    "workspaceDelay": 500,
+    "workspaceRate": 100
   },
   "runtime": {
     "version": "LuaJIT",
+    "path": [
+      "?.lua",
+      "?/init.lua",
+      "src/?.lua",
+      "src/?/init.lua",
+      "tests/?.lua",
+      "tests/?/init.lua"
+    ],
+    "pathStrict": false,
     "special": {
-      "love.filesystem.load": "loadfile"
+      "love.filesystem.load": "loadfile",
+      "require": "require"
     }
   },
   "completion": {
-    "callSnippet": "Both"
+    "enable": true,
+    "callSnippet": "Both",
+    "keywordSnippet": "Both",
+    "displayContext": 3,
+    "workspaceWord": true,
+    "showWord": "Enable",
+    "autoRequire": true,
+    "requireSeparator": ".",
+    "postfix": "."
+  },
+  "hover": {
+    "enable": true,
+    "viewNumber": true,
+    "viewString": true,
+    "viewStringMax": 1000,
+    "previewFields": 50,
+    "enumsLimit": 5
+  },
+  "hint": {
+    "enable": true,
+    "paramType": true,
+    "setType": true,
+    "paramName": "All",
+    "semicolon": "Disable",
+    "arrayIndex": "Enable"
+  },
+  "format": {
+    "enable": false
+  },
+  "window": {
+    "progressBar": true,
+    "statusBar": true
   },
   "files": {
-    "exclude": ["tests/standalone_tests/**"]
+    "associations": {
+      "*.lua": "lua"
+    },
+    "exclude": [
+      "tests/standalone_tests/**",
+      "**/.git/**",
+      "**/node_modules/**",
+      "**/.vscode/**"
+    ]
+  },
+  "telemetry": {
+    "enable": false
+  },
+  "misc": {
+    "parameters": [
+      "--logpath=\".\"",
+      "--metapath=\"./.vscode/lua-meta\""
+    ]
+  },
+  "type": {
+    "castNumberToInteger": false,
+    "weakUnionCheck": false
+  },
+  "doc": {
+    "privateName": ["_*"],
+    "protectedName": []
+  },
+  "codeLens": {
+    "enable": true
+  },
+  "intelliSense": {
+    "searchDepth": 5,
+    "fastGlobal": true
   }
 }

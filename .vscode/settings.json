@@ -1,0 +1,52 @@
+{
+  "Lua.runtime.version": "LuaJIT",
+  "Lua.runtime.path": [
+    "?.lua",
+    "?/init.lua",
+    "src/?.lua", 
+    "src/?/init.lua",
+    "tests/?.lua",
+    "tests/?/init.lua"
+  ],
+  "Lua.diagnostics.globals": [
+    "love",
+    "jit", 
+    "bit"
+  ],
+  "Lua.workspace.library": [
+    "${3rd}/love2d/library"
+  ],
+  "Lua.workspace.checkThirdParty": false,
+  "Lua.completion.autoRequire": true,
+  "Lua.hint.enable": true,
+  "Lua.hint.setType": true,
+  "Lua.hint.paramType": true,
+  "Lua.hint.paramName": "All",
+  "Lua.telemetry.enable": false,
+  "files.associations": {
+    "*.lua": "lua"
+  },
+  "editor.formatOnSave": false,
+  "editor.semanticHighlighting.enabled": true,
+  "[lua]": {
+    "editor.defaultFormatter": "sumneko.lua",
+    "editor.formatOnSave": false,
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/build": true,
+    "**/dist": true,
+    "tests/standalone_tests": true
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/*.love": true
+  },
+  "terminal.integrated.env.osx": {
+    "LUA_PATH": "./src/?.lua;./src/?/init.lua;./tests/?.lua;./tests/?/init.lua;;"
+  }
+}
