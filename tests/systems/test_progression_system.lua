@@ -2,12 +2,39 @@
 package.path = package.path .. ";../../?.lua"
 
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.test_framework")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
-local ProgressionSystem = Utils.require("src.systems.progression_system")
 
 -- Setup mocks
 Mocks.setup()
+
+-- Function to get ProgressionSystem with proper initialization
+local function getProgressionSystem()
+    -- Clear any cached version
+    package.loaded["src.systems.progression_system"] = nil
+    package.loaded["src/systems/progression_system"] = nil
+    
+    -- Also clear from Utils cache
+    if Utils.moduleCache then
+        Utils.moduleCache["src.systems.progression_system"] = nil
+    end
+    
+    -- Setup mocks before loading
+    Mocks.setup()
+    
+    -- Load fresh instance using regular require
+    local ProgressionSystem = require("src.systems.progression_system")
+    
+    -- Ensure it's initialized
+    if ProgressionSystem and ProgressionSystem.init then
+        ProgressionSystem.init()
+    end
+    
+    return ProgressionSystem
+end
+
+-- Get initial instance for testing
+local ProgressionSystem = getProgressionSystem()
 
 -- Initialize test framework
 TestFramework.init()
@@ -18,21 +45,21 @@ local tests = {
     ["system initialization"] = function()
         ProgressionSystem.init()
         
-        TestFramework.utils.assertNotNil(ProgressionSystem.data, "Data should be initialized")
-        TestFramework.utils.assertNotNil(ProgressionSystem.data.totalScore, "Total score should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.data.totalRingsCollected, "Total rings should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.data.achievements, "Achievements should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.data.upgrades, "Upgrades should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.data, "Data should be initialized")
+        TestFramework.assert.assertNotNil(ProgressionSystem.data.totalScore, "Total score should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.data.totalRingsCollected, "Total rings should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.data.achievements, "Achievements should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.data.upgrades, "Upgrades should exist")
     end,
     
     -- Test achievement definitions
     ["achievement definitions"] = function()
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.firstRing, "First ring achievement should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.comboMaster, "Combo master achievement should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.speedDemon, "Speed demon achievement should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.ringCollector, "Ring collector achievement should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.gravityDefier, "Gravity defier achievement should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.achievements.planetHopper, "Planet hopper achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.firstRing, "First ring achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.comboMaster, "Combo master achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.speedDemon, "Speed demon achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.ringCollector, "Ring collector achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.gravityDefier, "Gravity defier achievement should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.achievements.planetHopper, "Planet hopper achievement should exist")
     end,
     
     ["achievement properties"] = function()
@@ -41,34 +68,34 @@ local tests = {
         ProgressionSystem.achievements.comboMaster.unlocked = false
         
         local firstRing = ProgressionSystem.achievements.firstRing
-        TestFramework.utils.assertEqual("First Ring", firstRing.name, "Achievement should have correct name")
-        TestFramework.utils.assertEqual("Collect your first ring", firstRing.description, "Achievement should have description")
-        TestFramework.utils.assertEqual(10, firstRing.score, "Achievement should have correct score")
-        TestFramework.utils.assertFalse(firstRing.unlocked, "Achievement should start locked")
+        TestFramework.assert.assertEqual("First Ring", firstRing.name, "Achievement should have correct name")
+        TestFramework.assert.assertEqual("Collect your first ring", firstRing.description, "Achievement should have description")
+        TestFramework.assert.assertEqual(10, firstRing.score, "Achievement should have correct score")
+        TestFramework.assert.assertFalse(firstRing.unlocked, "Achievement should start locked")
         
         local comboMaster = ProgressionSystem.achievements.comboMaster
-        TestFramework.utils.assertEqual("Combo Master", comboMaster.name, "Achievement should have correct name")
-        TestFramework.utils.assertEqual(50, comboMaster.score, "Achievement should have correct score")
+        TestFramework.assert.assertEqual("Combo Master", comboMaster.name, "Achievement should have correct name")
+        TestFramework.assert.assertEqual(50, comboMaster.score, "Achievement should have correct score")
     end,
     
     -- Test upgrade definitions
     ["upgrade definitions"] = function()
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.jumpPower, "Jump power upgrade should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.dashPower, "Dash power upgrade should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.speedBoost, "Speed boost upgrade should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.ringValue, "Ring value upgrade should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.comboMultiplier, "Combo multiplier upgrade should exist")
-        TestFramework.utils.assertNotNil(ProgressionSystem.upgradeCosts.gravityResistance, "Gravity resistance upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.jumpPower, "Jump power upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.dashPower, "Dash power upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.speedBoost, "Speed boost upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.ringValue, "Ring value upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.comboMultiplier, "Combo multiplier upgrade should exist")
+        TestFramework.assert.assertNotNil(ProgressionSystem.upgradeCosts.gravityResistance, "Gravity resistance upgrade should exist")
     end,
     
     ["upgrade cost properties"] = function()
         local jumpPower = ProgressionSystem.upgradeCosts.jumpPower
-        TestFramework.utils.assertEqual(100, jumpPower.base, "Upgrade should have correct base cost")
-        TestFramework.utils.assertEqual(1.5, jumpPower.multiplier, "Upgrade should have correct multiplier")
+        TestFramework.assert.assertEqual(100, jumpPower.base, "Upgrade should have correct base cost")
+        TestFramework.assert.assertEqual(1.5, jumpPower.multiplier, "Upgrade should have correct multiplier")
         
         local dashPower = ProgressionSystem.upgradeCosts.dashPower
-        TestFramework.utils.assertEqual(150, dashPower.base, "Upgrade should have correct base cost")
-        TestFramework.utils.assertEqual(1.8, dashPower.multiplier, "Upgrade should have correct multiplier")
+        TestFramework.assert.assertEqual(150, dashPower.base, "Upgrade should have correct base cost")
+        TestFramework.assert.assertEqual(1.8, dashPower.multiplier, "Upgrade should have correct multiplier")
     end,
     
     -- Test score tracking
@@ -77,10 +104,10 @@ local tests = {
         local initialScore = ProgressionSystem.data.totalScore
         
         ProgressionSystem.addScore(100)
-        TestFramework.utils.assertEqual(initialScore + 100, ProgressionSystem.data.totalScore, "Score should increase")
+        TestFramework.assert.assertEqual(initialScore + 100, ProgressionSystem.data.totalScore, "Score should increase")
         
         ProgressionSystem.addScore(50)
-        TestFramework.utils.assertEqual(initialScore + 150, ProgressionSystem.data.totalScore, "Score should increase again")
+        TestFramework.assert.assertEqual(initialScore + 150, ProgressionSystem.data.totalScore, "Score should increase again")
     end,
     
     ["ring collection tracking"] = function()
@@ -88,10 +115,10 @@ local tests = {
         local initialRings = ProgressionSystem.data.totalRingsCollected
         
         ProgressionSystem.addRings(5)
-        TestFramework.utils.assertEqual(initialRings + 5, ProgressionSystem.data.totalRingsCollected, "Ring count should increase")
+        TestFramework.assert.assertEqual(initialRings + 5, ProgressionSystem.data.totalRingsCollected, "Ring count should increase")
         
         ProgressionSystem.addRings(10)
-        TestFramework.utils.assertEqual(initialRings + 15, ProgressionSystem.data.totalRingsCollected, "Ring count should increase again")
+        TestFramework.assert.assertEqual(initialRings + 15, ProgressionSystem.data.totalRingsCollected, "Ring count should increase again")
     end,
     
     ["jump tracking"] = function()
@@ -99,11 +126,11 @@ local tests = {
         local initialJumps = ProgressionSystem.data.totalJumps
         
         ProgressionSystem.addJump()
-        TestFramework.utils.assertEqual(initialJumps + 1, ProgressionSystem.data.totalJumps, "Jump count should increase")
+        TestFramework.assert.assertEqual(initialJumps + 1, ProgressionSystem.data.totalJumps, "Jump count should increase")
         
         ProgressionSystem.addJump()
         ProgressionSystem.addJump()
-        TestFramework.utils.assertEqual(initialJumps + 3, ProgressionSystem.data.totalJumps, "Jump count should increase multiple times")
+        TestFramework.assert.assertEqual(initialJumps + 3, ProgressionSystem.data.totalJumps, "Jump count should increase multiple times")
     end,
     
     ["play time tracking"] = function()
@@ -111,10 +138,10 @@ local tests = {
         local initialTime = ProgressionSystem.data.totalPlayTime
         
         ProgressionSystem.updatePlayTime(1.5)
-        TestFramework.utils.assertEqual(initialTime + 1.5, ProgressionSystem.data.totalPlayTime, "Play time should increase")
+        TestFramework.assert.assertEqual(initialTime + 1.5, ProgressionSystem.data.totalPlayTime, "Play time should increase")
         
         ProgressionSystem.updatePlayTime(0.5)
-        TestFramework.utils.assertEqual(initialTime + 2.0, ProgressionSystem.data.totalPlayTime, "Play time should increase again")
+        TestFramework.assert.assertEqual(initialTime + 2.0, ProgressionSystem.data.totalPlayTime, "Play time should increase again")
     end,
     
     -- Test achievement unlocking
@@ -127,11 +154,11 @@ local tests = {
         
         -- Unlock first ring achievement
         ProgressionSystem.unlockAchievement("firstRing")
-        TestFramework.utils.assertTrue(ProgressionSystem.achievements.firstRing.unlocked, "First ring achievement should be unlocked")
+        TestFramework.assert.assertTrue(ProgressionSystem.achievements.firstRing.unlocked, "First ring achievement should be unlocked")
         
         -- Unlock ring collector achievement
         ProgressionSystem.unlockAchievement("ringCollector")
-        TestFramework.utils.assertTrue(ProgressionSystem.achievements.ringCollector.unlocked, "Ring collector achievement should be unlocked")
+        TestFramework.assert.assertTrue(ProgressionSystem.achievements.ringCollector.unlocked, "Ring collector achievement should be unlocked")
     end,
     
     ["achievement score addition"] = function()
@@ -144,10 +171,10 @@ local tests = {
         
         -- Unlock achievements and check score
         ProgressionSystem.unlockAchievement("firstRing")
-        TestFramework.utils.assertEqual(initialScore + 10, ProgressionSystem.data.totalScore, "Score should increase by achievement value")
+        TestFramework.assert.assertEqual(initialScore + 10, ProgressionSystem.data.totalScore, "Score should increase by achievement value")
         
         ProgressionSystem.unlockAchievement("comboMaster")
-        TestFramework.utils.assertEqual(initialScore + 60, ProgressionSystem.data.totalScore, "Score should increase by both achievement values")
+        TestFramework.assert.assertEqual(initialScore + 60, ProgressionSystem.data.totalScore, "Score should increase by both achievement values")
     end,
     
     -- Test upgrade mechanics
@@ -159,10 +186,10 @@ local tests = {
         ProgressionSystem.data.upgrades.dashPower = 1
         
         local jumpCost = ProgressionSystem.getUpgradeCost("jumpPower")
-        TestFramework.utils.assertEqual(100, jumpCost, "First level upgrade should cost base amount")
+        TestFramework.assert.assertEqual(100, jumpCost, "First level upgrade should cost base amount")
         
         local dashCost = ProgressionSystem.getUpgradeCost("dashPower")
-        TestFramework.utils.assertEqual(150, dashCost, "First level upgrade should cost base amount")
+        TestFramework.assert.assertEqual(150, dashCost, "First level upgrade should cost base amount")
     end,
     
     ["upgrade cost scaling"] = function()
@@ -173,7 +200,7 @@ local tests = {
         
         local cost = ProgressionSystem.getUpgradeCost("jumpPower")
         local expectedCost = math.floor(100 * (1.5 ^ 1)) -- Level 2 cost
-        TestFramework.utils.assertEqual(expectedCost, cost, "Upgrade cost should scale with level")
+        TestFramework.assert.assertEqual(expectedCost, cost, "Upgrade cost should scale with level")
     end,
     
     ["upgrade purchase"] = function()
@@ -188,9 +215,9 @@ local tests = {
         
         local success = ProgressionSystem.purchaseUpgrade("jumpPower")
         
-        TestFramework.utils.assertTrue(success, "Upgrade purchase should succeed")
-        TestFramework.utils.assertEqual(initialLevel + 1, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should increase")
-        TestFramework.utils.assertTrue(ProgressionSystem.data.totalScore < initialScore, "Score should decrease after purchase")
+        TestFramework.assert.assertTrue(success, "Upgrade purchase should succeed")
+        TestFramework.assert.assertEqual(initialLevel + 1, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should increase")
+        TestFramework.assert.assertTrue(ProgressionSystem.data.totalScore < initialScore, "Score should decrease after purchase")
     end,
     
     ["upgrade purchase insufficient score"] = function()
@@ -205,9 +232,9 @@ local tests = {
         
         local success = ProgressionSystem.purchaseUpgrade("jumpPower")
         
-        TestFramework.utils.assertFalse(success, "Upgrade purchase should fail")
-        TestFramework.utils.assertEqual(initialLevel, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should not change")
-        TestFramework.utils.assertEqual(initialScore, ProgressionSystem.data.totalScore, "Score should not change")
+        TestFramework.assert.assertFalse(success, "Upgrade purchase should fail")
+        TestFramework.assert.assertEqual(initialLevel, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should not change")
+        TestFramework.assert.assertEqual(initialScore, ProgressionSystem.data.totalScore, "Score should not change")
     end,
     
     ["upgrade max level"] = function()
@@ -219,8 +246,8 @@ local tests = {
         
         local success = ProgressionSystem.purchaseUpgrade("jumpPower")
         
-        TestFramework.utils.assertFalse(success, "Upgrade purchase should fail at max level")
-        TestFramework.utils.assertEqual(5, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should remain at max")
+        TestFramework.assert.assertFalse(success, "Upgrade purchase should fail at max level")
+        TestFramework.assert.assertEqual(5, ProgressionSystem.data.upgrades.jumpPower, "Upgrade level should remain at max")
     end,
     
     -- Test upgrade effects
@@ -230,12 +257,12 @@ local tests = {
         -- Test jump power effect
         ProgressionSystem.data.upgrades.jumpPower = 3
         local effect = ProgressionSystem.getUpgradeEffect("jumpPower")
-        TestFramework.utils.assertEqual(3, effect, "Jump power effect should match level")
+        TestFramework.assert.assertEqual(3, effect, "Jump power effect should match level")
         
         -- Test dash power effect
         ProgressionSystem.data.upgrades.dashPower = 2
         local dashEffect = ProgressionSystem.getUpgradeEffect("dashPower")
-        TestFramework.utils.assertEqual(2, dashEffect, "Dash power effect should match level")
+        TestFramework.assert.assertEqual(2, dashEffect, "Dash power effect should match level")
     end,
     
     ["upgrade multiplier calculation"] = function()
@@ -244,12 +271,12 @@ local tests = {
         -- Test ring value multiplier
         ProgressionSystem.data.upgrades.ringValue = 3
         local multiplier = ProgressionSystem.getUpgradeMultiplier("ringValue")
-        TestFramework.utils.assertEqual(3, multiplier, "Ring value multiplier should match level")
+        TestFramework.assert.assertEqual(3, multiplier, "Ring value multiplier should match level")
         
         -- Test combo multiplier
         ProgressionSystem.data.upgrades.comboMultiplier = 2
         local comboMultiplier = ProgressionSystem.getUpgradeMultiplier("comboMultiplier")
-        TestFramework.utils.assertEqual(2, comboMultiplier, "Combo multiplier should match level")
+        TestFramework.assert.assertEqual(2, comboMultiplier, "Combo multiplier should match level")
     end,
     
     -- Test data persistence
@@ -262,9 +289,9 @@ local tests = {
         ProgressionSystem.data.upgrades.jumpPower = 3
         
         local serialized = ProgressionSystem.serialize(ProgressionSystem.data)
-        TestFramework.utils.assertNotNil(serialized, "Data should serialize")
-        TestFramework.utils.assertTrue(type(serialized) == "string", "Serialized data should be string")
-        TestFramework.utils.assertTrue(#serialized > 0, "Serialized data should not be empty")
+        TestFramework.assert.assertNotNil(serialized, "Data should serialize")
+        TestFramework.assert.assertTrue(type(serialized) == "string", "Serialized data should be string")
+        TestFramework.assert.assertTrue(#serialized > 0, "Serialized data should not be empty")
     end,
     
     ["data deserialization"] = function()
@@ -283,9 +310,9 @@ local tests = {
         local serialized = ProgressionSystem.serialize(testData)
         local deserialized = load("return " .. serialized)()
         
-        TestFramework.utils.assertEqual(testData.totalScore, deserialized.totalScore, "Total score should deserialize correctly")
-        TestFramework.utils.assertEqual(testData.totalRingsCollected, deserialized.totalRingsCollected, "Total rings should deserialize correctly")
-        TestFramework.utils.assertEqual(testData.upgrades.jumpPower, deserialized.upgrades.jumpPower, "Upgrades should deserialize correctly")
+        TestFramework.assert.assertEqual(testData.totalScore, deserialized.totalScore, "Total score should deserialize correctly")
+        TestFramework.assert.assertEqual(testData.totalRingsCollected, deserialized.totalRingsCollected, "Total rings should deserialize correctly")
+        TestFramework.assert.assertEqual(testData.upgrades.jumpPower, deserialized.upgrades.jumpPower, "Upgrades should deserialize correctly")
     end,
     
     -- Test achievement checking
@@ -302,24 +329,24 @@ local tests = {
         -- Check achievements (should unlock first ring)
         ProgressionSystem.checkAchievements()
         
-        TestFramework.utils.assertTrue(ProgressionSystem.achievements.firstRing.unlocked, "First ring should be unlocked automatically")
-        TestFramework.utils.assertFalse(ProgressionSystem.achievements.ringCollector.unlocked, "Ring collector should not be unlocked yet")
+        TestFramework.assert.assertTrue(ProgressionSystem.achievements.firstRing.unlocked, "First ring should be unlocked automatically")
+        TestFramework.assert.assertFalse(ProgressionSystem.achievements.ringCollector.unlocked, "Ring collector should not be unlocked yet")
     end,
     
     -- Test game completion tracking
     ["game completion tracking"] = function()
-        ProgressionSystem.init()
+        local ProgressionSystem = getProgressionSystem()
         local initialGames = ProgressionSystem.data.gamesPlayed
         
         ProgressionSystem.completeGame(500, 25, 8)
         
-        TestFramework.utils.assertEqual(initialGames + 1, ProgressionSystem.data.gamesPlayed, "Games played should increase")
-        TestFramework.utils.assertEqual(500, ProgressionSystem.data.totalScore, "Total score should be updated")
-        TestFramework.utils.assertEqual(25, ProgressionSystem.data.totalRingsCollected, "Total rings should be updated")
+        TestFramework.assert.assertEqual(initialGames + 1, ProgressionSystem.data.gamesPlayed, "Games played should increase")
+        TestFramework.assert.assertEqual(500, ProgressionSystem.data.totalScore, "Total score should be updated")
+        TestFramework.assert.assertEqual(25, ProgressionSystem.data.totalRingsCollected, "Total rings should be updated")
         
         -- Check if highest combo was updated
         if 8 > ProgressionSystem.data.highestCombo then
-            TestFramework.utils.assertEqual(8, ProgressionSystem.data.highestCombo, "Highest combo should be updated")
+            TestFramework.assert.assertEqual(8, ProgressionSystem.data.highestCombo, "Highest combo should be updated")
         end
     end,
     
@@ -336,16 +363,16 @@ local tests = {
         
         local stats = ProgressionSystem.getStatistics()
         
-        TestFramework.utils.assertEqual(500, stats.averageScore, "Average score should be calculated correctly")
-        TestFramework.utils.assertEqual(20, stats.averageRingsPerGame, "Average rings per game should be calculated correctly")
-        TestFramework.utils.assertEqual(10, stats.averageJumpsPerGame, "Average jumps per game should be calculated correctly")
-        TestFramework.utils.assertEqual(180, stats.averagePlayTimePerGame, "Average play time per game should be calculated correctly")
+        TestFramework.assert.assertEqual(500, stats.averageScore, "Average score should be calculated correctly")
+        TestFramework.assert.assertEqual(20, stats.averageRingsPerGame, "Average rings per game should be calculated correctly")
+        TestFramework.assert.assertEqual(10, stats.averageJumpsPerGame, "Average jumps per game should be calculated correctly")
+        TestFramework.assert.assertEqual(180, stats.averagePlayTimePerGame, "Average play time per game should be calculated correctly")
     end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runSuite("Progression System Tests", tests)
+    local success = TestFramework.runTests(tests, "Progression System Tests")
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")

@@ -4,54 +4,24 @@ package.path = package.path .. ";../../?.lua"
 local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
+local CollisionSystem = Utils.require("src.systems.collision_system")
 
--- Function to get CollisionSystem with proper initialization
-local function getCollisionSystem()
-    -- Clear any cached version
-    package.loaded["src.systems.collision_system"] = nil
-    package.loaded["src/systems/collision_system"] = nil
-    
-    -- Also clear from Utils cache
-    if Utils.moduleCache then
-        Utils.moduleCache["src.systems.collision_system"] = nil
+-- Setup mocks
+Mocks.setup()
+
+-- Mock ring system to avoid ring_constellations dependency
+local originalRequire = Utils.require
+Utils.require = function(path)
+    if path == "src.systems.ring_system" then
+        return {
+            collectRing = function(ring, gameState)
+                ring.collected = true
+                return 10
+            end
+        }
+    else
+        return originalRequire(path)
     end
-    
-    -- Setup mocks before loading
-    Mocks.setup()
-    
-    -- Mock ring system to avoid ring_constellations dependency
-    local originalRequire = Utils.require
-    Utils.require = function(path)
-        if path == "src.systems.ring_system" then
-            return {
-                collectRing = function(ring, gameState)
-                    ring.collected = true
-                    if gameState and gameState.addScore then
-                        gameState.addScore(10)
-                    end
-                    if gameState and gameState.addCombo then
-                        gameState.addCombo()
-                    end
-                    return 10
-                end
-            }
-        else
-            return originalRequire(path)
-        end
-    end
-    
-    -- Load fresh instance using regular require to bypass cache
-    local CollisionSystem = require("src.systems.collision_system")
-    
-    -- Restore Utils.require
-    Utils.require = originalRequire
-    
-    -- Ensure it's initialized
-    if CollisionSystem and CollisionSystem.init then
-        CollisionSystem.init()
-    end
-    
-    return CollisionSystem
 end
 
 -- Initialize test framework
@@ -61,7 +31,6 @@ TestFramework.init()
 local tests = {
     -- Test planet collision detection
     ["planet collision detection"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
@@ -80,7 +49,6 @@ local tests = {
     end,
     
     ["planet collision detection with spatial grid"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
@@ -105,7 +73,6 @@ local tests = {
     end,
     
     ["no planet collision when player on planet"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = true}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
@@ -116,7 +83,6 @@ local tests = {
     end,
     
     ["no planet collision when player too far"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 1000, y = 1000, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
@@ -127,7 +93,6 @@ local tests = {
     end,
     
     ["no planet collision with nil player"] = function()
-        local CollisionSystem = getCollisionSystem()
         local planet = {x = 100, y = 100, radius = 50}
         local planets = {planet}
         
@@ -138,7 +103,6 @@ local tests = {
     
     -- Test planet landing
     ["planet landing handling"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50, type = "standard"}
         local gameState = {
@@ -158,7 +122,6 @@ local tests = {
     end,
     
     ["planet landing position adjustment"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50, type = "standard"}
         local gameState = {
@@ -181,7 +144,6 @@ local tests = {
     end,
     
     ["quantum planet teleportation"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         local planet = {x = 100, y = 100, radius = 50, type = "quantum"}
         local targetPlanet = {x = 2000, y = 2000, radius = 50, id = 2}
@@ -222,7 +184,6 @@ local tests = {
     
     -- Test ring collision detection
     ["ring collision detection"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 120, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
@@ -242,8 +203,7 @@ local tests = {
     end,
     
     ["ring collision detection with spatial grid"] = function()
-        local CollisionSystem = getCollisionSystem()
-        local player = {x = 120, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
         local gameState = {
@@ -267,7 +227,6 @@ local tests = {
     end,
     
     ["no ring collision when player on planet"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = true, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false}
         local rings = {ring}
@@ -285,7 +244,6 @@ local tests = {
     end,
     
     ["no ring collision with collected ring"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = true}
         local rings = {ring}
@@ -303,7 +261,6 @@ local tests = {
     end,
     
     ["multiple ring collisions"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 120, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring1 = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local ring2 = {x = 120, y = 120, radius = 30, innerRadius = 15, collected = false, color = {0, 1, 0, 1}}
@@ -324,7 +281,6 @@ local tests = {
     
     -- Test ring burst effect
     ["ring burst effect creation"] = function()
-        local CollisionSystem = getCollisionSystem()
         local ring = {x = 100, y = 100, color = {1, 0, 0, 1}}
         local player = {x = 100, y = 100, vx = 50, vy = 30}
         
@@ -345,7 +301,6 @@ local tests = {
     
     -- Test player in ring detection
     ["player in ring detection"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10}
         local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
         
@@ -359,7 +314,6 @@ local tests = {
     end,
     
     ["player not in ring detection"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 1000, y = 1000, radius = 10}
         local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
         
@@ -369,7 +323,6 @@ local tests = {
     end,
     
     ["player in ring center hole"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 5}
         local ring = {x = 100, y = 100, radius = 50, innerRadius = 20}
         
@@ -380,7 +333,6 @@ local tests = {
     
     -- Test spatial grid operations
     ["spatial grid update"] = function()
-        local CollisionSystem = getCollisionSystem()
         local spatialGrid = {
             clear = function() end,
             addObject = function() end
@@ -401,7 +353,6 @@ local tests = {
     end,
     
     ["spatial grid update with nil grid"] = function()
-        local CollisionSystem = getCollisionSystem()
         local planets = {{x = 100, y = 100}}
         local rings = {{x = 150, y = 150, collected = false}}
         
@@ -415,7 +366,6 @@ local tests = {
     
     -- Test planet discovery tracking
     ["planet discovery tracking"] = function()
-        local CollisionSystem = getCollisionSystem()
         local planet = {x = 100, y = 100, radius = 50, discovered = false, lore = "Test lore"}
         local gameState = {
             addScore = function() end
@@ -449,7 +399,6 @@ local tests = {
     end,
     
     ["planet discovery tracking for already discovered planet"] = function()
-        local CollisionSystem = getCollisionSystem()
         local planet = {x = 100, y = 100, radius = 50, discovered = true}
         local gameState = {
             addScore = function() end
@@ -465,7 +414,6 @@ local tests = {
     
     -- Test edge cases
     ["collision with empty arrays"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         
         local planetResult = CollisionSystem.checkPlanetCollisions(player, {}, nil, {}, {})
@@ -477,7 +425,6 @@ local tests = {
     end,
     
     ["collision with nil arrays"] = function()
-        local CollisionSystem = getCollisionSystem()
         local player = {x = 100, y = 100, radius = 10, onPlanet = false}
         
         local planetResult = CollisionSystem.checkPlanetCollisions(player, nil, nil, {}, {})
@@ -489,8 +436,7 @@ local tests = {
     end,
     
     ["ring collision with game state integration"] = function()
-        local CollisionSystem = getCollisionSystem()
-        local player = {x = 120, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
+        local player = {x = 100, y = 100, radius = 10, onPlanet = false, vx = 0, vy = 0}
         local ring = {x = 100, y = 100, radius = 30, innerRadius = 15, collected = false, color = {1, 0, 0, 1}}
         local rings = {ring}
         
@@ -513,11 +459,7 @@ local tests = {
 
 -- Run the test suite
 local function run()
-    -- Initialize test framework
-    Mocks.setup()
-    TestFramework.init()
-    
-    local success = TestFramework.runTests(tests, "Collision System Tests")
+    local success = TestFramework.runSuite("Collision System Tests", tests)
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")

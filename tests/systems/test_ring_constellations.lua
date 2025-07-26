@@ -1,6 +1,6 @@
 -- Comprehensive tests for Ring Constellations System
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.test_framework")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 -- Setup mocks before requiring RingConstellations
@@ -38,38 +38,107 @@ Utils.atan2 = function(y, x)
     return math.atan(y, x)  -- Lua 5.3+ uses math.atan with 2 args
 end
 
--- Require RingConstellations after mocks are set up
-local RingConstellations = Utils.require("src.systems.ring_constellations")
+-- Store original require for restoration
+local originalUtilsRequire = Utils.require
+
+-- Store current mocks globally for Utils.require
+local currentMocks = {}
+
+-- Function to get RingConstellations with proper initialization
+local function getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
+    -- Clear any cached version
+    package.loaded["src.systems.ring_constellations"] = nil
+    package.loaded["src/systems/ring_constellations"] = nil
+    
+    -- Also clear from Utils cache
+    if Utils.moduleCache then
+        Utils.moduleCache["src.systems.ring_constellations"] = nil
+        Utils.moduleCache["src.core.game_state"] = nil
+        Utils.moduleCache["src.systems.achievement_system"] = nil
+        Utils.moduleCache["src.systems.sound_manager"] = nil
+        Utils.moduleCache["src.audio.sound_manager"] = nil
+    end
+    
+    -- Setup mocks before loading
+    Mocks.setup()
+    
+    -- Ensure mocks are set
+    love.timer = {
+        currentTime = 0,
+        getTime = function()
+            return love.timer.currentTime
+        end
+    }
+    
+    love.graphics = {
+        getWidth = function() return 800 end,
+        getHeight = function() return 600 end,
+        setLineWidth = function() end,
+        line = function() end,
+        circle = function() end,
+        print = function() end,
+        printf = function() end,
+        setFont = function() end,
+        newFont = function() return {} end
+    }
+    
+    -- Store mocks globally for reliable access
+    _G.mockGameState = mockGameState
+    _G.mockSoundManager = mockSoundManager
+    _G.mockAchievementSystem = mockAchievementSystem
+    
+    -- Directly populate Utils.moduleCache with our mocks
+    Utils.moduleCache = Utils.moduleCache or {}
+    Utils.moduleCache["src.core.game_state"] = _G.mockGameState
+    Utils.moduleCache["src.systems.achievement_system"] = _G.mockAchievementSystem
+    Utils.moduleCache["src.systems.sound_manager"] = _G.mockSoundManager
+    Utils.moduleCache["src.audio.sound_manager"] = _G.mockSoundManager
+    
+    -- Load fresh instance using regular require to bypass cache
+    local RingConstellations = require("src.systems.ring_constellations")
+    
+    -- Ensure it's initialized
+    if RingConstellations and RingConstellations.init then
+        RingConstellations.init()
+    end
+    
+    -- Don't restore Utils.require here - let it persist for the test
+    
+    return RingConstellations
+end
 
 -- Mock dependencies
-mockGameState = {
+local mockGameState = {
     score = 0,
     messages = {},
     addScore = function(points)
         mockGameState.score = mockGameState.score + points
     end,
     addMessage = function(msg)
+        if not mockGameState.messages then
+            mockGameState.messages = {}
+        end
         table.insert(mockGameState.messages, msg)
     end
 }
 
-mockSoundManager = {
+local mockSoundManager = {
     collectCalled = false,
     constellationCalled = false,
     playCollect = function(self)
-        mockSoundManager.collectCalled = true
+        self.collectCalled = true
     end,
     playConstellation = function(self)
-        mockSoundManager.constellationCalled = true
+        self.constellationCalled = true
     end
 }
 
-mockAchievementSystem = {
-    constellations = {},
-    onConstellationComplete = function(patternId)
-        table.insert(mockAchievementSystem.constellations, patternId)
-    end
+local mockAchievementSystem = {
+    constellations = {}
 }
+mockAchievementSystem.onConstellationComplete = function(patternId)
+    table.insert(mockAchievementSystem.constellations, patternId)
+end
 
 -- Test helper functions
 local function createRing(x, y)
@@ -90,7 +159,7 @@ local function resetMocks()
     love.timer.currentTime = 0
 end
 
-local function collectRings(positions, timeIncrement)
+local function collectRings(RingConstellations, positions, timeIncrement)
     for i, pos in ipairs(positions) do
         love.timer.currentTime = love.timer.currentTime + (timeIncrement or 0.5)
         RingConstellations.onRingCollected(createRing(pos.x, pos.y), {})
@@ -100,50 +169,36 @@ end
 -- Test suite
 local tests = {
     ["test initialization"] = function()
-        RingConstellations.init()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        TestFramework.utils.assertNil(RingConstellations.active.pattern, "Active pattern should be nil")
-        TestFramework.utils.assertEqual(0, #RingConstellations.active.positions, "No positions should be tracked")
-        TestFramework.utils.assertEqual(0, RingConstellations.active.startTime, "Start time should be 0")
-        TestFramework.utils.assertFalse(RingConstellations.active.completed, "Should not be completed")
-        TestFramework.utils.assertEqual(0, #RingConstellations.completedPatterns, "No completed patterns")
-        TestFramework.utils.assertEqual(0, #RingConstellations.effects, "No effects")
+        TestFramework.assert.assertNil(RingConstellations.active.pattern, "Active pattern should be nil")
+        TestFramework.assert.assertEqual(0, #RingConstellations.active.positions, "No positions should be tracked")
+        TestFramework.assert.assertEqual(0, RingConstellations.active.startTime, "Start time should be 0")
+        TestFramework.assert.assertFalse(RingConstellations.active.completed, "Should not be completed")
+        TestFramework.assert.assertEqual(0, #RingConstellations.completedPatterns, "No completed patterns")
+        TestFramework.assert.assertEqual(0, #RingConstellations.effects, "No effects")
     end,
     
     ["test ring collection tracking"] = function()
-        RingConstellations.init()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
         local ring1 = createRing(100, 100)
         RingConstellations.onRingCollected(ring1, {})
         
-        TestFramework.utils.assertEqual(1, #RingConstellations.active.positions, "Should track 1 position")
-        TestFramework.utils.assertEqual(100, RingConstellations.active.positions[1].x, "X position should match")
-        TestFramework.utils.assertEqual(100, RingConstellations.active.positions[1].y, "Y position should match")
+        TestFramework.assert.assertEqual(1, #RingConstellations.active.positions, "Should track 1 position")
+        TestFramework.assert.assertEqual(100, RingConstellations.active.positions[1].x, "X position should match")
+        TestFramework.assert.assertEqual(100, RingConstellations.active.positions[1].y, "Y position should match")
         
         local ring2 = createRing(200, 200)
         RingConstellations.onRingCollected(ring2, {})
         
-        TestFramework.utils.assertEqual(2, #RingConstellations.active.positions, "Should track 2 positions")
+        TestFramework.assert.assertEqual(2, #RingConstellations.active.positions, "Should track 2 positions")
     end,
     
     ["test pattern detection - star"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require to return our mocks
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create star pattern (5 rings equidistant from center)
         local centerX, centerY = 400, 300
@@ -158,36 +213,19 @@ local tests = {
             })
         end
         
-        collectRings(positions, 0.5) -- Collect within time limit
+        collectRings(RingConstellations, positions, 0.5) -- Collect within time limit
         
-        TestFramework.utils.assertTrue(mockGameState.score > 0, "Score should increase")
-        TestFramework.utils.assertEqual(1, #mockGameState.messages, "Should show completion message")
-        TestFramework.utils.assertTrue(string.find(mockGameState.messages[1], "Star Formation"), "Should mention star pattern")
-        TestFramework.utils.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
-        TestFramework.utils.assertEqual("star", RingConstellations.completedPatterns[1].pattern.id, "Should be star pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertTrue(mockGameState.score > 0, "Score should increase")
+        TestFramework.assert.assertEqual(1, #mockGameState.messages, "Should show completion message")
+        TestFramework.assert.assertTrue(string.find(mockGameState.messages[1], "Star Formation"), "Should mention star pattern")
+        TestFramework.assert.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
+        TestFramework.assert.assertEqual("star", RingConstellations.completedPatterns[1].pattern.id, "Should be star pattern")
     end,
     
     ["test pattern detection - line"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create line pattern (6 rings in a line)
         local positions = {}
@@ -198,34 +236,17 @@ local tests = {
             })
         end
         
-        collectRings(positions, 0.3) -- Collect quickly for line pattern
+        collectRings(RingConstellations, positions, 0.3) -- Collect quickly for line pattern
         
-        TestFramework.utils.assertTrue(mockGameState.score > 0, "Score should increase")
-        TestFramework.utils.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
-        TestFramework.utils.assertEqual("line", RingConstellations.completedPatterns[1].pattern.id, "Should be line pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertTrue(mockGameState.score > 0, "Score should increase")
+        TestFramework.assert.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
+        TestFramework.assert.assertEqual("line", RingConstellations.completedPatterns[1].pattern.id, "Should be line pattern")
     end,
     
     ["test pattern detection - circle"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create circle pattern (8 rings in a circle)
         local centerX, centerY = 400, 300
@@ -240,34 +261,17 @@ local tests = {
             })
         end
         
-        collectRings(positions, 0.5)
+        collectRings(RingConstellations, positions, 0.5)
         
-        TestFramework.utils.assertTrue(mockGameState.score > 0, "Score should increase")
-        TestFramework.utils.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
-        TestFramework.utils.assertEqual("circle", RingConstellations.completedPatterns[1].pattern.id, "Should be circle pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertTrue(mockGameState.score > 0, "Score should increase")
+        TestFramework.assert.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
+        TestFramework.assert.assertEqual("circle", RingConstellations.completedPatterns[1].pattern.id, "Should be circle pattern")
     end,
     
     ["test pattern detection - spiral"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create spiral pattern (8 rings with increasing distance from first ring)
         local positions = {}
@@ -286,36 +290,19 @@ local tests = {
             })
         end
         
-        collectRings(positions, 0.5)
+        collectRings(RingConstellations, positions, 0.5)
         
-        TestFramework.utils.assertTrue(mockGameState.score > 0, "Score should increase")
-        TestFramework.utils.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
+        TestFramework.assert.assertTrue(mockGameState.score > 0, "Score should increase")
+        TestFramework.assert.assertEqual(1, #RingConstellations.completedPatterns, "Should complete 1 pattern")
         -- Note: Spiral detection is sensitive - may detect as zigzag due to angle changes
         local patternId = RingConstellations.completedPatterns[1].pattern.id
-        TestFramework.utils.assertTrue(patternId == "spiral" or patternId == "zigzag", "Should be spiral or zigzag pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertTrue(patternId == "spiral" or patternId == "zigzag", "Should be spiral or zigzag pattern")
     end,
     
     ["test pattern time limit"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create star pattern but collect too slowly
         local centerX, centerY = 400, 300
@@ -330,17 +317,14 @@ local tests = {
             })
         end
         
-        collectRings(positions, 3) -- Too slow for star pattern (10s limit)
+        collectRings(RingConstellations, positions, 3) -- Too slow for star pattern (10s limit)
         
-        TestFramework.utils.assertEqual(0, mockGameState.score, "Score should not increase")
-        TestFramework.utils.assertEqual(0, #RingConstellations.completedPatterns, "Should not complete pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertEqual(0, mockGameState.score, "Score should not increase")
+        TestFramework.assert.assertEqual(0, #RingConstellations.completedPatterns, "Should not complete pattern")
     end,
     
     ["test position cleanup"] = function()
-        RingConstellations.init()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
         -- Override pattern checking to prevent any pattern detection
         local oldPatterns = RingConstellations.patterns
@@ -352,10 +336,10 @@ local tests = {
             RingConstellations.onRingCollected(createRing(i * 50, i * 50), {})
         end
         
-        TestFramework.utils.assertEqual(20, #RingConstellations.active.positions, "Should keep only last 20 positions")
+        TestFramework.assert.assertEqual(20, #RingConstellations.active.positions, "Should keep only last 20 positions")
         -- Check that early positions were removed
         local firstX = RingConstellations.active.positions[1].x
-        TestFramework.utils.assertEqual(300, firstX, "First position should be 6th ring (6*50)")
+        TestFramework.assert.assertEqual(300, firstX, "First position should be 6th ring (6*50)")
         
         -- Restore patterns
         RingConstellations.patterns = oldPatterns
@@ -363,22 +347,8 @@ local tests = {
     
     ["test constellation effects"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Create simple line pattern
         local positions = {}
@@ -386,17 +356,14 @@ local tests = {
             table.insert(positions, {x = i * 50, y = 300})
         end
         
-        collectRings(positions, 0.3)
+        collectRings(RingConstellations, positions, 0.3)
         
-        TestFramework.utils.assertEqual(1, #RingConstellations.effects, "Should create 1 effect")
-        TestFramework.utils.assertTrue(#RingConstellations.effects[1].particles > 0, "Should have particles")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertEqual(1, #RingConstellations.effects, "Should create 1 effect")
+        TestFramework.assert.assertTrue(#RingConstellations.effects[1].particles > 0, "Should have particles")
     end,
     
     ["test effect updates"] = function()
-        RingConstellations.init()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
         -- Manually create an effect
         local effect = {
@@ -414,37 +381,23 @@ local tests = {
         -- Update
         RingConstellations.update(0.1)
         
-        TestFramework.utils.assertEqual(1, #RingConstellations.effects, "Effect should still exist")
+        TestFramework.assert.assertEqual(1, #RingConstellations.effects, "Effect should still exist")
         local particle = RingConstellations.effects[1].particles[1]
-        TestFramework.utils.assertEqual(151, particle.x, "Particle X should update")
-        TestFramework.utils.assertEqual(148, particle.y, "Particle Y should fall with gravity") -- 150 + (-20 * 0.1) = 148, then vy becomes -10
-        TestFramework.utils.assertEqual(0.9, particle.life, "Particle life should decrease")
+        TestFramework.assert.assertEqual(151, particle.x, "Particle X should update")
+        TestFramework.assert.assertEqual(148, particle.y, "Particle Y should fall with gravity") -- 150 + (-20 * 0.1) = 148, then vy becomes -10
+        TestFramework.assert.assertEqual(0.9, particle.life, "Particle life should decrease")
         
         -- Update past duration
         love.timer.currentTime = love.timer.currentTime + 5
         RingConstellations.update(0.1)
         
-        TestFramework.utils.assertEqual(0, #RingConstellations.effects, "Effect should be removed")
+        TestFramework.assert.assertEqual(0, #RingConstellations.effects, "Effect should be removed")
     end,
     
     ["test stats tracking"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Complete multiple patterns
         -- Star pattern
@@ -453,107 +406,56 @@ local tests = {
             local angle = (i - 1) * (2 * math.pi / 5)
             table.insert(positions1, {x = 400 + 100 * math.cos(angle), y = 300 + 100 * math.sin(angle)})
         end
-        collectRings(positions1, 0.5)
+        collectRings(RingConstellations, positions1, 0.5)
         
         -- Line pattern
         local positions2 = {}
         for i = 1, 6 do
             table.insert(positions2, {x = 100 + i * 50, y = 300})
         end
-        collectRings(positions2, 0.3)
+        collectRings(RingConstellations, positions2, 0.3)
         
         local stats = RingConstellations.getStats()
-        TestFramework.utils.assertEqual(2, stats.totalCompleted, "Should have 2 completed patterns")
-        TestFramework.utils.assertEqual(1, stats.patternCounts["star"], "Should have 1 star pattern")
-        TestFramework.utils.assertEqual(1, stats.patternCounts["line"], "Should have 1 line pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertEqual(2, stats.totalCompleted, "Should have 2 completed patterns")
+        TestFramework.assert.assertEqual(1, stats.patternCounts["star"], "Should have 1 star pattern")
+        TestFramework.assert.assertEqual(1, stats.patternCounts["line"], "Should have 1 line pattern")
     end,
     
     ["test sound effects"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Complete a pattern
         local positions = {}
         for i = 1, 6 do
             table.insert(positions, {x = i * 50, y = 300})
         end
-        collectRings(positions, 0.3)
+        collectRings(RingConstellations, positions, 0.3)
         
-        TestFramework.utils.assertTrue(mockSoundManager.constellationCalled, "Should play constellation sound")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertTrue(mockSoundManager.constellationCalled, "Should play constellation sound")
     end,
     
     ["test achievement integration"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Complete a pattern
         local positions = {}
         for i = 1, 6 do
             table.insert(positions, {x = i * 50, y = 300})
         end
-        collectRings(positions, 0.3)
+        collectRings(RingConstellations, positions, 0.3)
         
-        TestFramework.utils.assertEqual(1, #mockAchievementSystem.constellations, "Should track constellation")
-        TestFramework.utils.assertEqual("line", mockAchievementSystem.constellations[1], "Should track line pattern")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertEqual(1, #mockAchievementSystem.constellations, "Should track constellation")
+        TestFramework.assert.assertEqual("line", mockAchievementSystem.constellations[1], "Should track line pattern")
     end,
     
     ["test reset function"] = function()
         resetMocks()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
-        -- Mock require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.core.game_state" then
-                return mockGameState
-            elseif path == "src.audio.sound_manager" then
-                return mockSoundManager
-            elseif path == "src.systems.achievement_system" then
-                return mockAchievementSystem
-            else
-                return oldRequire(path)
-            end
-        end
-        
-        RingConstellations.init()
         
         -- Add some data
         RingConstellations.onRingCollected(createRing(100, 100), {})
@@ -563,7 +465,7 @@ local tests = {
         for i = 1, 6 do
             table.insert(positions, {x = i * 50, y = 300})
         end
-        collectRings(positions, 0.3)
+        collectRings(RingConstellations, positions, 0.3)
         
         -- Add an effect
         table.insert(RingConstellations.effects, {})
@@ -571,51 +473,75 @@ local tests = {
         -- Reset
         RingConstellations.reset()
         
-        TestFramework.utils.assertNil(RingConstellations.active.pattern, "Pattern should be nil")
-        TestFramework.utils.assertEqual(0, #RingConstellations.active.positions, "Positions should be empty")
-        TestFramework.utils.assertEqual(0, #RingConstellations.completedPatterns, "Completed patterns should be empty")
-        TestFramework.utils.assertEqual(0, #RingConstellations.effects, "Effects should be empty")
-        
-        -- Restore
-        Utils.require = oldRequire
+        TestFramework.assert.assertNil(RingConstellations.active.pattern, "Pattern should be nil")
+        TestFramework.assert.assertEqual(0, #RingConstellations.active.positions, "Positions should be empty")
+        TestFramework.assert.assertEqual(0, #RingConstellations.completedPatterns, "Completed patterns should be empty")
+        TestFramework.assert.assertEqual(0, #RingConstellations.effects, "Effects should be empty")
     end,
     
     ["test draw functions"] = function()
-        RingConstellations.init()
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)
         
         -- Test draw doesn't error
         local success = pcall(function()
             RingConstellations.draw()
         end)
-        TestFramework.utils.assertTrue(success, "Draw should not error")
+        TestFramework.assert.assertTrue(success, "Draw should not error")
         
         -- Test drawUI doesn't error
         success = pcall(function()
             RingConstellations.drawUI()
         end)
-        TestFramework.utils.assertTrue(success, "DrawUI should not error")
+        TestFramework.assert.assertTrue(success, "DrawUI should not error")
     end,
     
     ["test all patterns defined"] = function()
-        TestFramework.utils.assertEqual(6, #RingConstellations.patterns, "Should have 6 patterns")
+        local RingConstellations = getRingConstellations(mockGameState, mockSoundManager, mockAchievementSystem)        TestFramework.assert.assertEqual(6, #RingConstellations.patterns, "Should have 6 patterns")
         
         local patternIds = {}
         for _, pattern in ipairs(RingConstellations.patterns) do
             patternIds[pattern.id] = true
         end
         
-        TestFramework.utils.assertNotNil(patternIds["star"], "Should have star pattern")
-        TestFramework.utils.assertNotNil(patternIds["spiral"], "Should have spiral pattern")
-        TestFramework.utils.assertNotNil(patternIds["line"], "Should have line pattern")
-        TestFramework.utils.assertNotNil(patternIds["circle"], "Should have circle pattern")
-        TestFramework.utils.assertNotNil(patternIds["zigzag"], "Should have zigzag pattern")
-        TestFramework.utils.assertNotNil(patternIds["infinity"], "Should have infinity pattern")
+        TestFramework.assert.assertNotNil(patternIds["star"], "Should have star pattern")
+        TestFramework.assert.assertNotNil(patternIds["spiral"], "Should have spiral pattern")
+        TestFramework.assert.assertNotNil(patternIds["line"], "Should have line pattern")
+        TestFramework.assert.assertNotNil(patternIds["circle"], "Should have circle pattern")
+        TestFramework.assert.assertNotNil(patternIds["zigzag"], "Should have zigzag pattern")
+        TestFramework.assert.assertNotNil(patternIds["infinity"], "Should have infinity pattern")
     end
 }
 
 -- Run the test suite
 local function run()
-    return TestFramework.runSuite("Ring Constellations Tests", tests)
+    -- Initialize test framework
+    Mocks.setup()
+    TestFramework.init()
+    
+    -- Set up persistent mocks for RingConstellations dependencies
+    local oldRequire = Utils.require
+    Utils.require = function(path)
+        if path == "src.core.game_state" then
+            return mockGameState
+        elseif path == "src.audio.sound_manager" then
+            return mockSoundManager
+        elseif path == "src.systems.achievement_system" then
+            return mockAchievementSystem
+        else
+            return oldRequire(path)
+        end
+    end
+    
+    local success = TestFramework.runTests(tests, "Ring Constellations Tests")
+    
+    -- Restore original require
+    Utils.require = originalUtilsRequire or oldRequire
+    
+    -- Update coverage tracking
+    local TestCoverage = Utils.require("tests.test_coverage")
+    TestCoverage.updateModule("ring_constellations", 10) -- All major functions tested
+    
+    return success
 end
 
 return {run = run}
