@@ -426,10 +426,22 @@ function Game.createIntelligentFontFallbacks()
     
     local defaultFont = love.graphics.getFont()
     
-    fonts.regular = love.graphics.newFont(16)     -- Base size
-    fonts.bold = love.graphics.newFont(18)        -- Slightly larger for emphasis
-    fonts.light = love.graphics.newFont(14)       -- Smaller for secondary info
-    fonts.extraBold = love.graphics.newFont(24)   -- Larger for headers
+    -- Try to create fallback fonts, but handle cases where even default font creation fails
+    local fallbackSuccess, fallbackError = Utils.ErrorHandler.safeCall(function()
+        fonts.regular = love.graphics.newFont(16)     -- Base size
+        fonts.bold = love.graphics.newFont(18)        -- Slightly larger for emphasis
+        fonts.light = love.graphics.newFont(14)       -- Smaller for secondary info
+        fonts.extraBold = love.graphics.newFont(24)   -- Larger for headers
+    end)
+    
+    if not fallbackSuccess then
+        Utils.Logger.warn("Even default font creation failed (%s) - Using system default", tostring(fallbackError))
+        -- Use the existing default font for all cases
+        fonts.regular = defaultFont
+        fonts.bold = defaultFont
+        fonts.light = defaultFont
+        fonts.extraBold = defaultFont
+    end
     
     Utils.Logger.info("🎨 Intelligent font fallback system activated")
 end
