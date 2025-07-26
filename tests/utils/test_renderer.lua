@@ -442,6 +442,11 @@ local tests = {
             onPlanet = true
         }
         
+        -- Set up fonts for Renderer
+        Renderer.fonts = {
+            bold = love.graphics.getFont()
+        }
+        
         -- Mock Utils.MobileInput.isMobile to return true
         local originalIsMobile = Utils.MobileInput.isMobile
         Utils.MobileInput.isMobile = function() return true end

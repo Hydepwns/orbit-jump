@@ -49,6 +49,7 @@ end
 
 -- Mock Utils functions
 Utils.setColor = function() end
+Utils.drawCircle = function() end
 
 -- Function to get MapSystem with proper initialization
 local function getMapSystem()
@@ -82,6 +83,19 @@ local MapSystem = getMapSystem()
 local mockWarpZones = {
     activeZones = {}
 }
+
+-- Mock Utils.require to return mock dependencies
+local originalUtilsRequire = Utils.require
+Utils.require = function(module)
+    if module == "src.systems.warp_zones" then
+        return mockWarpZones
+    end
+    -- Fall back to original for other modules
+    if originalUtilsRequire then
+        return originalUtilsRequire(module)
+    end
+    return nil
+end
 
 _G.mockArtifactSystem = {
     drawOnMapCalled = false,
@@ -390,6 +404,17 @@ local tests = {
     end,
     
     ["test hover detection"] = function()
+        -- Mock WarpZones before loading MapSystem
+        local originalRequire = Utils.require
+        Utils.require = function(module)
+            if module == "src.systems.warp_zones" then
+                return {
+                    activeZones = {}
+                }
+            end
+            return originalRequire and originalRequire(module) or require(module)
+        end
+        
         local MapSystem = getMapSystem()
         MapSystem.mapAlpha = 1.0
         
@@ -399,8 +424,9 @@ local tests = {
         
         -- This test verifies hover detection logic is considered
         -- The actual rendering is mocked
+        local mockCamera = { x = 0, y = 0 }
         local success, errorMsg = pcall(function()
-            MapSystem.draw(createTestPlayer(0, 0), {}, {})
+            MapSystem.draw(createTestPlayer(0, 0), {}, mockCamera)
         end)
         
         if not success then
@@ -408,6 +434,9 @@ local tests = {
         end
         
         TestFramework.assert.assertTrue(success, "Should handle hover detection without errors: " .. (errorMsg or "unknown error"))
+        
+        -- Restore Utils.require
+        Utils.require = originalRequire
     end,
     
     ["test discovered count"] = function()

@@ -1,0 +1,22 @@
+{
+  "workspace": {
+    "ignoreDir": [".git"],
+    "ignoreSubmodules": true
+  },
+  "diagnostics": {
+    "globals": ["love"],
+    "disable": ["lowercase-global"]
+  },
+  "runtime": {
+    "version": "LuaJIT",
+    "special": {
+      "love.filesystem.load": "loadfile"
+    }
+  },
+  "completion": {
+    "callSnippet": "Both"
+  },
+  "files": {
+    "exclude": ["tests/standalone_tests/**"]
+  }
+}

@@ -121,16 +121,16 @@ local tests = {
         -- Ensure we start from 0
         PauseMenu.fadeAlpha = 0
         PauseMenu.pause()
-        local initialAlpha = PauseMenu.fadeAlpha
         
         PauseMenu.update(0.1) -- 0.1 seconds
         
         -- Debug info
-        print("Paused test - Initial alpha:", initialAlpha, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
+        print("Paused test - Initial alpha:", 0, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
         
         -- The fade should increase when paused (rate is 5 per second)
         -- With 0.1 seconds, expect 0.5 increase: 0 + (0.1 * 5) = 0.5
-        TestFramework.assert.greaterThan(PauseMenu.fadeAlpha, initialAlpha, "Fade should increase when paused")
+        TestFramework.assert.equal(0.5, PauseMenu.fadeAlpha, "Fade should be 0.5 after 0.1 seconds")
+        TestFramework.assert.greaterThan(0, PauseMenu.fadeAlpha, "Fade should increase when paused")
     end,
 
     ["test fade update when unpaused"] = function()
@@ -139,18 +139,18 @@ local tests = {
         -- Build up fade first
         PauseMenu.fadeAlpha = 0
         PauseMenu.pause()
-        PauseMenu.update(0.2) -- Build up some fade
-        local initialAlpha = PauseMenu.fadeAlpha
+        PauseMenu.update(0.2) -- Build up to 1.0 fade (0.2 * 5 = 1.0)
         
         PauseMenu.resume()
         PauseMenu.update(0.1) -- 0.1 seconds
         
         -- Debug info  
-        print("Unpaused test - Initial alpha:", initialAlpha, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
+        print("Unpaused test - Initial alpha:", 1.0, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
         
         -- The fade should decrease when unpaused (rate is 5 per second)
-        -- With 0.1 seconds, expect 0.5 decrease from initial
-        TestFramework.assert.lessThan(PauseMenu.fadeAlpha, initialAlpha, "Fade should decrease when unpaused")
+        -- With 0.1 seconds, expect 0.5 decrease: 1.0 - (0.1 * 5) = 0.5
+        TestFramework.assert.equal(0.5, PauseMenu.fadeAlpha, "Fade should be 0.5 after 0.1 seconds")
+        TestFramework.assert.lessThan(1.0, PauseMenu.fadeAlpha, "Fade should decrease when unpaused")
     end,
 
     ["test fade limits"] = function()

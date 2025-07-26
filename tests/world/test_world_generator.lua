@@ -79,7 +79,11 @@ WorldGenerator.generateSector = function(x, y, existingPlanets)
         
         -- Generate 1-3 planets for this sector
         local numPlanets = math.random(1, 3)
-        for i = 1, numPlanets do
+        local attempts = 0
+        local maxAttempts = 50
+        
+        while #planets < numPlanets and attempts < maxAttempts do
+            attempts = attempts + 1
             local planetX = x + math.random(-400, 400)
             local planetY = y + math.random(-400, 400)
             local planetType = "standard"
@@ -87,7 +91,30 @@ WorldGenerator.generateSector = function(x, y, existingPlanets)
             if math.random() < 0.2 then planetType = "lava" end
             if math.random() < 0.1 then planetType = "void" end
             
-            table.insert(planets, WorldGenerator.generatePlanet(planetX, planetY, planetType))
+            -- Check distance from existing planets
+            local tooClose = false
+            if existingPlanets then
+                for _, existing in ipairs(existingPlanets) do
+                    local dist = math.sqrt((planetX - existing.x)^2 + (planetY - existing.y)^2)
+                    if dist < WorldGenerator.MIN_PLANET_DISTANCE then
+                        tooClose = true
+                        break
+                    end
+                end
+            end
+            
+            -- Also check distance from already generated planets in this sector
+            for _, planet in ipairs(planets) do
+                local dist = math.sqrt((planetX - planet.x)^2 + (planetY - planet.y)^2)
+                if dist < WorldGenerator.MIN_PLANET_DISTANCE then
+                    tooClose = true
+                    break
+                end
+            end
+            
+            if not tooClose then
+                table.insert(planets, WorldGenerator.generatePlanet(planetX, planetY, planetType))
+            end
         end
         
         return planets
@@ -261,15 +288,14 @@ local tests = {
         
         local newPlanets = WorldGenerator.generateSector(0, 0, existingPlanets)
         
-        -- Check that new planets don't overlap with existing ones
+        -- Check that new planets respect the minimum distance from existing ones
         for _, newPlanet in ipairs(newPlanets) do
             for _, existingPlanet in ipairs(existingPlanets) do
                 local distance = math.sqrt((newPlanet.x - existingPlanet.x)^2 + (newPlanet.y - existingPlanet.y)^2)
-                -- Use a more lenient minimum distance for test stability
-                -- Just ensure planets don't completely overlap (sum of radii)
-                local minDist = (newPlanet.radius or 50) + (existingPlanet.radius or 50)
+                -- WorldGenerator uses MIN_PLANET_DISTANCE = 300
+                local minDist = WorldGenerator.MIN_PLANET_DISTANCE
                 TestFramework.assert.isTrue(distance >= minDist, 
-                    string.format("Planets should not overlap. Distance: %.1f, Required: %.1f (sum of radii)", distance, minDist))
+                    string.format("Planets should maintain minimum distance. Distance: %.1f, Required: %.1f", distance, minDist))
             end
         end
     end,

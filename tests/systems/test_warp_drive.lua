@@ -44,15 +44,17 @@ local function getWarpDrive(customMocks)
         return originalUtilsRequire(module)
     end
     
-    -- Load completely fresh instance, avoiding all caches
-    local WarpDrive = dofile("src/systems/warp_drive.lua") or require("src.systems.warp_drive")
+    -- Load fresh instance using regular require to bypass cache
+    local WarpDrive = require("src.systems.warp_drive")
     
     -- Ensure it's initialized
     if WarpDrive and WarpDrive.init then
         WarpDrive.init()
     end
     
-    -- DON'T restore Utils.require here - let the test control it
+    -- DON'T restore Utils.require yet - let tests control when to restore it
+    -- Store the original for later restoration
+    WarpDrive._originalUtilsRequire = originalUtilsRequire
     
     return WarpDrive
 end
@@ -124,6 +126,7 @@ mockAchievementSystem = {
     onWarpDriveUnlocked = function()
         print("🎯 mockAchievementSystem.onWarpDriveUnlocked() called!")
         mockAchievementSystem.warpDriveUnlocked = true
+        print("🎯 onWarpDriveUnlocked - warpDriveUnlocked is now:", mockAchievementSystem.warpDriveUnlocked)
     end,
     onWarpCompleted = function()
         print("🎯 mockAchievementSystem.onWarpCompleted() called!")
@@ -150,6 +153,14 @@ mockCamera = {
     end
 }
 
+-- Cleanup function to restore Utils.require
+local function cleanupWarpDrive(WarpDrive)
+    if WarpDrive._originalUtilsRequire then
+        Utils.require = WarpDrive._originalUtilsRequire
+        WarpDrive._originalUtilsRequire = nil
+    end
+end
+
 -- Test helper functions
 local function createTestPlayer(x, y)
     return {
@@ -174,6 +185,16 @@ end
 local function resetMocks()
     mockAchievementSystem.warpDriveUnlocked = false
     mockAchievementSystem.warpsCompleted = 0
+    -- Ensure functions exist
+    mockAchievementSystem.onWarpDriveUnlocked = function()
+        print("🎯 mockAchievementSystem.onWarpDriveUnlocked() called!")
+        mockAchievementSystem.warpDriveUnlocked = true
+        print("🎯 onWarpDriveUnlocked - warpDriveUnlocked is now:", mockAchievementSystem.warpDriveUnlocked)
+    end
+    mockAchievementSystem.onWarpCompleted = function()
+        print("🎯 mockAchievementSystem.onWarpCompleted() called!")
+        mockAchievementSystem.warpsCompleted = mockAchievementSystem.warpsCompleted + 1
+    end
     mockSoundManager.eventWarningPlayed = false
     mockCamera.shakeAmount = 0
     mockCamera.shakeDuration = 0
@@ -194,26 +215,42 @@ local tests = {
     ["test unlock warp drive"] = function()
         resetMocks()
         
-        -- Mock Utils.require BEFORE getting WarpDrive and KEEP it mocked during the test
+        -- Reset the mock state
+        mockAchievementSystem.warpDriveUnlocked = false
+        
+        -- Get WarpDrive without custom mocks - use the defaults
+        local WarpDrive = getWarpDrive()
+        
+        -- FORCE the mock setup after WarpDrive is loaded
         local originalUtilsRequire = Utils.require
         Utils.require = function(module)
-            print("Utils.require called with:", module)
             if module == "src.systems.achievement_system" then
-                print("Returning mockAchievementSystem:", mockAchievementSystem)
                 return mockAchievementSystem
             end
-            local result = originalUtilsRequire(module)
-            print("Returning original for", module, ":", result)
-            return result
+            return originalUtilsRequire(module)
         end
-        
-        -- Get WarpDrive (this will use the original mock setup, not the custom one)
-        local WarpDrive = getWarpDrive()
         
         -- Debug: Check mock state before unlock
         print("Before unlock - mockAchievementSystem.warpDriveUnlocked:", mockAchievementSystem.warpDriveUnlocked)
         
+        -- Check what Utils.require returns when called during unlock
+        local testAS = Utils.require("src.systems.achievement_system")
+        print("Just before unlock - Utils.require returns:", tostring(testAS))
+        print("Just before unlock - onWarpDriveUnlocked exists:", testAS.onWarpDriveUnlocked ~= nil)
+        print("Just before unlock - same object:", testAS == mockAchievementSystem)
+        print("Just before unlock - mockAchievementSystem.onWarpDriveUnlocked exists:", mockAchievementSystem.onWarpDriveUnlocked ~= nil)
+        local keys = {}
+        for k, v in pairs(mockAchievementSystem) do
+            table.insert(keys, k .. ":" .. type(v))
+        end
+        print("Just before unlock - mockAchievementSystem keys:", table.concat(keys, ", "))
+        
         WarpDrive.unlock()
+        
+        -- Check Utils.require after unlock
+        local testAS2 = Utils.require("src.systems.achievement_system")
+        print("After unlock - Utils.require returns:", tostring(testAS2))
+        print("After unlock - onWarpDriveUnlocked exists:", testAS2.onWarpDriveUnlocked ~= nil)
         
         -- Debug: Check state after unlock
         print("After unlock - WarpDrive.isUnlocked:", WarpDrive.isUnlocked)
@@ -222,8 +259,11 @@ local tests = {
         TestFramework.assert.assertTrue(WarpDrive.isUnlocked, "Warp drive should be unlocked")
         TestFramework.assert.assertTrue(mockAchievementSystem.warpDriveUnlocked, "Achievement should be triggered")
         
-        -- Restore
+        -- Restore Utils.require
         Utils.require = originalUtilsRequire
+        
+        -- Cleanup
+        cleanupWarpDrive(WarpDrive)
     end,
     
     ["test calculate cost"] = function()
@@ -366,19 +406,23 @@ local tests = {
     ["test complete warp"] = function()
         resetMocks()
         
-        -- Mock Utils.require BEFORE getting WarpDrive and KEEP it mocked during the test
+        -- Reset the mock state
+        mockAchievementSystem.warpsCompleted = 0
+        mockCamera.shakeAmount = 0
+        
+        -- Get WarpDrive without custom mocks - use the defaults
+        local WarpDrive = getWarpDrive()
+        
+        -- FORCE the mock setup after WarpDrive is loaded
         local originalUtilsRequire = Utils.require
         Utils.require = function(module)
-            if module == "src.core.camera" then
-                return mockCamera
-            elseif module == "src.systems.achievement_system" then
+            if module == "src.systems.achievement_system" then
                 return mockAchievementSystem
+            elseif module == "src.core.camera" then
+                return mockCamera
             end
             return originalUtilsRequire(module)
         end
-        
-        -- Get WarpDrive
-        local WarpDrive = getWarpDrive()
         
         local player = createTestPlayer(0, 0)
         local planet = createTestPlanet(1000, 500, 50)
@@ -412,8 +456,11 @@ local tests = {
         TestFramework.assert.assertEqual(15, mockCamera.shakeAmount, "Camera should shake")
         TestFramework.assert.assertEqual(1, mockAchievementSystem.warpsCompleted, "Achievement should track completion")
         
-        -- Restore
+        -- Restore Utils.require
         Utils.require = originalUtilsRequire
+        
+        -- Cleanup
+        cleanupWarpDrive(WarpDrive)
     end,
     
     ["test toggle selection"] = function()
