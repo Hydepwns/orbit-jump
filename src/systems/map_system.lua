@@ -26,6 +26,7 @@ function MapSystem.init()
     MapSystem.visitedSectors = {}
     MapSystem.isVisible = false
     MapSystem.mapAlpha = 0
+    return true
 end
 
 -- Toggle map visibility

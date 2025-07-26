@@ -4,6 +4,7 @@
 local Utils = require("src.utils.utils")
 local GameLogic = Utils.require("src.core.game_logic")
 local WarpDrive = Utils.require("src.systems.warp_drive")
+local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
 
 local CollisionSystem = {}
 
@@ -35,9 +36,20 @@ function CollisionSystem.checkPlanetCollisions(player, planets, spatialGrid, gam
     return nil
 end
 
--- Handle landing on a planet
 function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundManager)
+    --[[
+        Planetary Landing: The Moment of Arrival and Accomplishment
+        
+        Landing successfully on a planet is a satisfying moment that deserves
+        emotional recognition. This function now captures the context of the
+        landing (speed, approach angle, timing) to provide appropriate feedback.
+    --]]
+    
     if not player or not planet then return end
+    
+    -- Capture landing context for emotional feedback
+    local landingSpeed = Utils.fastDistance(0, 0, player.vx, player.vy)
+    local approachAngle = Utils.atan2(player.vy, player.vx)
     
     -- Calculate angle to planet center
     local dx = player.x - planet.x
@@ -67,7 +79,17 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
     player.x = planet.x + math.cos(player.angle) * orbitRadius
     player.y = planet.y + math.sin(player.angle) * orbitRadius
     
-    -- Reset velocity
+    -- Emotional Analysis: What kind of landing was this?
+    local GENTLE_LANDING_SPEED = 100   -- Graceful approach
+    local FAST_LANDING_SPEED = 300     -- Dramatic arrival
+    
+    local isGentle = landingSpeed < GENTLE_LANDING_SPEED
+    local isDramatic = landingSpeed > FAST_LANDING_SPEED
+    
+    -- Emotional Feedback: Celebrate the successful landing
+    EmotionalFeedback.onLanding(player, planet, landingSpeed, isGentle)
+    
+    -- Reset velocity (this happens after emotional analysis)
     player.vx = 0
     player.vy = 0
     

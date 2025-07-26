@@ -12,6 +12,12 @@ WorldGenerator.MAX_PLANETS_PER_SECTOR = 3
 -- Track generated sectors
 WorldGenerator.generatedSectors = {}
 
+-- Initialize the world generator
+function WorldGenerator.init()
+    WorldGenerator.generatedSectors = {}
+    return true
+end
+
 -- Planet type definitions
 WorldGenerator.planetTypes = {
     standard = {

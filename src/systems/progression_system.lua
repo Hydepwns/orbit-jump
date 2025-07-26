@@ -67,6 +67,7 @@ ProgressionSystem.maxUpgradeLevels = {
 
 function ProgressionSystem.init()
     ProgressionSystem.loadData()
+    return true
 end
 
 function ProgressionSystem.loadData()

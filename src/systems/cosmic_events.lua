@@ -2,6 +2,7 @@
 -- Dynamic events that create challenges and opportunities
 
 local Utils = require("src.utils.utils")
+local ObjectPool = require("src.utils.object_pool")
 local CosmicEvents = {}
 
 -- Event types
@@ -66,10 +67,41 @@ function CosmicEvents.init()
     CosmicEvents.eventCooldown = CosmicEvents.minimumCooldown
     CosmicEvents.meteors = {}
     CosmicEvents.stormRings = {}
+    
+    -- Create meteor object pool
+    CosmicEvents.meteorPool = ObjectPool:new(
+        function()
+            return {
+                x = 0,
+                y = 0,
+                vx = 0,
+                vy = 0,
+                radius = 10,
+                damage = true,
+                color = {1, 0.5, 0.2},
+                trail = {},
+                active = false
+            }
+        end,
+        function(meteor)
+            meteor.x = 0
+            meteor.y = 0
+            meteor.vx = 0
+            meteor.vy = 0
+            meteor.radius = 10
+            meteor.damage = true
+            meteor.color = {1, 0.5, 0.2}
+            meteor.trail = {}
+            meteor.active = false
+        end,
+        200  -- Max 200 meteors
+    )
+    
+    return true
 end
 
 -- Update events
-function CosmicEvents.update(dt, player, Camera)
+function CosmicEvents.update(dt, player, camera)
     -- Update cooldown
     if CosmicEvents.eventCooldown > 0 then
         CosmicEvents.eventCooldown = CosmicEvents.eventCooldown - dt
@@ -91,7 +123,7 @@ function CosmicEvents.update(dt, player, Camera)
             
             -- Update specific event
             if event.type == "meteor_shower" then
-                CosmicEvents.updateMeteorShower(dt, player, Camera)
+                CosmicEvents.updateMeteorShower(dt, player, camera)
             elseif event.type == "ring_storm" then
                 CosmicEvents.updateRingStorm(dt, player)
             end
@@ -105,7 +137,7 @@ function CosmicEvents.update(dt, player, Camera)
     end
     
     -- Update meteors
-    CosmicEvents.updateMeteors(dt, player)
+    CosmicEvents.updateMeteors(dt, player, camera)
     
     -- Update storm rings
     CosmicEvents.updateStormRings(dt, player)
@@ -182,12 +214,20 @@ function CosmicEvents.updateMeteorShower(dt, player, Camera)
         local screenWidth, screenHeight = love.graphics.getDimensions()
         local x1, y1, x2, y2 = Camera:getVisibleArea()
         
+        -- Get meteor from pool
+        local meteor = CosmicEvents.meteorPool:get()
+        if not meteor then
+            -- Pool exhausted, skip spawning
+            return
+        end
+        
+        -- Setup meteor properties
+        meteor.radius = 15 + math.random(10)
+        meteor.damage = true
+        meteor.active = true
+        
         -- Spawn from edges
         local side = math.random(4)
-        local meteor = {
-            radius = 15 + math.random(10),
-            damage = true
-        }
         
         if side == 1 then -- Top
             meteor.x = math.random(x1, x2)
@@ -220,7 +260,7 @@ function CosmicEvents.updateMeteorShower(dt, player, Camera)
 end
 
 -- Update meteors
-function CosmicEvents.updateMeteors(dt, player)
+function CosmicEvents.updateMeteors(dt, player, camera)
     for i = #CosmicEvents.meteors, 1, -1 do
         local meteor = CosmicEvents.meteors[i]
         
@@ -259,11 +299,11 @@ function CosmicEvents.updateMeteors(dt, player)
         end
         
         -- Remove if too far
-        local Camera = Utils.require("src.core.camera")
-        local x1, y1, x2, y2 = Camera:getVisibleArea()
+        local x1, y1, x2, y2 = camera:getVisibleArea()
         if meteor.x < x1 - 200 or meteor.x > x2 + 200 or
            meteor.y < y1 - 200 or meteor.y > y2 + 200 then
             table.remove(CosmicEvents.meteors, i)
+            CosmicEvents.meteorPool:release(meteor)
         end
     end
 end

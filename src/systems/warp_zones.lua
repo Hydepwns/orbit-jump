@@ -57,6 +57,7 @@ function WarpZones.init()
     WarpZones.activeZones = {}
     WarpZones.currentChallenge = nil
     WarpZones.portalPhase = 0
+    return true
 end
 
 -- Generate warp zones based on player position

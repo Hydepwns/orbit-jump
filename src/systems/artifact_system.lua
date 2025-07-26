@@ -118,6 +118,7 @@ function ArtifactSystem.init()
   ArtifactSystem.spawnedArtifacts = {}
   ArtifactSystem.collectedCount = 0
   ArtifactSystem.notificationQueue = {}
+  return true
 end
 
 -- Spawn artifacts based on conditions

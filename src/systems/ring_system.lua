@@ -4,6 +4,12 @@
 local Utils = require("src.utils.utils")
 local RingSystem = {}
 
+-- Initialize the ring system
+function RingSystem.init()
+    -- Ring system is initialized through type definitions
+    return true
+end
+
 -- Ring type definitions
 RingSystem.types = {
     standard = {
