@@ -1,15 +1,12 @@
 -- Enhanced Ring System for Orbit Jump
 -- Manages special ring types and their effects
-
 local Utils = require("src.utils.utils")
 local RingSystem = {}
-
 -- Initialize the ring system
 function RingSystem.init()
     -- Ring system is initialized through type definitions
     return true
 end
-
 -- Ring type definitions
 RingSystem.types = {
     standard = {
@@ -71,13 +68,11 @@ RingSystem.types = {
         rarity = 0.15
     }
 }
-
 -- Active power-ups
 RingSystem.activePowers = {}
 RingSystem.warpPairs = {}
 RingSystem.chainSequence = {}
 RingSystem.currentChain = 1
-
 function RingSystem.generateRing(x, y, planetType)
     local ring = {
         x = x,
@@ -144,7 +139,6 @@ function RingSystem.generateRing(x, y, planetType)
     
     return ring
 end
-
 function RingSystem.updateRing(ring, dt)
     if ring.collected then return end
     
@@ -168,7 +162,6 @@ function RingSystem.updateRing(ring, dt)
         end
     end
 end
-
 function RingSystem.collectRing(ring, player)
     if ring.collected then return 0 end
     
@@ -236,14 +229,12 @@ function RingSystem.collectRing(ring, player)
     -- Return ring value (with fallback to type value or default)
     return ring.value or (RingSystem.types[ring.type] and RingSystem.types[ring.type].value) or 5
 end
-
 function RingSystem.activatePower(power, duration)
     RingSystem.activePowers[power] = {
         duration = duration,
         startTime = love.timer.getTime()
     }
 end
-
 function RingSystem.updatePowers(dt)
     local currentTime = love.timer.getTime()
     
@@ -263,18 +254,15 @@ function RingSystem.updatePowers(dt)
         end
     end
 end
-
 function RingSystem.isActive(power)
     return RingSystem.activePowers[power] ~= nil
 end
-
 function RingSystem.getTimeScale()
     if RingSystem.isActive("slowmo") then
         return RingSystem.types.power_slowmo.timeScale
     end
     return 1.0
 end
-
 function RingSystem.findWarpPair(ring)
     -- GameState needs to be passed in or required
     local GameState = Utils.require("src.core.game_state")
@@ -285,7 +273,6 @@ function RingSystem.findWarpPair(ring)
     end
     return nil
 end
-
 function RingSystem.applyMagnetEffect(player, rings)
     if not player.magnetRange then return end
     
@@ -305,7 +292,6 @@ function RingSystem.applyMagnetEffect(player, rings)
         end
     end
 end
-
 function RingSystem.reset()
     RingSystem.activePowers = {}
     RingSystem.warpPairs = {}
@@ -319,8 +305,8 @@ function RingSystem.reset()
         local rings = RingSystem.generateRings(planets)
         GameState.setRings(rings)
     end
+    return true
 end
-
 -- Generate rings around planets
 function RingSystem.generateRings(planets, count)
     local rings = {}
@@ -343,5 +329,4 @@ function RingSystem.generateRings(planets, count)
     
     return rings
 end
-
 return RingSystem

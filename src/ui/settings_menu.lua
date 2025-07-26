@@ -1,16 +1,13 @@
 -- Settings Menu for Orbit Jump
 -- Allows players to configure volume, controls, and other preferences
-
 local Utils = require("src.utils.utils")
 local SettingsMenu = {}
-
 -- Settings state
 SettingsMenu.isVisible = false
 SettingsMenu.selectedTab = 1
 SettingsMenu.selectedOption = 1
 SettingsMenu.fadeAlpha = 0
 SettingsMenu.unsavedChanges = false
-
 -- Settings categories
 SettingsMenu.tabs = {
     {name = "Audio", icon = "🔊"},
@@ -18,7 +15,6 @@ SettingsMenu.tabs = {
     {name = "Graphics", icon = "🖼️"},
     {name = "Gameplay", icon = "⚙️"}
 }
-
 -- Default settings
 SettingsMenu.defaults = {
     -- Audio
@@ -49,13 +45,10 @@ SettingsMenu.defaults = {
     mobileControls = "auto",  -- auto, always, never
     cameraZoom = 1.0
 }
-
 -- Current settings (loaded from file or defaults)
 SettingsMenu.current = {}
-
 -- Settings file
 SettingsMenu.settingsFile = "settings.dat"
-
 -- Initialize
 function SettingsMenu.init()
     -- Load settings from file or use defaults
@@ -65,8 +58,8 @@ function SettingsMenu.init()
     SettingsMenu.applySettings()
     
     Utils.Logger.info("Settings menu initialized")
+    return true
 end
-
 -- Load settings from file
 function SettingsMenu.load()
     if love.filesystem.getInfo(SettingsMenu.settingsFile) then
@@ -93,7 +86,6 @@ function SettingsMenu.load()
     end
     Utils.Logger.info("Using default settings")
 end
-
 -- Save settings to file
 function SettingsMenu.save()
     local json = Utils.require("libs.json")
@@ -102,7 +94,6 @@ function SettingsMenu.save()
     SettingsMenu.unsavedChanges = false
     Utils.Logger.info("Settings saved")
 end
-
 -- Apply current settings to game
 function SettingsMenu.applySettings()
     -- Apply audio settings
@@ -131,7 +122,6 @@ function SettingsMenu.applySettings()
         SaveSystem.autoSaveInterval = SettingsMenu.current.autoSaveInterval
     end
 end
-
 -- Toggle settings menu
 function SettingsMenu.toggle()
     SettingsMenu.isVisible = not SettingsMenu.isVisible
@@ -144,7 +134,6 @@ function SettingsMenu.toggle()
         SettingsMenu.applySettings()
     end
 end
-
 -- Update
 function SettingsMenu.update(dt)
     if SettingsMenu.isVisible then
@@ -153,7 +142,6 @@ function SettingsMenu.update(dt)
         SettingsMenu.fadeAlpha = math.max(SettingsMenu.fadeAlpha - dt * 5, 0)
     end
 end
-
 -- Get options for current tab
 function SettingsMenu.getCurrentOptions()
     local tab = SettingsMenu.tabs[SettingsMenu.selectedTab]
@@ -195,7 +183,6 @@ function SettingsMenu.getCurrentOptions()
     
     return {}
 end
-
 -- Handle input
 function SettingsMenu.keypressed(key)
     if not SettingsMenu.isVisible then
@@ -283,7 +270,6 @@ function SettingsMenu.keypressed(key)
     
     return true -- Consume all input when visible
 end
-
 -- Handle mouse input
 function SettingsMenu.mousepressed(x, y, button)
     if not SettingsMenu.isVisible or SettingsMenu.fadeAlpha < 0.5 then
@@ -350,7 +336,6 @@ function SettingsMenu.mousepressed(x, y, button)
     
     return true
 end
-
 -- Draw settings menu
 function SettingsMenu.draw()
     if SettingsMenu.fadeAlpha <= 0 then return end
@@ -511,21 +496,17 @@ function SettingsMenu.draw()
         love.graphics.print("* Unsaved Changes", menuX + 20, menuY + menuHeight - 60)
     end
 end
-
 -- Check if blocking input
 function SettingsMenu.isBlockingInput()
     return SettingsMenu.isVisible and SettingsMenu.fadeAlpha > 0.5
 end
-
 -- Get setting value
 function SettingsMenu.get(key)
     return SettingsMenu.current[key] or SettingsMenu.defaults[key]
 end
-
 -- Set setting value
 function SettingsMenu.set(key, value)
     SettingsMenu.current[key] = value
     SettingsMenu.unsavedChanges = true
 end
-
 return SettingsMenu

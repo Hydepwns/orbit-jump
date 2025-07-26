@@ -1,12 +1,9 @@
 -- Upgrade System for Orbit Jump
 -- Spend collected points to enhance abilities
-
 local Utils = require("src.utils.utils")
 local UpgradeSystem = {}
-
 -- Initialize currency
 UpgradeSystem.currency = 0
-
 -- Available upgrades
 UpgradeSystem.upgrades = {
     -- Jump upgrades
@@ -188,10 +185,8 @@ UpgradeSystem.upgrades = {
         end
     }
 }
-
 -- Currency (uses achievement points)
 UpgradeSystem.currency = 500 -- Start with some points for testing
-
 -- Calculate upgrade cost
 function UpgradeSystem.getUpgradeCost(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
@@ -214,12 +209,10 @@ function UpgradeSystem.getUpgradeCost(upgradeId)
         return math.floor(upgrade.baseCost * (upgrade.costMultiplier ^ level))
     end
 end
-
 -- Alias for getUpgradeCost (for backward compatibility)
 function UpgradeSystem.getCost(upgradeId)
     return UpgradeSystem.getUpgradeCost(upgradeId)
 end
-
 -- Get upgrade level
 function UpgradeSystem.getLevel(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
@@ -232,7 +225,6 @@ function UpgradeSystem.getLevel(upgradeId)
     
     return upgrade.currentLevel
 end
-
 -- Initialize upgrade system
 function UpgradeSystem.init()
     -- Initialize currency if not set
@@ -251,14 +243,12 @@ function UpgradeSystem.init()
     
     return true
 end
-
 -- Check if can afford upgrade
 function UpgradeSystem.canAfford(upgradeId, availableCurrency)
     local cost = UpgradeSystem.getUpgradeCost(upgradeId)
     local currency = availableCurrency or UpgradeSystem.currency
     return cost > 0 and currency >= cost
 end
-
 -- Purchase upgrade
 function UpgradeSystem.purchase(upgradeId, availableCurrency)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
@@ -309,7 +299,6 @@ function UpgradeSystem.purchase(upgradeId, availableCurrency)
     
     return true
 end
-
 -- Get upgrade effect value
 function UpgradeSystem.getEffect(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
@@ -329,12 +318,10 @@ function UpgradeSystem.getEffect(upgradeId)
     
     return upgrade.effect(level)
 end
-
 -- Add currency (from achievements)
 function UpgradeSystem.addCurrency(amount)
     UpgradeSystem.currency = UpgradeSystem.currency + amount
 end
-
 -- Save/Load
 function UpgradeSystem.getSaveData()
     local saveData = {
@@ -356,7 +343,6 @@ function UpgradeSystem.getSaveData()
     
     return saveData
 end
-
 function UpgradeSystem.loadSaveData(data)
     if not data then return end
     
@@ -374,7 +360,6 @@ function UpgradeSystem.loadSaveData(data)
         end
     end
 end
-
 -- Get total upgrades purchased
 function UpgradeSystem.getTotalUpgrades()
     local total = 0
@@ -393,7 +378,6 @@ function UpgradeSystem.getTotalUpgrades()
     
     return total
 end
-
 -- Get completion percentage
 function UpgradeSystem.getCompletionPercentage()
     local current = 0
@@ -406,7 +390,6 @@ function UpgradeSystem.getCompletionPercentage()
     
     return (current / max) * 100
 end
-
 -- Reset all upgrades to level 0
 function UpgradeSystem.reset()
     for _, upgrade in pairs(UpgradeSystem.upgrades) do
@@ -418,8 +401,8 @@ function UpgradeSystem.reset()
             UpgradeSystem.playerUpgrades[id] = 0
         end
     end
+    return true
 end
-
 -- Apply all upgrade effects to game state
 function UpgradeSystem.applyEffects(gameState)
     if not gameState then return false end
@@ -446,5 +429,4 @@ function UpgradeSystem.applyEffects(gameState)
     
     return true
 end
-
 return UpgradeSystem

@@ -1,23 +1,18 @@
 -- World Generator for Orbit Jump
 -- Procedurally generates planets as the player explores
-
 local Utils = require("src.utils.utils")
 local WorldGenerator = {}
-
 -- Generation parameters
 WorldGenerator.SECTOR_SIZE = 1000
 WorldGenerator.MIN_PLANET_DISTANCE = 300
 WorldGenerator.MAX_PLANETS_PER_SECTOR = 3
-
 -- Track generated sectors
 WorldGenerator.generatedSectors = {}
-
 -- Initialize the world generator
 function WorldGenerator.init()
     WorldGenerator.generatedSectors = {}
     return true
 end
-
 -- Planet type definitions
 WorldGenerator.planetTypes = {
     standard = {
@@ -95,13 +90,11 @@ WorldGenerator.planetTypes = {
         special = true -- Mark as special type
     }
 }
-
 function WorldGenerator.getSectorKey(x, y)
     local sectorX = math.floor(x / WorldGenerator.SECTOR_SIZE)
     local sectorY = math.floor(y / WorldGenerator.SECTOR_SIZE)
     return sectorX .. "," .. sectorY
 end
-
 function WorldGenerator.generateSector(sectorX, sectorY, existingPlanets)
     local key = sectorX .. "," .. sectorY
     if WorldGenerator.generatedSectors[key] then
@@ -195,7 +188,6 @@ function WorldGenerator.generateSector(sectorX, sectorY, existingPlanets)
     
     return newPlanets
 end
-
 function WorldGenerator.generateAroundPosition(x, y, existingPlanets, radius)
     radius = radius or WorldGenerator.SECTOR_SIZE * 2
     
@@ -219,7 +211,6 @@ function WorldGenerator.generateAroundPosition(x, y, existingPlanets, radius)
     
     return newPlanets
 end
-
 function WorldGenerator.generateRingsForPlanet(planet)
     local RingSystem = Utils.require("src.systems.ring_system")
     local rings = {}
@@ -253,7 +244,6 @@ function WorldGenerator.generateRingsForPlanet(planet)
     
     return rings
 end
-
 function WorldGenerator.reset()
     WorldGenerator.generatedSectors = {}
     
@@ -261,8 +251,8 @@ function WorldGenerator.reset()
     local GameState = Utils.require("src.core.game_state")
     local initialPlanets = WorldGenerator.generateInitialWorld()
     GameState.setPlanets(initialPlanets)
+    return true
 end
-
 -- Generate initial world with starting planets
 function WorldGenerator.generateInitialWorld()
     local planets = {}
@@ -287,7 +277,6 @@ function WorldGenerator.generateInitialWorld()
     
     return planets
 end
-
 -- Generate a single planet at specified position
 function WorldGenerator.generatePlanet(x, y, planetType)
     planetType = planetType or "standard"
@@ -312,7 +301,6 @@ function WorldGenerator.generatePlanet(x, y, planetType)
         id = "planet_" .. x .. "_" .. y
     }
 end
-
 -- Discover a planet when player gets close
 function WorldGenerator.discoverPlanet(planet, playerX, playerY)
     if planet.discovered then return false end
@@ -340,5 +328,4 @@ function WorldGenerator.discoverPlanet(planet, playerX, playerY)
     
     return false
 end
-
 return WorldGenerator

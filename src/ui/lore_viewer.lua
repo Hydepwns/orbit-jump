@@ -1,30 +1,26 @@
 -- Lore Viewer UI for Orbit Jump
 -- Displays collected artifacts and their lore entries
-
 local Utils = require("src.utils.utils")
 local LoreViewer = {}
-
 -- UI state
 LoreViewer.isVisible = false
 LoreViewer.scrollY = 0
 LoreViewer.selectedArtifact = nil
 LoreViewer.fadeAlpha = 0
-
 -- UI dimensions
 LoreViewer.width = 800
 LoreViewer.height = 600
 LoreViewer.padding = 20
 LoreViewer.itemHeight = 80
 LoreViewer.scrollSpeed = 300
-
 -- Initialize
 function LoreViewer.init()
     LoreViewer.isVisible = false
     LoreViewer.scrollY = 0
     LoreViewer.selectedArtifact = nil
     LoreViewer.fadeAlpha = 0
+    return true
 end
-
 -- Toggle lore viewer
 function LoreViewer.toggle()
     LoreViewer.isVisible = not LoreViewer.isVisible
@@ -34,7 +30,6 @@ function LoreViewer.toggle()
     end
     Utils.Logger.info("Lore viewer: %s", LoreViewer.isVisible and "opened" or "closed")
 end
-
 -- Open to specific artifact
 function LoreViewer.openToArtifact(artifactId)
     if not artifactId then return end
@@ -53,7 +48,6 @@ function LoreViewer.openToArtifact(artifactId)
         end
     end
 end
-
 -- Update
 function LoreViewer.update(dt)
     -- Update fade effect
@@ -66,7 +60,6 @@ function LoreViewer.update(dt)
         end
     end
 end
-
 -- Handle input
 function LoreViewer.keypressed(key)
     if not LoreViewer.isVisible then return false end
@@ -88,7 +81,6 @@ function LoreViewer.keypressed(key)
     
     return false
 end
-
 -- Handle mouse input
 function LoreViewer.mousepressed(x, y, button)
     if not LoreViewer.isVisible or LoreViewer.fadeAlpha < 0.5 then return false end
@@ -135,7 +127,6 @@ function LoreViewer.mousepressed(x, y, button)
     
     return true -- Consume input when visible
 end
-
 -- Handle mouse wheel
 function LoreViewer.wheelmoved(x, y)
     if not LoreViewer.isVisible then return false end
@@ -145,7 +136,6 @@ function LoreViewer.wheelmoved(x, y)
     
     return true
 end
-
 -- Draw lore viewer
 function LoreViewer.draw()
     if LoreViewer.fadeAlpha <= 0 then return end
@@ -195,7 +185,6 @@ function LoreViewer.draw()
     love.graphics.printf("Press ESC or L to close", viewerX, viewerY + LoreViewer.height - 30, 
                         LoreViewer.width, "center")
 end
-
 -- Draw artifact list
 function LoreViewer.drawArtifactList(x, y)
     -- Handle case where love.graphics is not available (e.g., in test environment)
@@ -282,7 +271,6 @@ function LoreViewer.drawArtifactList(x, y)
         listY = listY + LoreViewer.itemHeight + 10
     end
 end
-
 -- Draw artifact detail
 function LoreViewer.drawArtifactDetail(x, y)
     -- Handle case where love.graphics is not available (e.g., in test environment)
@@ -366,10 +354,8 @@ function LoreViewer.drawArtifactDetail(x, y)
         love.graphics.printf("Hint: " .. artifact.hint, x + 40, textY, wrapWidth, "center")
     end
 end
-
 -- Check if blocking input
 function LoreViewer.isBlockingInput()
     return LoreViewer.isVisible and LoreViewer.fadeAlpha > 0.5
 end
-
 return LoreViewer

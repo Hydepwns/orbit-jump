@@ -1,9 +1,7 @@
 -- Tutorial System for Orbit Jump
 -- Guides new players through game mechanics
-
 local Utils = require("src.utils.utils")
 local TutorialSystem = {}
-
 -- Tutorial state
 TutorialSystem.isActive = false
 TutorialSystem.currentStep = 1
@@ -11,7 +9,6 @@ TutorialSystem.stepTimer = 0
 TutorialSystem.hasCompletedTutorial = false
 TutorialSystem.fadeAlpha = 0
 TutorialSystem.pulsePhase = 0
-
 -- Tutorial steps
 TutorialSystem.steps = {
     {
@@ -97,7 +94,6 @@ TutorialSystem.steps = {
         highlight = nil
     }
 }
-
 -- Initialize tutorial
 function TutorialSystem.init()
     -- Check if player has completed tutorial before
@@ -107,8 +103,8 @@ function TutorialSystem.init()
     if not TutorialSystem.hasCompletedTutorial then
         TutorialSystem.start()
     end
+    return true
 end
-
 -- Start tutorial
 function TutorialSystem.start()
     TutorialSystem.isActive = true
@@ -124,7 +120,6 @@ function TutorialSystem.start()
     
     Utils.Logger.info("Tutorial started")
 end
-
 -- Skip tutorial
 function TutorialSystem.skip()
     TutorialSystem.isActive = false
@@ -132,7 +127,6 @@ function TutorialSystem.skip()
     TutorialSystem.saveTutorialState()
     Utils.Logger.info("Tutorial skipped")
 end
-
 -- Complete tutorial
 function TutorialSystem.complete()
     TutorialSystem.isActive = false
@@ -147,7 +141,6 @@ function TutorialSystem.complete()
     
     Utils.Logger.info("Tutorial completed!")
 end
-
 -- Update tutorial
 function TutorialSystem.update(dt, player)
     if not TutorialSystem.isActive then return end
@@ -176,7 +169,6 @@ function TutorialSystem.update(dt, player)
         end
     end
 end
-
 -- Check for player actions
 function TutorialSystem.onPlayerAction(action)
     if not TutorialSystem.isActive then return end
@@ -186,7 +178,6 @@ function TutorialSystem.onPlayerAction(action)
         TutorialSystem.nextStep()
     end
 end
-
 -- Move to next step
 function TutorialSystem.nextStep()
     TutorialSystem.currentStep = TutorialSystem.currentStep + 1
@@ -197,7 +188,6 @@ function TutorialSystem.nextStep()
         TutorialSystem.complete()
     end
 end
-
 -- Draw tutorial UI
 function TutorialSystem.draw(player, camera)
     if not TutorialSystem.isActive then return end
@@ -342,7 +332,6 @@ function TutorialSystem.draw(player, camera)
         end
     end
 end
-
 -- Input handlers (return false to allow input to pass through)
 function TutorialSystem.handleKeyPress(key)
     if not TutorialSystem.isActive then return false end
@@ -361,22 +350,18 @@ function TutorialSystem.handleKeyPress(key)
     -- Let input pass through to game
     return false
 end
-
 function TutorialSystem.mousepressed(x, y, button)
     -- Always let mouse input pass through during tutorial
     return false
 end
-
 function TutorialSystem.mousemoved(x, y)
     -- Always let mouse input pass through during tutorial
     return false
 end
-
 function TutorialSystem.mousereleased(x, y, button)
     -- Always let mouse input pass through during tutorial
     return false
 end
-
 -- Save/Load tutorial state
 function TutorialSystem.saveTutorialState()
     local saveData = {
@@ -385,7 +370,6 @@ function TutorialSystem.saveTutorialState()
     
     love.filesystem.write("tutorial_state.dat", tostring(TutorialSystem.hasCompletedTutorial))
 end
-
 function TutorialSystem.loadTutorialState()
     if love.filesystem.getInfo("tutorial_state.dat") then
         local data = love.filesystem.read("tutorial_state.dat")
@@ -393,5 +377,4 @@ function TutorialSystem.loadTutorialState()
     end
     return nil
 end
-
 return TutorialSystem

@@ -1,9 +1,7 @@
 -- Ring Constellations System for Orbit Jump
 -- Detects patterns in collected rings for bonus rewards
-
 local Utils = require("src.utils.utils")
 local RingConstellations = {}
-
 -- Constellation patterns
 RingConstellations.patterns = {
     {
@@ -251,7 +249,6 @@ RingConstellations.patterns = {
         end
     }
 }
-
 -- Active constellation tracking
 RingConstellations.active = {
     pattern = nil,
@@ -259,13 +256,10 @@ RingConstellations.active = {
     startTime = 0,
     completed = false
 }
-
 -- Completed constellations this session
 RingConstellations.completedPatterns = {}
-
 -- Visual effects
 RingConstellations.effects = {}
-
 -- Initialize
 function RingConstellations.init()
     RingConstellations.active.pattern = nil
@@ -276,8 +270,8 @@ function RingConstellations.init()
     RingConstellations.effects = {}
     
     Utils.Logger.info("Ring Constellations system initialized")
+    return true
 end
-
 -- Called when a ring is collected
 function RingConstellations.onRingCollected(ring, player)
     -- Add position to active tracking
@@ -319,7 +313,6 @@ function RingConstellations.onRingCollected(ring, player)
         table.remove(RingConstellations.active.positions, 1)
     end
 end
-
 -- Complete a constellation pattern
 function RingConstellations.completePattern(pattern, positions)
     RingConstellations.active.pattern = pattern
@@ -362,7 +355,6 @@ function RingConstellations.completePattern(pattern, positions)
     
     Utils.Logger.info("Constellation completed: %s", pattern.name)
 end
-
 -- Create visual effect for completed constellation
 function RingConstellations.createConstellationEffect(pattern, positions)
     local effect = {
@@ -420,7 +412,6 @@ function RingConstellations.createConstellationEffect(pattern, positions)
     
     table.insert(RingConstellations.effects, effect)
 end
-
 -- Update constellation effects
 function RingConstellations.update(dt)
     -- Update visual effects
@@ -454,7 +445,6 @@ function RingConstellations.update(dt)
         end
     end
 end
-
 -- Draw constellation effects and UI
 function RingConstellations.draw()
     -- Draw effects
@@ -478,7 +468,6 @@ function RingConstellations.draw()
         end
     end
 end
-
 -- Draw UI hints
 function RingConstellations.drawUI()
     -- Show active pattern progress
@@ -524,7 +513,6 @@ function RingConstellations.drawUI()
         )
     end
 end
-
 -- Get constellation stats
 function RingConstellations.getStats()
     local stats = {
@@ -540,7 +528,6 @@ function RingConstellations.getStats()
     
     return stats
 end
-
 -- Reset for new game
 function RingConstellations.reset()
     RingConstellations.active.pattern = nil
@@ -549,6 +536,6 @@ function RingConstellations.reset()
     RingConstellations.active.completed = false
     RingConstellations.completedPatterns = {}
     RingConstellations.effects = {}
+    return true
 end
-
 return RingConstellations
