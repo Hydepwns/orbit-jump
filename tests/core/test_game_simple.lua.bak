@@ -1,6 +1,6 @@
 -- Simplified tests for Game Controller focusing on testable units
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.modern_test_framework")
+local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 -- Setup mocks before any other requires
@@ -33,8 +33,8 @@ local tests = {
         
         Game.initGraphics()
         
-        TestFramework.assert.assertTrue(backgroundColorSet, "Background color should be set")
-        TestFramework.assert.assertTrue(correctColor, "Background color should be dark blue (0.05, 0.05, 0.1)")
+        TestFramework.utils.assertTrue(backgroundColorSet, "Background color should be set")
+        TestFramework.utils.assertTrue(correctColor, "Background color should be dark blue (0.05, 0.05, 0.1)")
     end,
     
     ["test font loading attempt"] = function()
@@ -53,8 +53,8 @@ local tests = {
         local Game = Utils.require("src.core.game")
         Game.initGraphics()
         
-        TestFramework.assert.assertTrue(fontLoadAttempted, "Should attempt to load fonts")
-        TestFramework.assert.assertTrue(#fontPaths >= 4, "Should load at least 4 fonts")
+        TestFramework.utils.assertTrue(fontLoadAttempted, "Should attempt to load fonts")
+        TestFramework.utils.assertTrue(#fontPaths >= 4, "Should load at least 4 fonts")
         
         -- Check that font paths are correct
         local hasMonaspace = false
@@ -64,7 +64,7 @@ local tests = {
                 break
             end
         end
-        TestFramework.assert.assertTrue(hasMonaspace, "Should load Monaspace fonts")
+        TestFramework.utils.assertTrue(hasMonaspace, "Should load Monaspace fonts")
     end,
     
     ["test font loading fallback"] = function()
@@ -91,48 +91,48 @@ local tests = {
         -- Should not crash
         local success = pcall(Game.initGraphics)
         
-        TestFramework.assert.assertTrue(success, "Should handle font loading failure gracefully")
-        TestFramework.assert.assertTrue(defaultFontUsed, "Should fall back to default font on failure")
+        TestFramework.utils.assertTrue(success, "Should handle font loading failure gracefully")
+        TestFramework.utils.assertTrue(defaultFontUsed, "Should fall back to default font on failure")
     end,
     
     ["test input handler existence"] = function()
         local Game = Utils.require("src.core.game")
         
-        TestFramework.assert.assertNotNil(Game.handleKeyPress, "Game should have handleKeyPress function")
-        TestFramework.assert.assertNotNil(Game.handleMousePress, "Game should have handleMousePress function")
-        TestFramework.assert.assertNotNil(Game.handleMouseMove, "Game should have handleMouseMove function")
-        TestFramework.assert.assertNotNil(Game.handleMouseRelease, "Game should have handleMouseRelease function")
-        TestFramework.assert.assertEqual("function", type(Game.handleKeyPress), "handleKeyPress should be a function")
-        TestFramework.assert.assertEqual("function", type(Game.handleMousePress), "handleMousePress should be a function")
+        TestFramework.utils.assertNotNil(Game.handleKeyPress, "Game should have handleKeyPress function")
+        TestFramework.utils.assertNotNil(Game.handleMousePress, "Game should have handleMousePress function")
+        TestFramework.utils.assertNotNil(Game.handleMouseMove, "Game should have handleMouseMove function")
+        TestFramework.utils.assertNotNil(Game.handleMouseRelease, "Game should have handleMouseRelease function")
+        TestFramework.utils.assertEqual("function", type(Game.handleKeyPress), "handleKeyPress should be a function")
+        TestFramework.utils.assertEqual("function", type(Game.handleMousePress), "handleMousePress should be a function")
     end,
     
     ["test core functions existence"] = function()
         local Game = Utils.require("src.core.game")
         
-        TestFramework.assert.assertNotNil(Game.init, "Game should have init function")
-        TestFramework.assert.assertNotNil(Game.update, "Game should have update function")
-        TestFramework.assert.assertNotNil(Game.draw, "Game should have draw function")
-        TestFramework.assert.assertNotNil(Game.quit, "Game should have quit function")
-        TestFramework.assert.assertEqual("function", type(Game.init), "init should be a function")
-        TestFramework.assert.assertEqual("function", type(Game.update), "update should be a function")
-        TestFramework.assert.assertEqual("function", type(Game.draw), "draw should be a function")
-        TestFramework.assert.assertEqual("function", type(Game.quit), "quit should be a function")
+        TestFramework.utils.assertNotNil(Game.init, "Game should have init function")
+        TestFramework.utils.assertNotNil(Game.update, "Game should have update function")
+        TestFramework.utils.assertNotNil(Game.draw, "Game should have draw function")
+        TestFramework.utils.assertNotNil(Game.quit, "Game should have quit function")
+        TestFramework.utils.assertEqual("function", type(Game.init), "init should be a function")
+        TestFramework.utils.assertEqual("function", type(Game.update), "update should be a function")
+        TestFramework.utils.assertEqual("function", type(Game.draw), "draw should be a function")
+        TestFramework.utils.assertEqual("function", type(Game.quit), "quit should be a function")
     end,
     
     ["test initialization functions existence"] = function()
         local Game = Utils.require("src.core.game")
         
-        TestFramework.assert.assertNotNil(Game.initGraphics, "Game should have initGraphics function")
-        TestFramework.assert.assertNotNil(Game.initSystems, "Game should have initSystems function")
-        TestFramework.assert.assertEqual("function", type(Game.initGraphics), "initGraphics should be a function")
-        TestFramework.assert.assertEqual("function", type(Game.initSystems), "initSystems should be a function")
+        TestFramework.utils.assertNotNil(Game.initGraphics, "Game should have initGraphics function")
+        TestFramework.utils.assertNotNil(Game.initSystems, "Game should have initSystems function")
+        TestFramework.utils.assertEqual("function", type(Game.initGraphics), "initGraphics should be a function")
+        TestFramework.utils.assertEqual("function", type(Game.initSystems), "initSystems should be a function")
     end,
     
     ["test module structure"] = function()
         local Game = Utils.require("src.core.game")
         
         -- Game should be a table
-        TestFramework.assert.assertEqual("table", type(Game), "Game module should return a table")
+        TestFramework.utils.assertEqual("table", type(Game), "Game module should return a table")
         
         -- Count exported functions
         local functionCount = 0
@@ -142,7 +142,7 @@ local tests = {
             end
         end
         
-        TestFramework.assert.assertTrue(functionCount >= 10, "Game should export at least 10 functions")
+        TestFramework.utils.assertTrue(functionCount >= 10, "Game should export at least 10 functions")
     end,
     
     ["test quit logging"] = function()
@@ -175,7 +175,7 @@ local tests = {
         package.loaded["src.systems.save_system"] = nil
         package.loaded["src.core.game"] = nil
         
-        TestFramework.assert.assertTrue(loggedShutdown, "Should log shutdown message")
+        TestFramework.utils.assertTrue(loggedShutdown, "Should log shutdown message")
     end,
     
     ["test game init logging"] = function()
@@ -257,15 +257,15 @@ local tests = {
         Utils.Logger.info = originalInfo
         Utils.require = oldRequire
         
-        TestFramework.assert.assertTrue(success, "Game.init should not crash")
-        TestFramework.assert.assertTrue(loggedStart, "Should log game start")
-        TestFramework.assert.assertTrue(loggedComplete, "Should log initialization complete")
+        TestFramework.utils.assertTrue(success, "Game.init should not crash")
+        TestFramework.utils.assertTrue(loggedStart, "Should log game start")
+        TestFramework.utils.assertTrue(loggedComplete, "Should log initialization complete")
     end
 }
 
 -- Run the test suite
 local function run()
-    return TestFramework.runTests(tests, "Game Controller Simple Tests")
+    return TestFramework.runSuite("Game Controller Simple Tests", tests)
 end
 
 return {run = run}

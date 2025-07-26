@@ -1,6 +1,6 @@
 -- Comprehensive tests for Game Controller
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.modern_test_framework")
+local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 -- Setup mocks before requiring Game
@@ -169,10 +169,10 @@ local tests = {
         
         -- Test initialization
         local success, err = pcall(Game.init)
-        TestFramework.assert.assertTrue(success, "Game should initialize without errors: " .. tostring(err))
-        TestFramework.assert.assertNotNil(Game.camera, "Camera should be initialized")
-        TestFramework.assert.assertEqual(800, Game.camera.screenWidth, "Camera should have correct screen width")
-        TestFramework.assert.assertEqual(600, Game.camera.screenHeight, "Camera should have correct screen height")
+        TestFramework.utils.assertTrue(success, "Game should initialize without errors: " .. tostring(err))
+        TestFramework.utils.assertNotNil(Game.camera, "Camera should be initialized")
+        TestFramework.utils.assertEqual(800, Game.camera.screenWidth, "Camera should have correct screen width")
+        TestFramework.utils.assertEqual(600, Game.camera.screenHeight, "Camera should have correct screen height")
     end,
     
     ["test graphics initialization"] = function()
@@ -181,22 +181,22 @@ local tests = {
         
         love.graphics.newFont = function(path, size)
             fontLoadCalled = true
-            TestFramework.assert.assertTrue(string.find(path, "%.otf$") ~= nil, "Should load OTF font")
-            TestFramework.assert.assertTrue(size > 0, "Font size should be positive")
+            TestFramework.utils.assertTrue(string.find(path, "%.otf$") ~= nil, "Should load OTF font")
+            TestFramework.utils.assertTrue(size > 0, "Font size should be positive")
             return {}
         end
         
         love.graphics.setBackgroundColor = function(r, g, b)
             backgroundColorSet = true
-            TestFramework.assert.assertEqual(0.05, r, "Background red should be 0.05")
-            TestFramework.assert.assertEqual(0.05, g, "Background green should be 0.05")
-            TestFramework.assert.assertEqual(0.1, b, "Background blue should be 0.1")
+            TestFramework.utils.assertEqual(0.05, r, "Background red should be 0.05")
+            TestFramework.utils.assertEqual(0.05, g, "Background green should be 0.05")
+            TestFramework.utils.assertEqual(0.1, b, "Background blue should be 0.1")
         end
         
         Game.initGraphics()
         
-        TestFramework.assert.assertTrue(fontLoadCalled, "Should attempt to load fonts")
-        TestFramework.assert.assertTrue(backgroundColorSet, "Should set background color")
+        TestFramework.utils.assertTrue(fontLoadCalled, "Should attempt to load fonts")
+        TestFramework.utils.assertTrue(backgroundColorSet, "Should set background color")
     end,
     
     ["test font loading failure handling"] = function()
@@ -213,8 +213,8 @@ local tests = {
         
         -- Should not crash on font loading failure
         local success = pcall(Game.initGraphics)
-        TestFramework.assert.assertTrue(success, "Should handle font loading failure gracefully")
-        TestFramework.assert.assertTrue(defaultFontUsed, "Should fall back to default font")
+        TestFramework.utils.assertTrue(success, "Should handle font loading failure gracefully")
+        TestFramework.utils.assertTrue(defaultFontUsed, "Should fall back to default font")
     end,
     
     ["test systems initialization"] = function()
@@ -227,11 +227,11 @@ local tests = {
         Game.initSystems()
         
         -- Check critical systems were initialized
-        TestFramework.assert.assertEqual("init", initCalls["systems.progression_system"], "Progression system should be initialized")
-        TestFramework.assert.assertEqual("reset", initCalls["systems.ring_system"], "Ring system should be reset")
-        TestFramework.assert.assertEqual("init", initCalls["systems.save_system"], "Save system should be initialized")
-        TestFramework.assert.assertEqual("init", initCalls["ui.pause_menu"], "Pause menu should be initialized")
-        TestFramework.assert.assertEqual("init", initCalls["performance.performance_monitor"], "Performance monitor should be initialized")
+        TestFramework.utils.assertEqual("init", initCalls["systems.progression_system"], "Progression system should be initialized")
+        TestFramework.utils.assertEqual("reset", initCalls["systems.ring_system"], "Ring system should be reset")
+        TestFramework.utils.assertEqual("init", initCalls["systems.save_system"], "Save system should be initialized")
+        TestFramework.utils.assertEqual("init", initCalls["ui.pause_menu"], "Pause menu should be initialized")
+        TestFramework.utils.assertEqual("init", initCalls["performance.performance_monitor"], "Performance monitor should be initialized")
     end,
     
     ["test update loop"] = function()
@@ -244,7 +244,7 @@ local tests = {
         local testGameState = {
             update = function(dt)
                 gameStateUpdated = true
-                TestFramework.assert.assertEqual(0.016, dt, "Delta time should be passed correctly")
+                TestFramework.utils.assertEqual(0.016, dt, "Delta time should be passed correctly")
             end,
             player = mockGameState.player,
             data = mockGameState.data,
@@ -257,7 +257,7 @@ local tests = {
         local testTutorialSystem = {
             update = function(dt, player)
                 tutorialUpdated = true
-                TestFramework.assert.assertNotNil(player, "Player should be passed to tutorial")
+                TestFramework.utils.assertNotNil(player, "Player should be passed to tutorial")
             end
         }
         
@@ -283,8 +283,8 @@ local tests = {
         Game.camera = {
             follow = function(self, player, dt)
                 cameraUpdated = true
-                TestFramework.assert.assertNotNil(player, "Player should be passed to camera")
-                TestFramework.assert.assertEqual(0.016, dt, "Delta time should be passed to camera")
+                TestFramework.utils.assertNotNil(player, "Player should be passed to camera")
+                TestFramework.utils.assertEqual(0.016, dt, "Delta time should be passed to camera")
             end
         }
         
@@ -293,10 +293,10 @@ local tests = {
         -- Restore original require
         Utils.require = oldRequire
         
-        TestFramework.assert.assertTrue(gameStateUpdated, "Game state should be updated")
-        TestFramework.assert.assertTrue(cameraUpdated, "Camera should follow player")
-        TestFramework.assert.assertTrue(tutorialUpdated, "Tutorial should be updated")
-        TestFramework.assert.assertTrue(pauseMenuUpdated, "Pause menu should be updated")
+        TestFramework.utils.assertTrue(gameStateUpdated, "Game state should be updated")
+        TestFramework.utils.assertTrue(cameraUpdated, "Camera should follow player")
+        TestFramework.utils.assertTrue(tutorialUpdated, "Tutorial should be updated")
+        TestFramework.utils.assertTrue(pauseMenuUpdated, "Pause menu should be updated")
     end,
     
     ["test update when paused"] = function()
@@ -320,9 +320,9 @@ local tests = {
         
         Game.update(0.016)
         
-        TestFramework.assert.assertFalse(gameStateUpdated, "Game state should not update when paused")
-        TestFramework.assert.assertTrue(pauseMenuUpdated, "Pause menu should update even when paused")
-        TestFramework.assert.assertTrue(tutorialUpdated, "Tutorial should update even when paused")
+        TestFramework.utils.assertFalse(gameStateUpdated, "Game state should not update when paused")
+        TestFramework.utils.assertTrue(pauseMenuUpdated, "Pause menu should update even when paused")
+        TestFramework.utils.assertTrue(tutorialUpdated, "Tutorial should update even when paused")
     end,
     
     ["test draw function"] = function()
@@ -359,17 +359,17 @@ local tests = {
         Game.draw()
         
         -- Verify draw order
-        TestFramework.assert.assertTrue(drawCalls.cameraApply, "Camera transform should be applied")
-        TestFramework.assert.assertTrue(drawCalls.background, "Background should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.playerTrail, "Player trail should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.planets, "Planets should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.rings, "Rings should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.particles, "Particles should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.player, "Player should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.cameraClear, "Camera transform should be cleared for UI")
-        TestFramework.assert.assertTrue(drawCalls.ui, "UI should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.tutorial, "Tutorial should be drawn")
-        TestFramework.assert.assertTrue(drawCalls.pauseMenu, "Pause menu should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.cameraApply, "Camera transform should be applied")
+        TestFramework.utils.assertTrue(drawCalls.background, "Background should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.playerTrail, "Player trail should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.planets, "Planets should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.rings, "Rings should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.particles, "Particles should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.player, "Player should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.cameraClear, "Camera transform should be cleared for UI")
+        TestFramework.utils.assertTrue(drawCalls.ui, "UI should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.tutorial, "Tutorial should be drawn")
+        TestFramework.utils.assertTrue(drawCalls.pauseMenu, "Pause menu should be drawn")
     end,
     
     ["test pull indicator drawing"] = function()
@@ -384,17 +384,17 @@ local tests = {
         
         mockRenderer.drawPullIndicator = function(player, mx, my, msx, msy, power, maxDist)
             pullIndicatorDrawn = true
-            TestFramework.assert.assertEqual(200, mx, "Mouse X should be correct")
-            TestFramework.assert.assertEqual(200, my, "Mouse Y should be correct")
-            TestFramework.assert.assertEqual(100, msx, "Mouse start X should be correct")
-            TestFramework.assert.assertEqual(100, msy, "Mouse start Y should be correct")
-            TestFramework.assert.assertEqual(0, power, "Pull power should be correct")
-            TestFramework.assert.assertEqual(200, maxDist, "Max pull distance should be correct")
+            TestFramework.utils.assertEqual(200, mx, "Mouse X should be correct")
+            TestFramework.utils.assertEqual(200, my, "Mouse Y should be correct")
+            TestFramework.utils.assertEqual(100, msx, "Mouse start X should be correct")
+            TestFramework.utils.assertEqual(100, msy, "Mouse start Y should be correct")
+            TestFramework.utils.assertEqual(0, power, "Pull power should be correct")
+            TestFramework.utils.assertEqual(200, maxDist, "Max pull distance should be correct")
         end
         
         Game.draw()
         
-        TestFramework.assert.assertTrue(pullIndicatorDrawn, "Pull indicator should be drawn when charging")
+        TestFramework.utils.assertTrue(pullIndicatorDrawn, "Pull indicator should be drawn when charging")
     end,
     
     ["test mobile controls drawing"] = function()
@@ -404,13 +404,13 @@ local tests = {
         
         mockRenderer.drawMobileControls = function(player, fonts)
             mobileControlsDrawn = true
-            TestFramework.assert.assertNotNil(player, "Player should be passed to mobile controls")
-            TestFramework.assert.assertNotNil(fonts, "Fonts should be passed to mobile controls")
+            TestFramework.utils.assertNotNil(player, "Player should be passed to mobile controls")
+            TestFramework.utils.assertNotNil(fonts, "Fonts should be passed to mobile controls")
         end
         
         Game.draw()
         
-        TestFramework.assert.assertTrue(mobileControlsDrawn, "Mobile controls should be drawn on mobile")
+        TestFramework.utils.assertTrue(mobileControlsDrawn, "Mobile controls should be drawn on mobile")
         
         -- Test desktop
         Utils.MobileInput.isMobile = function() return false end
@@ -418,7 +418,7 @@ local tests = {
         
         Game.draw()
         
-        TestFramework.assert.assertFalse(mobileControlsDrawn, "Mobile controls should not be drawn on desktop")
+        TestFramework.utils.assertFalse(mobileControlsDrawn, "Mobile controls should not be drawn on desktop")
     end,
     
     ["test input handling priority - key press"] = function()
@@ -449,10 +449,10 @@ local tests = {
         
         Game.handleKeyPress("escape")
         
-        TestFramework.assert.assertTrue(pauseHandled, "Pause menu should handle input first")
-        TestFramework.assert.assertFalse(tutorialHandled, "Tutorial should not handle input if pause handles it")
-        TestFramework.assert.assertFalse(uiHandled, "UI should not handle input if pause handles it")
-        TestFramework.assert.assertFalse(gameStateHandled, "Game state should not handle input if pause handles it")
+        TestFramework.utils.assertTrue(pauseHandled, "Pause menu should handle input first")
+        TestFramework.utils.assertFalse(tutorialHandled, "Tutorial should not handle input if pause handles it")
+        TestFramework.utils.assertFalse(uiHandled, "UI should not handle input if pause handles it")
+        TestFramework.utils.assertFalse(gameStateHandled, "Game state should not handle input if pause handles it")
         
         -- Test when pause doesn't handle
         pauseHandled = false
@@ -461,8 +461,8 @@ local tests = {
         
         Game.handleKeyPress("space")
         
-        TestFramework.assert.assertTrue(tutorialHandled, "Tutorial should handle input if pause doesn't")
-        TestFramework.assert.assertFalse(gameStateHandled, "Game state should not handle input if tutorial handles it")
+        TestFramework.utils.assertTrue(tutorialHandled, "Tutorial should handle input if pause doesn't")
+        TestFramework.utils.assertFalse(gameStateHandled, "Game state should not handle input if tutorial handles it")
     end,
     
     ["test mouse input handling"] = function()
@@ -472,9 +472,9 @@ local tests = {
         
         mockGameState.handleMousePress = function(x, y, button)
             mousePressHandled = true
-            TestFramework.assert.assertEqual(100, x, "Mouse X should be correct")
-            TestFramework.assert.assertEqual(200, y, "Mouse Y should be correct")
-            TestFramework.assert.assertEqual(1, button, "Mouse button should be correct")
+            TestFramework.utils.assertEqual(100, x, "Mouse X should be correct")
+            TestFramework.utils.assertEqual(200, y, "Mouse Y should be correct")
+            TestFramework.utils.assertEqual(1, button, "Mouse button should be correct")
         end
         
         mockGameState.handleMouseMove = function(x, y)
@@ -489,9 +489,9 @@ local tests = {
         Game.handleMouseMove(150, 250)
         Game.handleMouseRelease(150, 250, 1)
         
-        TestFramework.assert.assertTrue(mousePressHandled, "Mouse press should be handled")
-        TestFramework.assert.assertTrue(mouseMoveHandled, "Mouse move should be handled")
-        TestFramework.assert.assertTrue(mouseReleaseHandled, "Mouse release should be handled")
+        TestFramework.utils.assertTrue(mousePressHandled, "Mouse press should be handled")
+        TestFramework.utils.assertTrue(mouseMoveHandled, "Mouse move should be handled")
+        TestFramework.utils.assertTrue(mouseReleaseHandled, "Mouse release should be handled")
     end,
     
     ["test quit function"] = function()
@@ -524,7 +524,7 @@ local tests = {
         -- Restore original require
         Utils.require = oldRequire
         
-        TestFramework.assert.assertTrue(saveGameCalled, "Game should be saved on quit")
+        TestFramework.utils.assertTrue(saveGameCalled, "Game should be saved on quit")
     end,
     
     ["test blockchain initialization"] = function()
@@ -540,7 +540,7 @@ local tests = {
         
         Game.initSystems()
         
-        TestFramework.assert.assertTrue(blockchainInitialized, "Blockchain should be initialized when enabled")
+        TestFramework.utils.assertTrue(blockchainInitialized, "Blockchain should be initialized when enabled")
         
         -- Test when disabled
         blockchainInitialized = false
@@ -548,7 +548,7 @@ local tests = {
         
         Game.initSystems()
         
-        TestFramework.assert.assertFalse(blockchainInitialized, "Blockchain should not be initialized when disabled")
+        TestFramework.utils.assertFalse(blockchainInitialized, "Blockchain should not be initialized when disabled")
     end,
     
     ["test save loading on init"] = function()
@@ -561,7 +561,7 @@ local tests = {
         
         Game.initSystems()
         
-        TestFramework.assert.assertTrue(saveLoaded, "Save should be loaded if it exists")
+        TestFramework.utils.assertTrue(saveLoaded, "Save should be loaded if it exists")
         
         -- Test when no save exists
         saveLoaded = false
@@ -569,7 +569,7 @@ local tests = {
         
         Game.initSystems()
         
-        TestFramework.assert.assertFalse(saveLoaded, "Save should not be loaded if it doesn't exist")
+        TestFramework.utils.assertFalse(saveLoaded, "Save should not be loaded if it doesn't exist")
     end,
     
     ["test error handling in config validation"] = function()
@@ -579,8 +579,8 @@ local tests = {
         
         local success, err = pcall(Game.init)
         
-        TestFramework.assert.assertFalse(success, "Init should fail with invalid config")
-        TestFramework.assert.assertTrue(string.find(err, "Invalid configuration") ~= nil, "Error should mention invalid configuration")
+        TestFramework.utils.assertFalse(success, "Init should fail with invalid config")
+        TestFramework.utils.assertTrue(string.find(err, "Invalid configuration") ~= nil, "Error should mention invalid configuration")
     end,
     
     ["test performance culling"] = function()
@@ -594,7 +594,7 @@ local tests = {
         
         mockPerformanceSystem.cullPlanets = function(planets, camera)
             cullPlanetsCalled = true
-            TestFramework.assert.assertNotNil(camera, "Camera should be passed for culling")
+            TestFramework.utils.assertNotNil(camera, "Camera should be passed for culling")
             return planets
         end
         
@@ -610,9 +610,9 @@ local tests = {
         
         Game.draw()
         
-        TestFramework.assert.assertTrue(cullPlanetsCalled, "Planets should be culled for performance")
-        TestFramework.assert.assertTrue(cullRingsCalled, "Rings should be culled for performance")
-        TestFramework.assert.assertTrue(cullParticlesCalled, "Particles should be culled for performance")
+        TestFramework.utils.assertTrue(cullPlanetsCalled, "Planets should be culled for performance")
+        TestFramework.utils.assertTrue(cullRingsCalled, "Rings should be culled for performance")
+        TestFramework.utils.assertTrue(cullParticlesCalled, "Particles should be culled for performance")
     end,
     
     ["test system update parameters"] = function()
@@ -622,25 +622,25 @@ local tests = {
         local mockCosmicEvents = {
             update = function(dt, player, camera)
                 updateCalls.cosmicEvents = true
-                TestFramework.assert.assertNotNil(dt, "Delta time should be passed")
-                TestFramework.assert.assertNotNil(player, "Player should be passed")
-                TestFramework.assert.assertNotNil(camera, "Camera should be passed")
+                TestFramework.utils.assertNotNil(dt, "Delta time should be passed")
+                TestFramework.utils.assertNotNil(player, "Player should be passed")
+                TestFramework.utils.assertNotNil(camera, "Camera should be passed")
             end
         }
         
         local mockRingSystem = {
             update = function(dt, player, rings)
                 updateCalls.ringSystem = true
-                TestFramework.assert.assertNotNil(dt, "Delta time should be passed")
-                TestFramework.assert.assertNotNil(player, "Player should be passed")
-                TestFramework.assert.assertNotNil(rings, "Rings should be passed")
+                TestFramework.utils.assertNotNil(dt, "Delta time should be passed")
+                TestFramework.utils.assertNotNil(player, "Player should be passed")
+                TestFramework.utils.assertNotNil(rings, "Rings should be passed")
             end
         }
         
         local mockProgressionSystem = {
             update = function(dt)
                 updateCalls.progressionSystem = true
-                TestFramework.assert.assertNotNil(dt, "Delta time should be passed")
+                TestFramework.utils.assertNotNil(dt, "Delta time should be passed")
             end
         }
         
@@ -656,9 +656,9 @@ local tests = {
         
         Game.update(0.016)
         
-        TestFramework.assert.assertTrue(updateCalls.cosmicEvents or true, "Cosmic events should be updated if available")
-        TestFramework.assert.assertTrue(updateCalls.ringSystem or true, "Ring system should be updated if available")
-        TestFramework.assert.assertTrue(updateCalls.progressionSystem or true, "Progression system should be updated if available")
+        TestFramework.utils.assertTrue(updateCalls.cosmicEvents or true, "Cosmic events should be updated if available")
+        TestFramework.utils.assertTrue(updateCalls.ringSystem or true, "Ring system should be updated if available")
+        TestFramework.utils.assertTrue(updateCalls.progressionSystem or true, "Progression system should be updated if available")
     end
 }
 
@@ -672,7 +672,7 @@ local function run()
     -- Store original require
     originalRequires.require = Utils.require
     
-    local results = TestFramework.runTests(tests, "Game Controller Tests")
+    local results = TestFramework.runSuite("Game Controller Tests", tests)
     
     -- Cleanup
     cleanup()

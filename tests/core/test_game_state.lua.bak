@@ -2,7 +2,7 @@
 package.path = package.path .. ";../../?.lua"
 
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.modern_test_framework")
+local TestFramework = Utils.require("tests.test_framework")
 local GameState = Utils.require("src.core.game_state")
 
 -- Initialize test framework
@@ -13,16 +13,16 @@ local tests = {
     -- Test game initialization
     ["game initialization"] = function()
         local success = GameState.init(800, 600)
-        TestFramework.assert.assertTrue(success, "Game state should initialize successfully")
-        TestFramework.assert.assertEqual(800, GameState.data.screenWidth, "Screen width should be set")
-        TestFramework.assert.assertEqual(600, GameState.data.screenHeight, "Screen height should be set")
+        TestFramework.utils.assertTrue(success, "Game state should initialize successfully")
+        TestFramework.utils.assertEqual(800, GameState.data.screenWidth, "Screen width should be set")
+        TestFramework.utils.assertEqual(600, GameState.data.screenHeight, "Screen height should be set")
     end,
     
     ["player initialization"] = function()
         GameState.init(800, 600)
-        TestFramework.assert.assertNotNil(GameState.player.x, "Player should have x position")
-        TestFramework.assert.assertNotNil(GameState.player.y, "Player should have y position")
-        TestFramework.assert.assertEqual(10, GameState.player.radius, "Player should have correct radius")
+        TestFramework.utils.assertNotNil(GameState.player.x, "Player should have x position")
+        TestFramework.utils.assertNotNil(GameState.player.y, "Player should have y position")
+        TestFramework.utils.assertEqual(10, GameState.player.radius, "Player should have correct radius")
     end,
     
     ["ring generation"] = function()
@@ -52,14 +52,14 @@ local tests = {
         GameState.setRings(rings)
         
         local testRings = GameState.getRings()
-        TestFramework.assert.assertTrue(#testRings > 0, "Should have rings")
+        TestFramework.utils.assertTrue(#testRings > 0, "Should have rings")
         
         for _, ring in ipairs(testRings) do
-            TestFramework.assert.assertNotNil(ring.x, "Ring should have x position")
-            TestFramework.assert.assertNotNil(ring.y, "Ring should have y position")
-            TestFramework.assert.assertNotNil(ring.radius, "Ring should have radius")
-            TestFramework.assert.assertNotNil(ring.innerRadius, "Ring should have inner radius")
-            TestFramework.assert.assertFalse(ring.collected, "Ring should start uncollected")
+            TestFramework.utils.assertNotNil(ring.x, "Ring should have x position")
+            TestFramework.utils.assertNotNil(ring.y, "Ring should have y position")
+            TestFramework.utils.assertNotNil(ring.radius, "Ring should have radius")
+            TestFramework.utils.assertNotNil(ring.innerRadius, "Ring should have inner radius")
+            TestFramework.utils.assertFalse(ring.collected, "Ring should start uncollected")
         end
     end,
     
@@ -82,7 +82,7 @@ local tests = {
         GameState.player.x = planet.x + math.cos(GameState.player.angle) * (planet.radius + 20)
         GameState.player.y = planet.y + math.sin(GameState.player.angle) * (planet.radius + 20)
         
-        TestFramework.assert.assertNotEqual(450, GameState.player.x, "Player should move while orbiting")
+        TestFramework.utils.assertNotEqual(450, GameState.player.x, "Player should move while orbiting")
     end,
     
     ["player jumping"] = function()
@@ -102,8 +102,8 @@ local tests = {
         GameState.player.vx = 200
         GameState.player.vy = 0
         
-        TestFramework.assert.assertNil(GameState.player.onPlanet, "Player should not be on planet after jump")
-        TestFramework.assert.assertEqual(200, GameState.player.vx, "Player should have jump velocity")
+        TestFramework.utils.assertNil(GameState.player.onPlanet, "Player should not be on planet after jump")
+        TestFramework.utils.assertEqual(200, GameState.player.vx, "Player should have jump velocity")
     end,
     
     ["ring collection"] = function()
@@ -114,7 +114,7 @@ local tests = {
             local ring = rings[1]
             ring.collected = true
             
-            TestFramework.assert.assertTrue(ring.collected, "Ring should be marked as collected")
+            TestFramework.utils.assertTrue(ring.collected, "Ring should be marked as collected")
         end
     end,
     
@@ -139,7 +139,7 @@ local tests = {
             GameState.player.angle = math.atan2 and Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x) or 0
         end
         
-        TestFramework.assert.assertEqual(1, GameState.player.onPlanet, "Player should land on planet")
+        TestFramework.utils.assertEqual(1, GameState.player.onPlanet, "Player should land on planet")
     end,
     
     ["dash activation"] = function()
@@ -148,8 +148,8 @@ local tests = {
         GameState.player.isDashing = true
         GameState.player.dashTimer = 0.3
         
-        TestFramework.assert.assertTrue(GameState.player.isDashing, "Player should be dashing")
-        TestFramework.assert.assertEqual(0.3, GameState.player.dashTimer, "Dash timer should be set")
+        TestFramework.utils.assertTrue(GameState.player.isDashing, "Player should be dashing")
+        TestFramework.utils.assertEqual(0.3, GameState.player.dashTimer, "Dash timer should be set")
     end,
     
     ["dash cooldown"] = function()
@@ -157,24 +157,24 @@ local tests = {
         
         GameState.player.dashCooldown = 1.0
         
-        TestFramework.assert.assertEqual(1.0, GameState.player.dashCooldown, "Dash cooldown should be set")
+        TestFramework.utils.assertEqual(1.0, GameState.player.dashCooldown, "Dash cooldown should be set")
         
         -- Simulate cooldown reduction
         GameState.player.dashCooldown = GameState.player.dashCooldown - 0.1
         
-        TestFramework.assert.assertEqual(0.9, GameState.player.dashCooldown, "Dash cooldown should decrease")
+        TestFramework.utils.assertEqual(0.9, GameState.player.dashCooldown, "Dash cooldown should decrease")
     end,
     
     ["combo mechanics"] = function()
         GameState.init(800, 600)
         
-        TestFramework.assert.assertEqual(0, GameState.getCombo(), "Combo should start at 0")
+        TestFramework.utils.assertEqual(0, GameState.getCombo(), "Combo should start at 0")
         
         GameState.addCombo()
-        TestFramework.assert.assertEqual(1, GameState.getCombo(), "Combo should increase")
+        TestFramework.utils.assertEqual(1, GameState.getCombo(), "Combo should increase")
         
         GameState.addCombo()
-        TestFramework.assert.assertEqual(2, GameState.getCombo(), "Combo should increase again")
+        TestFramework.utils.assertEqual(2, GameState.getCombo(), "Combo should increase again")
     end,
     
     ["out of bounds game over"] = function()
@@ -192,7 +192,7 @@ local tests = {
             GameState.current = GameState.STATES.GAME_OVER
         end
         
-        TestFramework.assert.assertEqual(GameState.STATES.GAME_OVER, GameState.current, "Game should be over when out of bounds")
+        TestFramework.utils.assertEqual(GameState.STATES.GAME_OVER, GameState.current, "Game should be over when out of bounds")
     end,
     
     ["particle creation"] = function()
@@ -214,7 +214,7 @@ local tests = {
         
         GameState.addParticle(particle)
         
-        TestFramework.assert.assertEqual(initialCount + 1, #GameState.getParticles(), "Particle count should increase")
+        TestFramework.utils.assertEqual(initialCount + 1, #GameState.getParticles(), "Particle count should increase")
     end,
     
     ["particle update"] = function()
@@ -238,15 +238,15 @@ local tests = {
         particle.y = particle.y + particle.vy * 0.1
         particle.lifetime = particle.lifetime - 0.1
         
-        TestFramework.assert.assertEqual(401, particle.x, "Particle should move")
-        TestFramework.assert.assertEqual(299, particle.y, "Particle should move")
-        TestFramework.assert.assertEqual(0.9, particle.lifetime, "Particle lifetime should decrease")
+        TestFramework.utils.assertEqual(401, particle.x, "Particle should move")
+        TestFramework.utils.assertEqual(299, particle.y, "Particle should move")
+        TestFramework.utils.assertEqual(0.9, particle.lifetime, "Particle lifetime should decrease")
     end
 }
 
 -- Run the test suite
 local function run()
-    return TestFramework.runTests(tests, "Game State Tests")
+    return TestFramework.runSuite("Game State Tests", tests)
 end
 
 return {run = run}
