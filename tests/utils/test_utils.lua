@@ -748,7 +748,11 @@ local tests = {
     
     -- Color palette tests
     ["test color palette structure"] = function()
-        -- Ensure Utils is properly loaded
+        -- Clear module cache to ensure fresh load
+        package.loaded["src.utils.utils"] = nil
+        package.loaded["src/utils/utils"] = nil
+        
+        -- Get a fresh Utils instance
         local Utils = require("src.utils.utils")
         
         TestFramework.assert.notNil(Utils.colors, "Colors exist")

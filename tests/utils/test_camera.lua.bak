@@ -2,7 +2,7 @@
 package.path = package.path .. ";../../?.lua"
 
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.modern_test_framework")
+local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 local Camera = Utils.require("src.core.camera")
 
@@ -18,23 +18,23 @@ local tests = {
     ["camera initialization"] = function()
         local camera = Camera:new()
         
-        TestFramework.assert.assertEqual(0, camera.x, "Camera should start at x=0")
-        TestFramework.assert.assertEqual(0, camera.y, "Camera should start at y=0")
-        TestFramework.assert.assertEqual(1, camera.scale, "Camera should start at scale=1")
-        TestFramework.assert.assertEqual(0, camera.rotation, "Camera should start at rotation=0")
-        TestFramework.assert.assertEqual(8, camera.smoothSpeed, "Camera should have default smooth speed")
-        TestFramework.assert.assertEqual(0.15, camera.lookAheadFactor, "Camera should have default look ahead factor")
-        TestFramework.assert.assertEqual(0, camera.shakeIntensity, "Camera should start with no shake")
-        TestFramework.assert.assertEqual(0, camera.shakeDuration, "Camera should start with no shake duration")
-        TestFramework.assert.assertTrue(camera.enableShake, "Camera should have shake enabled by default")
-        TestFramework.assert.assertNil(camera.bounds, "Camera should start with no bounds")
+        TestFramework.utils.assertEqual(0, camera.x, "Camera should start at x=0")
+        TestFramework.utils.assertEqual(0, camera.y, "Camera should start at y=0")
+        TestFramework.utils.assertEqual(1, camera.scale, "Camera should start at scale=1")
+        TestFramework.utils.assertEqual(0, camera.rotation, "Camera should start at rotation=0")
+        TestFramework.utils.assertEqual(8, camera.smoothSpeed, "Camera should have default smooth speed")
+        TestFramework.utils.assertEqual(0.15, camera.lookAheadFactor, "Camera should have default look ahead factor")
+        TestFramework.utils.assertEqual(0, camera.shakeIntensity, "Camera should start with no shake")
+        TestFramework.utils.assertEqual(0, camera.shakeDuration, "Camera should start with no shake duration")
+        TestFramework.utils.assertTrue(camera.enableShake, "Camera should have shake enabled by default")
+        TestFramework.utils.assertNil(camera.bounds, "Camera should start with no bounds")
     end,
     
     ["camera screen dimensions"] = function()
         local camera = Camera:new()
         
-        TestFramework.assert.assertEqual(800, camera.screenWidth, "Camera should capture screen width")
-        TestFramework.assert.assertEqual(600, camera.screenHeight, "Camera should capture screen height")
+        TestFramework.utils.assertEqual(800, camera.screenWidth, "Camera should capture screen width")
+        TestFramework.utils.assertEqual(600, camera.screenHeight, "Camera should capture screen height")
     end,
     
     -- Test camera following
@@ -45,8 +45,8 @@ local tests = {
         camera:follow(target, 0.1)
         
         -- Camera should move toward centering the target (negative values to center target on screen)
-        TestFramework.assert.assertTrue(camera.x < 0, "Camera should move toward centering target x")
-        TestFramework.assert.assertTrue(camera.y < 0, "Camera should move toward centering target y")
+        TestFramework.utils.assertTrue(camera.x < 0, "Camera should move toward centering target x")
+        TestFramework.utils.assertTrue(camera.y < 0, "Camera should move toward centering target y")
     end,
     
     ["camera following moving target"] = function()
@@ -56,8 +56,8 @@ local tests = {
         camera:follow(target, 0.1)
         
         -- Camera should move toward target with look-ahead (negative values to center target on screen)
-        TestFramework.assert.assertTrue(camera.x < 0, "Camera should move toward target with look-ahead")
-        TestFramework.assert.assertTrue(camera.y < 0, "Camera should move toward target with look-ahead")
+        TestFramework.utils.assertTrue(camera.x < 0, "Camera should move toward target with look-ahead")
+        TestFramework.utils.assertTrue(camera.y < 0, "Camera should move toward target with look-ahead")
     end,
     
     ["camera following with bounds"] = function()
@@ -68,10 +68,10 @@ local tests = {
         camera:follow(target, 0.1)
         
         -- Camera should respect bounds
-        TestFramework.assert.assertTrue(camera.x <= 1000 - camera.screenWidth / camera.scale, "Camera should respect max X bound")
-        TestFramework.assert.assertTrue(camera.y <= 1000 - camera.screenHeight / camera.scale, "Camera should respect max Y bound")
-        TestFramework.assert.assertTrue(camera.x >= 0, "Camera should respect min X bound")
-        TestFramework.assert.assertTrue(camera.y >= 0, "Camera should respect min Y bound")
+        TestFramework.utils.assertTrue(camera.x <= 1000 - camera.screenWidth / camera.scale, "Camera should respect max X bound")
+        TestFramework.utils.assertTrue(camera.y <= 1000 - camera.screenHeight / camera.scale, "Camera should respect max Y bound")
+        TestFramework.utils.assertTrue(camera.x >= 0, "Camera should respect min X bound")
+        TestFramework.utils.assertTrue(camera.y >= 0, "Camera should respect min Y bound")
     end,
     
     ["camera following nil target"] = function()
@@ -82,8 +82,8 @@ local tests = {
         camera:follow(nil, 0.1)
         
         -- Camera should not move when target is nil
-        TestFramework.assert.assertEqual(originalX, camera.x, "Camera should not move with nil target")
-        TestFramework.assert.assertEqual(originalY, camera.y, "Camera should not move with nil target")
+        TestFramework.utils.assertEqual(originalX, camera.x, "Camera should not move with nil target")
+        TestFramework.utils.assertEqual(originalY, camera.y, "Camera should not move with nil target")
     end,
     
     -- Test camera shake
@@ -92,8 +92,8 @@ local tests = {
         
         camera:shake(10, 1.0)
         
-        TestFramework.assert.assertEqual(10, camera.shakeIntensity, "Camera should have shake intensity set")
-        TestFramework.assert.assertEqual(1.0, camera.shakeDuration, "Camera should have shake duration set")
+        TestFramework.utils.assertEqual(10, camera.shakeIntensity, "Camera should have shake intensity set")
+        TestFramework.utils.assertEqual(1.0, camera.shakeDuration, "Camera should have shake duration set")
     end,
     
     ["camera shake disabled"] = function()
@@ -102,8 +102,8 @@ local tests = {
         
         camera:shake(10, 1.0)
         
-        TestFramework.assert.assertEqual(0, camera.shakeIntensity, "Camera should not shake when disabled")
-        TestFramework.assert.assertEqual(0, camera.shakeDuration, "Camera should not shake when disabled")
+        TestFramework.utils.assertEqual(0, camera.shakeIntensity, "Camera should not shake when disabled")
+        TestFramework.utils.assertEqual(0, camera.shakeDuration, "Camera should not shake when disabled")
     end,
     
     ["camera shake expiration"] = function()
@@ -113,8 +113,8 @@ local tests = {
         -- Simulate time passing
         camera:follow({x = 0, y = 0}, 1.1) -- More than shake duration
         
-        TestFramework.assert.assertEqual(0, camera.shakeIntensity, "Camera shake should expire")
-        TestFramework.assert.assertEqual(0, camera.shakeDuration, "Camera shake duration should be 0")
+        TestFramework.utils.assertEqual(0, camera.shakeIntensity, "Camera shake should expire")
+        TestFramework.utils.assertEqual(0, camera.shakeDuration, "Camera shake duration should be 0")
     end,
     
     -- Test camera zoom
@@ -122,13 +122,13 @@ local tests = {
         local camera = Camera:new()
         
         camera:setScale(2.0)
-        TestFramework.assert.assertEqual(2.0, camera.scale, "Camera scale should be set correctly")
+        TestFramework.utils.assertEqual(2.0, camera.scale, "Camera scale should be set correctly")
         
         camera:setScale(0.05) -- Below minimum
-        TestFramework.assert.assertEqual(0.1, camera.scale, "Camera scale should be clamped to minimum")
+        TestFramework.utils.assertEqual(0.1, camera.scale, "Camera scale should be clamped to minimum")
         
         camera:setScale(10.0) -- Above maximum
-        TestFramework.assert.assertEqual(5.0, camera.scale, "Camera scale should be clamped to maximum")
+        TestFramework.utils.assertEqual(5.0, camera.scale, "Camera scale should be clamped to maximum")
     end,
     
     ["camera zoom in"] = function()
@@ -137,7 +137,7 @@ local tests = {
         
         camera:zoomIn(0.5)
         
-        TestFramework.assert.assertEqual(originalScale * 1.5, camera.scale, "Camera should zoom in correctly")
+        TestFramework.utils.assertEqual(originalScale * 1.5, camera.scale, "Camera should zoom in correctly")
     end,
     
     ["camera zoom out"] = function()
@@ -146,7 +146,7 @@ local tests = {
         
         camera:zoomOut(0.3)
         
-        TestFramework.assert.assertEqual(originalScale * 0.7, camera.scale, "Camera should zoom out correctly")
+        TestFramework.utils.assertEqual(originalScale * 0.7, camera.scale, "Camera should zoom out correctly")
     end,
     
     -- Test coordinate transformations
@@ -158,8 +158,8 @@ local tests = {
         
         local screenX, screenY = camera:worldToScreen(200, 300)
         
-        TestFramework.assert.assertEqual(200, screenX, "World to screen X should be correct")
-        TestFramework.assert.assertEqual(200, screenY, "World to screen Y should be correct")
+        TestFramework.utils.assertEqual(200, screenX, "World to screen X should be correct")
+        TestFramework.utils.assertEqual(200, screenY, "World to screen Y should be correct")
     end,
     
     ["screen to world coordinates"] = function()
@@ -170,8 +170,8 @@ local tests = {
         
         local worldX, worldY = camera:screenToWorld(200, 200)
         
-        TestFramework.assert.assertEqual(200, worldX, "Screen to world X should be correct")
-        TestFramework.assert.assertEqual(300, worldY, "Screen to world Y should be correct")
+        TestFramework.utils.assertEqual(200, worldX, "Screen to world X should be correct")
+        TestFramework.utils.assertEqual(300, worldY, "Screen to world Y should be correct")
     end,
     
     ["coordinate transformation round trip"] = function()
@@ -184,8 +184,8 @@ local tests = {
         local screenX, screenY = camera:worldToScreen(originalWorldX, originalWorldY)
         local worldX, worldY = camera:screenToWorld(screenX, screenY)
         
-        TestFramework.assert.assertEqual(originalWorldX, worldX, "Round trip transformation should preserve X")
-        TestFramework.assert.assertEqual(originalWorldY, worldY, "Round trip transformation should preserve Y")
+        TestFramework.utils.assertEqual(originalWorldX, worldX, "Round trip transformation should preserve X")
+        TestFramework.utils.assertEqual(originalWorldY, worldY, "Round trip transformation should preserve Y")
     end,
     
     -- Test bounds
@@ -194,11 +194,11 @@ local tests = {
         
         camera:setBounds(0, 0, 1000, 1000)
         
-        TestFramework.assert.assertNotNil(camera.bounds, "Camera bounds should be set")
-        TestFramework.assert.assertEqual(0, camera.bounds.minX, "Camera bounds minX should be correct")
-        TestFramework.assert.assertEqual(0, camera.bounds.minY, "Camera bounds minY should be correct")
-        TestFramework.assert.assertEqual(1000, camera.bounds.maxX, "Camera bounds maxX should be correct")
-        TestFramework.assert.assertEqual(1000, camera.bounds.maxY, "Camera bounds maxY should be correct")
+        TestFramework.utils.assertNotNil(camera.bounds, "Camera bounds should be set")
+        TestFramework.utils.assertEqual(0, camera.bounds.minX, "Camera bounds minX should be correct")
+        TestFramework.utils.assertEqual(0, camera.bounds.minY, "Camera bounds minY should be correct")
+        TestFramework.utils.assertEqual(1000, camera.bounds.maxX, "Camera bounds maxX should be correct")
+        TestFramework.utils.assertEqual(1000, camera.bounds.maxY, "Camera bounds maxY should be correct")
     end,
     
     ["camera bounds removal"] = function()
@@ -207,7 +207,7 @@ local tests = {
         
         camera:removeBounds()
         
-        TestFramework.assert.assertNil(camera.bounds, "Camera bounds should be removed")
+        TestFramework.utils.assertNil(camera.bounds, "Camera bounds should be removed")
     end,
     
     -- Test resize
@@ -216,8 +216,8 @@ local tests = {
         
         camera:resize(1024, 768)
         
-        TestFramework.assert.assertEqual(1024, camera.screenWidth, "Camera screen width should be updated")
-        TestFramework.assert.assertEqual(768, camera.screenHeight, "Camera screen height should be updated")
+        TestFramework.utils.assertEqual(1024, camera.screenWidth, "Camera screen width should be updated")
+        TestFramework.utils.assertEqual(768, camera.screenHeight, "Camera screen height should be updated")
     end,
     
     -- Test visible area
@@ -229,10 +229,10 @@ local tests = {
         
         local x1, y1, x2, y2 = camera:getVisibleArea()
         
-        TestFramework.assert.assertEqual(100, x1, "Visible area x1 should be correct")
-        TestFramework.assert.assertEqual(200, y1, "Visible area y1 should be correct")
-        TestFramework.assert.assertEqual(500, x2, "Visible area x2 should be correct")
-        TestFramework.assert.assertEqual(500, y2, "Visible area y2 should be correct")
+        TestFramework.utils.assertEqual(100, x1, "Visible area x1 should be correct")
+        TestFramework.utils.assertEqual(200, y1, "Visible area y1 should be correct")
+        TestFramework.utils.assertEqual(500, x2, "Visible area x2 should be correct")
+        TestFramework.utils.assertEqual(500, y2, "Visible area y2 should be correct")
     end,
     
     -- Test smooth following over time
@@ -249,7 +249,7 @@ local tests = {
         local expectedX = target.x - camera.screenWidth / (2 * camera.scale)
         local expectedY = target.y - camera.screenHeight / (2 * camera.scale)
         local distance = math.sqrt((camera.x - expectedX)^2 + (camera.y - expectedY)^2)
-        TestFramework.assert.assertTrue(distance < 50, "Camera should smoothly approach target center")
+        TestFramework.utils.assertTrue(distance < 50, "Camera should smoothly approach target center")
     end,
     
     -- Test camera with different smooth speeds
@@ -273,10 +273,10 @@ local tests = {
         local distance2 = math.sqrt((camera2.x - expectedX)^2 + (camera2.y - expectedY)^2)
         
         -- Both cameras should have moved (not at origin)
-        TestFramework.assert.assertTrue(camera1.x ~= 0 or camera1.y ~= 0, "Slower camera should have moved")
-        TestFramework.assert.assertTrue(camera2.x ~= 0 or camera2.y ~= 0, "Faster camera should have moved")
+        TestFramework.utils.assertTrue(camera1.x ~= 0 or camera1.y ~= 0, "Slower camera should have moved")
+        TestFramework.utils.assertTrue(camera2.x ~= 0 or camera2.y ~= 0, "Faster camera should have moved")
         -- Different smooth speeds should result in different positions
-        TestFramework.assert.assertTrue(camera1.x ~= camera2.x or camera1.y ~= camera2.y, "Different smooth speeds should result in different positions")
+        TestFramework.utils.assertTrue(camera1.x ~= camera2.x or camera1.y ~= camera2.y, "Different smooth speeds should result in different positions")
     end,
     
     -- Test camera with different look-ahead factors
@@ -295,14 +295,14 @@ local tests = {
         
         -- Camera with more look-ahead should move less toward the target (less negative values)
         -- because the look-ahead makes the target appear further away
-        TestFramework.assert.assertTrue(camera2.x > camera1.x, "Camera with more look-ahead should move less in X")
-        TestFramework.assert.assertTrue(camera2.y > camera1.y, "Camera with more look-ahead should move less in Y")
+        TestFramework.utils.assertTrue(camera2.x > camera1.x, "Camera with more look-ahead should move less in X")
+        TestFramework.utils.assertTrue(camera2.y > camera1.y, "Camera with more look-ahead should move less in Y")
     end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runTests(tests, "Camera System Tests")
+    local success = TestFramework.runSuite("Camera System Tests", tests)
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")

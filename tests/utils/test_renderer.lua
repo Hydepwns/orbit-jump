@@ -2,7 +2,7 @@
 package.path = package.path .. ";../../?.lua"
 
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.test_framework")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 local Renderer = Utils.require("src.core.renderer")
 
@@ -24,13 +24,13 @@ local tests = {
         
         Renderer.init(fonts)
         
-        TestFramework.utils.assertEqual(fonts, Renderer.fonts, "Fonts should be set correctly")
+        TestFramework.assert.assertEqual(fonts, Renderer.fonts, "Fonts should be set correctly")
     end,
     
     ["renderer initialization with nil fonts"] = function()
         Renderer.init(nil)
         
-        TestFramework.utils.assertNil(Renderer.fonts, "Fonts should be nil when not provided")
+        TestFramework.assert.assertNil(Renderer.fonts, "Fonts should be nil when not provided")
     end,
     
     -- Test background rendering
@@ -42,7 +42,7 @@ local tests = {
             Renderer.drawBackground()
         end)
         
-        TestFramework.utils.assertTrue(success, "Background rendering should work without camera")
+        TestFramework.assert.assertTrue(success, "Background rendering should work without camera")
     end,
     
     ["background rendering with camera"] = function()
@@ -56,7 +56,7 @@ local tests = {
             Renderer.drawBackground()
         end)
         
-        TestFramework.utils.assertTrue(success, "Background rendering should work with camera")
+        TestFramework.assert.assertTrue(success, "Background rendering should work with camera")
     end,
     
     -- Test player rendering
@@ -72,7 +72,7 @@ local tests = {
             Renderer.drawPlayer(player, false)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player rendering should work in normal state")
+        TestFramework.assert.assertTrue(success, "Player rendering should work in normal state")
     end,
     
     ["player rendering dashing"] = function()
@@ -87,7 +87,7 @@ local tests = {
             Renderer.drawPlayer(player, true)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player rendering should work when dashing")
+        TestFramework.assert.assertTrue(success, "Player rendering should work when dashing")
     end,
     
     ["player rendering with shield"] = function()
@@ -103,7 +103,7 @@ local tests = {
             Renderer.drawPlayer(player, false)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player rendering should work with shield")
+        TestFramework.assert.assertTrue(success, "Player rendering should work with shield")
     end,
     
     ["player rendering with shield and dashing"] = function()
@@ -119,7 +119,7 @@ local tests = {
             Renderer.drawPlayer(player, true)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player rendering should work with shield and dashing")
+        TestFramework.assert.assertTrue(success, "Player rendering should work with shield and dashing")
     end,
     
     -- Test player trail rendering
@@ -131,7 +131,7 @@ local tests = {
             Renderer.drawPlayerTrail(trail)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player trail rendering should work with empty trail")
+        TestFramework.assert.assertTrue(success, "Player trail rendering should work with empty trail")
     end,
     
     ["player trail rendering with points"] = function()
@@ -146,7 +146,7 @@ local tests = {
             Renderer.drawPlayerTrail(trail)
         end)
         
-        TestFramework.utils.assertTrue(success, "Player trail rendering should work with trail points")
+        TestFramework.assert.assertTrue(success, "Player trail rendering should work with trail points")
     end,
     
     -- Test dash cooldown rendering
@@ -163,7 +163,7 @@ local tests = {
             Renderer.drawDashCooldown(player, 0.5, 1.0)
         end)
         
-        TestFramework.utils.assertTrue(success, "Dash cooldown rendering should work when active")
+        TestFramework.assert.assertTrue(success, "Dash cooldown rendering should work when active")
     end,
     
     ["dash cooldown rendering on planet"] = function()
@@ -179,7 +179,7 @@ local tests = {
             Renderer.drawDashCooldown(player, 0.5, 1.0)
         end)
         
-        TestFramework.utils.assertTrue(success, "Dash cooldown rendering should work when on planet")
+        TestFramework.assert.assertTrue(success, "Dash cooldown rendering should work when on planet")
     end,
     
     ["dash cooldown rendering no cooldown"] = function()
@@ -195,7 +195,7 @@ local tests = {
             Renderer.drawDashCooldown(player, 0, 1.0)
         end)
         
-        TestFramework.utils.assertTrue(success, "Dash cooldown rendering should work with no cooldown")
+        TestFramework.assert.assertTrue(success, "Dash cooldown rendering should work with no cooldown")
     end,
     
     -- Test planet rendering
@@ -207,31 +207,31 @@ local tests = {
             Renderer.drawPlanets(planets)
         end)
         
-        TestFramework.utils.assertTrue(success, "Planet rendering should work with empty planets")
+        TestFramework.assert.assertTrue(success, "Planet rendering should work with empty planets")
     end,
     
     ["planet rendering with planets"] = function()
         -- Test that the function exists
-        TestFramework.utils.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
+        TestFramework.assert.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
         
         -- Test with empty planets list (should not crash)
         local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlanets({})
         end)
         
-        TestFramework.utils.assertTrue(success, "Planet rendering should work with empty planets")
+        TestFramework.assert.assertTrue(success, "Planet rendering should work with empty planets")
     end,
     
     ["planet rendering with quantum planet"] = function()
         -- Test that the function exists
-        TestFramework.utils.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
+        TestFramework.assert.assertNotNil(Renderer.drawPlanets, "drawPlanets function should exist")
         
         -- Test with minimal planet data (should not crash)
         local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawPlanets({{x = 400, y = 300, radius = 50}})
         end)
         
-        TestFramework.utils.assertTrue(success, "Planet rendering should work with minimal planet data")
+        TestFramework.assert.assertTrue(success, "Planet rendering should work with minimal planet data")
     end,
     
     -- Test ring rendering
@@ -243,7 +243,7 @@ local tests = {
             Renderer.drawRings(rings)
         end)
         
-        TestFramework.utils.assertTrue(success, "Ring rendering should work with empty rings")
+        TestFramework.assert.assertTrue(success, "Ring rendering should work with empty rings")
     end,
     
     ["ring rendering with rings"] = function()
@@ -277,7 +277,7 @@ local tests = {
             Renderer.drawRings(rings)
         end)
         
-        TestFramework.utils.assertTrue(success, "Ring rendering should work with rings")
+        TestFramework.assert.assertTrue(success, "Ring rendering should work with rings")
     end,
     
     ["ring rendering with collected rings"] = function()
@@ -300,7 +300,7 @@ local tests = {
             Renderer.drawRings(rings)
         end)
         
-        TestFramework.utils.assertTrue(success, "Ring rendering should work with collected rings")
+        TestFramework.assert.assertTrue(success, "Ring rendering should work with collected rings")
     end,
     
     -- Test particle rendering
@@ -312,7 +312,7 @@ local tests = {
             Renderer.drawParticles(particles)
         end)
         
-        TestFramework.utils.assertTrue(success, "Particle rendering should work with empty particles")
+        TestFramework.assert.assertTrue(success, "Particle rendering should work with empty particles")
     end,
     
     ["particle rendering with particles"] = function()
@@ -340,7 +340,7 @@ local tests = {
             Renderer.drawParticles(particles)
         end)
         
-        TestFramework.utils.assertTrue(success, "Particle rendering should work with particles")
+        TestFramework.assert.assertTrue(success, "Particle rendering should work with particles")
     end,
     
     -- Test pull indicator rendering
@@ -356,7 +356,7 @@ local tests = {
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 50, 100)
         end)
         
-        TestFramework.utils.assertTrue(success, "Pull indicator rendering should work when not on planet")
+        TestFramework.assert.assertTrue(success, "Pull indicator rendering should work when not on planet")
     end,
     
     ["pull indicator rendering on planet"] = function()
@@ -371,7 +371,7 @@ local tests = {
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 50, 100)
         end)
         
-        TestFramework.utils.assertTrue(success, "Pull indicator rendering should work when on planet")
+        TestFramework.assert.assertTrue(success, "Pull indicator rendering should work when on planet")
     end,
     
     ["pull indicator rendering with power"] = function()
@@ -386,7 +386,7 @@ local tests = {
             Renderer.drawPullIndicator(player, 450, 350, 400, 300, 80, 100)
         end)
         
-        TestFramework.utils.assertTrue(success, "Pull indicator rendering should work with power")
+        TestFramework.assert.assertTrue(success, "Pull indicator rendering should work with power")
     end,
     
     -- Test mobile controls rendering
@@ -409,7 +409,7 @@ local tests = {
             Renderer.drawMobileControls(player, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Mobile controls rendering should work")
+        TestFramework.assert.assertTrue(success, "Mobile controls rendering should work")
     end,
     
     ["mobile controls rendering with cooldown"] = function()
@@ -431,7 +431,7 @@ local tests = {
             Renderer.drawMobileControls(player, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Mobile controls rendering should work with cooldown")
+        TestFramework.assert.assertTrue(success, "Mobile controls rendering should work with cooldown")
     end,
     
     -- Test mobile pull indicator rendering
@@ -454,7 +454,7 @@ local tests = {
         -- Restore original function
         Utils.MobileInput.isMobile = originalIsMobile
         
-        TestFramework.utils.assertTrue(success, "Mobile pull indicator rendering should work")
+        TestFramework.assert.assertTrue(success, "Mobile pull indicator rendering should work")
     end,
     
     -- Test UI rendering
@@ -469,7 +469,7 @@ local tests = {
             Renderer.drawUI(1000, 5, 2.0, 1.5, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "UI rendering should work")
+        TestFramework.assert.assertTrue(success, "UI rendering should work")
     end,
     
     ["UI rendering with combo"] = function()
@@ -483,7 +483,7 @@ local tests = {
             Renderer.drawUI(1000, 10, 3.0, 2.0, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "UI rendering should work with combo")
+        TestFramework.assert.assertTrue(success, "UI rendering should work with combo")
     end,
     
     -- Test controls hint rendering
@@ -501,7 +501,7 @@ local tests = {
             Renderer.drawControlsHint(player, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Controls hint rendering should work")
+        TestFramework.assert.assertTrue(success, "Controls hint rendering should work")
     end,
     
     ["controls hint rendering not on planet"] = function()
@@ -518,7 +518,7 @@ local tests = {
             Renderer.drawControlsHint(player, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Controls hint rendering should work when not on planet")
+        TestFramework.assert.assertTrue(success, "Controls hint rendering should work when not on planet")
     end,
     
     -- Test game over rendering
@@ -534,7 +534,7 @@ local tests = {
             Renderer.drawGameOver(1500, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Game over rendering should work")
+        TestFramework.assert.assertTrue(success, "Game over rendering should work")
     end,
     
     -- Test sound status rendering
@@ -548,7 +548,7 @@ local tests = {
             Renderer.drawSoundStatus(true, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Sound status rendering should work when enabled")
+        TestFramework.assert.assertTrue(success, "Sound status rendering should work when enabled")
     end,
     
     ["sound status rendering disabled"] = function()
@@ -561,7 +561,7 @@ local tests = {
             Renderer.drawSoundStatus(false, fonts)
         end)
         
-        TestFramework.utils.assertTrue(success, "Sound status rendering should work when disabled")
+        TestFramework.assert.assertTrue(success, "Sound status rendering should work when disabled")
     end,
     
     -- Test exploration indicator rendering
@@ -575,18 +575,26 @@ local tests = {
             scale = 1.5
         }
         
+        -- Initialize fonts
+        local fonts = {
+            regular = { getWidth = function() return 100 end, getHeight = function() return 20 end },
+            bold = { getWidth = function() return 120 end, getHeight = function() return 22 end },
+            light = { getWidth = function() return 90 end, getHeight = function() return 18 end }
+        }
+        Renderer.init(fonts)
+        
         -- Set camera for renderer
         Renderer.camera = Camera
         
         -- Test that the function exists and can be called
-        TestFramework.utils.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
+        TestFramework.assert.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
         
         -- Should not crash
         local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawExplorationIndicator(player, Camera)
         end)
         
-        TestFramework.utils.assertTrue(success, "Exploration indicator rendering should work")
+        TestFramework.assert.assertTrue(success, "Exploration indicator rendering should work")
     end,
     
     ["exploration indicator rendering far from origin"] = function()
@@ -599,18 +607,26 @@ local tests = {
             scale = 1.0
         }
         
+        -- Initialize fonts
+        local fonts = {
+            regular = { getWidth = function() return 100 end, getHeight = function() return 20 end },
+            bold = { getWidth = function() return 120 end, getHeight = function() return 22 end },
+            light = { getWidth = function() return 90 end, getHeight = function() return 18 end }
+        }
+        Renderer.init(fonts)
+        
         -- Set camera for renderer
         Renderer.camera = Camera
         
         -- Test that the function exists and can be called
-        TestFramework.utils.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
+        TestFramework.assert.assertNotNil(Renderer.drawExplorationIndicator, "drawExplorationIndicator function should exist")
         
         -- Should not crash
         local success  = Utils.ErrorHandler.safeCall(function()
             Renderer.drawExplorationIndicator(player, Camera)
         end)
         
-        TestFramework.utils.assertTrue(success, "Exploration indicator rendering should work far from origin")
+        TestFramework.assert.assertTrue(success, "Exploration indicator rendering should work far from origin")
     end,
     
     -- Test utility rendering functions
@@ -620,7 +636,7 @@ local tests = {
             Renderer.drawButton("Test Button", 100, 100, 200, 50, false)
         end)
         
-        TestFramework.utils.assertTrue(success, "Button rendering should work")
+        TestFramework.assert.assertTrue(success, "Button rendering should work")
     end,
     
     ["button rendering hovered"] = function()
@@ -629,7 +645,7 @@ local tests = {
             Renderer.drawButton("Test Button", 100, 100, 200, 50, true)
         end)
         
-        TestFramework.utils.assertTrue(success, "Button rendering should work when hovered")
+        TestFramework.assert.assertTrue(success, "Button rendering should work when hovered")
     end,
     
     ["progress bar rendering"] = function()
@@ -638,7 +654,7 @@ local tests = {
             Renderer.drawProgressBar(100, 100, 200, 20, 0.75)
         end)
         
-        TestFramework.utils.assertTrue(success, "Progress bar rendering should work")
+        TestFramework.assert.assertTrue(success, "Progress bar rendering should work")
     end,
     
     ["progress bar rendering full"] = function()
@@ -647,7 +663,7 @@ local tests = {
             Renderer.drawProgressBar(100, 100, 200, 20, 1.0)
         end)
         
-        TestFramework.utils.assertTrue(success, "Progress bar rendering should work when full")
+        TestFramework.assert.assertTrue(success, "Progress bar rendering should work when full")
     end,
     
     ["progress bar rendering empty"] = function()
@@ -656,7 +672,7 @@ local tests = {
             Renderer.drawProgressBar(100, 100, 200, 20, 0.0)
         end)
         
-        TestFramework.utils.assertTrue(success, "Progress bar rendering should work when empty")
+        TestFramework.assert.assertTrue(success, "Progress bar rendering should work when empty")
     end,
     
     ["text rendering"] = function()
@@ -669,7 +685,7 @@ local tests = {
             Renderer.drawText("Test Text", 100, 100, fonts.regular, {1, 1, 1, 1}, "left")
         end)
         
-        TestFramework.utils.assertTrue(success, "Text rendering should work")
+        TestFramework.assert.assertTrue(success, "Text rendering should work")
     end,
     
     ["text rendering without font"] = function()
@@ -678,7 +694,7 @@ local tests = {
             Renderer.drawText("Test Text", 100, 100, nil, {1, 1, 1, 1}, "center")
         end)
         
-        TestFramework.utils.assertTrue(success, "Text rendering should work without font")
+        TestFramework.assert.assertTrue(success, "Text rendering should work without font")
     end,
     
     ["centered text rendering"] = function()
@@ -691,7 +707,7 @@ local tests = {
             Renderer.drawCenteredText("Centered Text", 100, fonts.bold, {1, 1, 1, 1})
         end)
         
-        TestFramework.utils.assertTrue(success, "Centered text rendering should work")
+        TestFramework.assert.assertTrue(success, "Centered text rendering should work")
     end,
     
     ["panel rendering"] = function()
@@ -700,7 +716,7 @@ local tests = {
             Renderer.drawPanel(100, 100, 200, 150, {0.1, 0.1, 0.1, 0.8})
         end)
         
-        TestFramework.utils.assertTrue(success, "Panel rendering should work")
+        TestFramework.assert.assertTrue(success, "Panel rendering should work")
     end,
     
     ["panel rendering with default color"] = function()
@@ -709,13 +725,13 @@ local tests = {
             Renderer.drawPanel(100, 100, 200, 150)
         end)
         
-        TestFramework.utils.assertTrue(success, "Panel rendering should work with default color")
+        TestFramework.assert.assertTrue(success, "Panel rendering should work with default color")
     end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runSuite("Renderer System Tests", tests)
+    local success = TestFramework.runTests(tests, "Renderer System Tests")
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")
