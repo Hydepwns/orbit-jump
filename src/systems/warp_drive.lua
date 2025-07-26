@@ -356,6 +356,12 @@ end
 function WarpDrive.createWarpParticles(player, cost)
     WarpDrive.particles = {}
     
+    -- Safety check for warp target
+    if not WarpDrive.warpTarget then
+        Utils.Logger.warn("Cannot create warp particles: no warp target set")
+        return
+    end
+    
     -- Adaptive particle count based on warp efficiency
     local baseCost = math.max(50, math.floor(Utils.distance(player.x, player.y, WarpDrive.warpTarget.x, WarpDrive.warpTarget.y) / 100))
     local efficiency = cost / baseCost  -- Lower cost = higher efficiency = more particles
