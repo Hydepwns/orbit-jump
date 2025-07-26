@@ -1,6 +1,6 @@
 -- Comprehensive tests for Sound Generator
 local Utils = require("src.utils.utils")
-local TestFramework = Utils.require("tests.modern_test_framework")
+local TestFramework = Utils.require("tests.test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 -- Setup mocks
@@ -68,9 +68,9 @@ local tests = {
         
         local soundData = SoundGenerator.generateSineWave(frequency, duration, sampleRate)
         
-        TestFramework.assert.assertNotNil(soundData, "Should generate sound data")
-        TestFramework.assert.assertEqual(4410, soundData.samples, "Should have correct number of samples")
-        TestFramework.assert.assertEqual(44100, soundData.rate, "Should have correct sample rate")
+        TestFramework.utils.assertNotNil(soundData, "Should generate sound data")
+        TestFramework.utils.assertEqual(4410, soundData.samples, "Should have correct number of samples")
+        TestFramework.utils.assertEqual(44100, soundData.rate, "Should have correct sample rate")
         
         -- Check that samples were written
         local hasNonZeroSamples = false
@@ -80,7 +80,7 @@ local tests = {
                 break
             end
         end
-        TestFramework.assert.assertTrue(hasNonZeroSamples, "Should have non-zero samples")
+        TestFramework.utils.assertTrue(hasNonZeroSamples, "Should have non-zero samples")
     end,
     
     ["test square wave generation"] = function()
@@ -89,7 +89,7 @@ local tests = {
         
         local soundData = SoundGenerator.generateSquareWave(frequency, duration)
         
-        TestFramework.assert.assertNotNil(soundData, "Should generate sound data")
+        TestFramework.utils.assertNotNil(soundData, "Should generate sound data")
         
         -- Check that square wave has only two values (approximately)
         local positiveFound = false
@@ -98,13 +98,13 @@ local tests = {
             local sample = mockSamples[i]
             if sample and sample > 0 then
                 positiveFound = true
-                TestFramework.assert.assertTrue(math.abs(sample - 0.3) < 0.001, "Positive should be 0.3")
+                TestFramework.utils.assertTrue(math.abs(sample - 0.3) < 0.001, "Positive should be 0.3")
             elseif sample and sample < 0 then
                 negativeFound = true
-                TestFramework.assert.assertTrue(math.abs(sample + 0.3) < 0.001, "Negative should be -0.3")
+                TestFramework.utils.assertTrue(math.abs(sample + 0.3) < 0.001, "Negative should be -0.3")
             end
         end
-        TestFramework.assert.assertTrue(positiveFound and negativeFound, "Should have both positive and negative values")
+        TestFramework.utils.assertTrue(positiveFound and negativeFound, "Should have both positive and negative values")
     end,
     
     ["test noise generation"] = function()
@@ -122,7 +122,7 @@ local tests = {
         
         local soundData = SoundGenerator.generateNoise(duration)
         
-        TestFramework.assert.assertNotNil(soundData, "Should generate sound data")
+        TestFramework.utils.assertNotNil(soundData, "Should generate sound data")
         
         -- Check that noise has varied values
         local uniqueValues = {}
@@ -137,7 +137,7 @@ local tests = {
         for _ in pairs(uniqueValues) do
             count = count + 1
         end
-        TestFramework.assert.assertTrue(count > 1, "Noise should have varied values")
+        TestFramework.utils.assertTrue(count > 1, "Noise should have varied values")
         
         -- Restore random
         math.random = oldRandom
@@ -164,39 +164,39 @@ local tests = {
                 break
             end
         end
-        TestFramework.assert.assertTrue(modified, "Envelope should modify samples")
+        TestFramework.utils.assertTrue(modified, "Envelope should modify samples")
         
         -- Check attack phase (should start at 0)
         local firstSample = math.abs(mockSamples[0] or 0)
-        TestFramework.assert.assertTrue(firstSample < 0.1, "First sample should be near zero")
+        TestFramework.utils.assertTrue(firstSample < 0.1, "First sample should be near zero")
     end,
     
     ["test game sounds generation"] = function()
         local sounds = SoundGenerator.generateGameSounds()
         
-        TestFramework.assert.assertNotNil(sounds, "Should generate sounds table")
-        TestFramework.assert.assertNotNil(sounds.jump, "Should have jump sound")
-        TestFramework.assert.assertNotNil(sounds.ring, "Should have ring sound")
-        TestFramework.assert.assertNotNil(sounds.dash, "Should have dash sound")
-        TestFramework.assert.assertNotNil(sounds.land, "Should have land sound")
-        TestFramework.assert.assertNotNil(sounds.combo, "Should have combo sound")
-        TestFramework.assert.assertNotNil(sounds.gameOver, "Should have game over sound")
-        TestFramework.assert.assertNotNil(sounds.ambient, "Should have ambient sound")
+        TestFramework.utils.assertNotNil(sounds, "Should generate sounds table")
+        TestFramework.utils.assertNotNil(sounds.jump, "Should have jump sound")
+        TestFramework.utils.assertNotNil(sounds.ring, "Should have ring sound")
+        TestFramework.utils.assertNotNil(sounds.dash, "Should have dash sound")
+        TestFramework.utils.assertNotNil(sounds.land, "Should have land sound")
+        TestFramework.utils.assertNotNil(sounds.combo, "Should have combo sound")
+        TestFramework.utils.assertNotNil(sounds.gameOver, "Should have game over sound")
+        TestFramework.utils.assertNotNil(sounds.ambient, "Should have ambient sound")
         
         -- Check ambient sound properties
-        TestFramework.assert.assertTrue(sounds.ambient.looping, "Ambient should loop")
-        TestFramework.assert.assertEqual(0.2, sounds.ambient.volume, "Ambient volume should be 0.2")
+        TestFramework.utils.assertTrue(sounds.ambient.looping, "Ambient should loop")
+        TestFramework.utils.assertEqual(0.2, sounds.ambient.volume, "Ambient volume should be 0.2")
         
         -- Check that all sounds have the correct type
-        TestFramework.assert.assertEqual("static", sounds.jump.type, "Jump should be static")
-        TestFramework.assert.assertEqual("stream", sounds.ambient.type, "Ambient should be stream")
+        TestFramework.utils.assertEqual("static", sounds.jump.type, "Jump should be static")
+        TestFramework.utils.assertEqual("stream", sounds.ambient.type, "Ambient should be stream")
     end,
     
     ["test jump sound characteristics"] = function()
         local sounds = SoundGenerator.generateGameSounds()
         
         -- Jump sound should have samples (sweep from 200Hz to 800Hz)
-        TestFramework.assert.assertNotNil(sounds.jump.soundData, "Jump should have sound data")
+        TestFramework.utils.assertNotNil(sounds.jump.soundData, "Jump should have sound data")
         
         -- Check that samples were generated
         local hasNonZeroSamples = false
@@ -206,7 +206,7 @@ local tests = {
                 break
             end
         end
-        TestFramework.assert.assertTrue(hasNonZeroSamples, "Jump should have non-zero samples")
+        TestFramework.utils.assertTrue(hasNonZeroSamples, "Jump should have non-zero samples")
     end,
     
     ["test ring sound harmonics"] = function()
@@ -216,7 +216,7 @@ local tests = {
         local sounds = SoundGenerator.generateGameSounds()
         
         -- Ring sound uses multiple harmonics
-        TestFramework.assert.assertNotNil(sounds.ring.soundData, "Ring should have sound data")
+        TestFramework.utils.assertNotNil(sounds.ring.soundData, "Ring should have sound data")
         
         -- Should have complex waveform (not just simple sine)
         local hasComplexWaveform = false
@@ -226,7 +226,7 @@ local tests = {
                 sampleCount = sampleCount + 1
             end
         end
-        TestFramework.assert.assertTrue(sampleCount > 0, "Ring should have samples")
+        TestFramework.utils.assertTrue(sampleCount > 0, "Ring should have samples")
     end,
     
     ["test sound data parameters"] = function()
@@ -241,9 +241,9 @@ local tests = {
             local soundData = SoundGenerator.generateSineWave(test.freq, test.dur, test.rate)
             
             local expectedSamples = math.floor(test.dur * test.rate)
-            TestFramework.assert.assertEqual(expectedSamples, soundData.samples, 
+            TestFramework.utils.assertEqual(expectedSamples, soundData.samples, 
                 "Test " .. i .. " should have correct samples")
-            TestFramework.assert.assertEqual(test.rate, soundData.rate, 
+            TestFramework.utils.assertEqual(test.rate, soundData.rate, 
                 "Test " .. i .. " should have correct rate")
         end
     end,
@@ -255,13 +255,13 @@ local tests = {
         local success = pcall(function()
             SoundGenerator.applyEnvelope(soundData, 0.001, 0.001, 0.5, 0.001)
         end)
-        TestFramework.assert.assertTrue(success, "Should handle short envelope times")
+        TestFramework.utils.assertTrue(success, "Should handle short envelope times")
         
         -- Test with zero times
         success = pcall(function()
             SoundGenerator.applyEnvelope(soundData, 0, 0, 1.0, 0)
         end)
-        TestFramework.assert.assertTrue(success, "Should handle zero envelope times")
+        TestFramework.utils.assertTrue(success, "Should handle zero envelope times")
     end,
     
     ["test all sound types created"] = function()
@@ -272,8 +272,8 @@ local tests = {
         }
         
         for _, soundType in ipairs(soundTypes) do
-            TestFramework.assert.assertNotNil(sounds[soundType], soundType .. " sound should exist")
-            TestFramework.assert.assertNotNil(sounds[soundType].soundData, 
+            TestFramework.utils.assertNotNil(sounds[soundType], soundType .. " sound should exist")
+            TestFramework.utils.assertNotNil(sounds[soundType].soundData, 
                 soundType .. " should have sound data")
         end
     end,
@@ -281,13 +281,13 @@ local tests = {
     ["test default sample rate"] = function()
         -- Test that default sample rate is used when not specified
         local soundData = SoundGenerator.generateSineWave(440, 0.1)
-        TestFramework.assert.assertEqual(44100, soundData.rate, "Should use default sample rate of 44100")
+        TestFramework.utils.assertEqual(44100, soundData.rate, "Should use default sample rate of 44100")
         
         soundData = SoundGenerator.generateSquareWave(440, 0.1)
-        TestFramework.assert.assertEqual(44100, soundData.rate, "Square wave should use default sample rate")
+        TestFramework.utils.assertEqual(44100, soundData.rate, "Square wave should use default sample rate")
         
         soundData = SoundGenerator.generateNoise(0.1)
-        TestFramework.assert.assertEqual(44100, soundData.rate, "Noise should use default sample rate")
+        TestFramework.utils.assertEqual(44100, soundData.rate, "Noise should use default sample rate")
     end,
     
     ["test sample clamping"] = function()
@@ -302,13 +302,13 @@ local tests = {
                 break
             end
         end
-        TestFramework.assert.assertTrue(allInRange, "All samples should be in range [-1, 1]")
+        TestFramework.utils.assertTrue(allInRange, "All samples should be in range [-1, 1]")
     end
 }
 
 -- Run the test suite
 local function run()
-    return TestFramework.runTests(tests, "Sound Generator Tests")
+    return TestFramework.runSuite("Sound Generator Tests", tests)
 end
 
 return {run = run}

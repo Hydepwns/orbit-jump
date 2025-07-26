@@ -1,7 +1,8 @@
 -- Tests for Blockchain Integration
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.require("tests.test_framework")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
@@ -14,141 +15,193 @@ TestFramework.init()
 -- Test suite
 local tests = {
     ["blockchain initialization"] = function()
+        -- Reset config to default state
+        BlockchainIntegration.config.enabled = false
         BlockchainIntegration.init()
-        TestFramework.utils.assertNotNil(BlockchainIntegration.events, "Events queue should be initialized")
-        TestFramework.utils.assertFalse(BlockchainIntegration.connected, "Should not be connected initially")
+        TestFramework.assert.assertNotNil(BlockchainIntegration.eventQueue, "Event queue should be initialized")
+        TestFramework.assert.assertFalse(BlockchainIntegration.config.enabled, "Should not be enabled initially")
     end,
     
-    ["connect to blockchain"] = function()
+    ["enable and disable blockchain"] = function()
         BlockchainIntegration.init()
         
-        local success  = Utils.ErrorHandler.safeCall(function()
-            BlockchainIntegration.connect("test-wallet-address")
-        end)
-        TestFramework.utils.assertTrue(success, "Connection attempt should not crash")
+        BlockchainIntegration.enable()
+        TestFramework.assert.assertTrue(BlockchainIntegration.config.enabled, "Should be enabled")
+        
+        BlockchainIntegration.disable()
+        TestFramework.assert.assertFalse(BlockchainIntegration.config.enabled, "Should be disabled")
     end,
     
-    ["track game event"] = function()
+    ["queue event"] = function()
         BlockchainIntegration.init()
+        BlockchainIntegration.enable() -- Enable blockchain to allow queuing
         
         local event = {
-            type = "ring_collected",
-            timestamp = os.time(),
+            type = BlockchainIntegration.eventTypes.ACHIEVEMENT_UNLOCKED,
             data = {
-                ringType = "power",
-                value = 100
+                achievementId = "first_ring",
+                score = 100
             }
         }
         
-        BlockchainIntegration.trackEvent(event)
-        TestFramework.utils.assertTrue(#BlockchainIntegration.events > 0, "Event should be tracked")
+        BlockchainIntegration.queueEvent(event.type, event.data)
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "Event should be queued")
     end,
     
-    ["mint NFT achievement"] = function()
-        BlockchainIntegration.init()
+    ["generate event id"] = function()
+        -- Store original timer function
+        local originalGetTime = love.timer.getTime
+        local timeCounter = 5500
         
-        local achievement = {
-            id = "first_1000_rings",
-            name = "Ring Master",
-            description = "Collected 1000 rings",
-            rarity = "rare"
+        -- Mock timer to return incrementing values
+        love.timer.getTime = function()
+            timeCounter = timeCounter + 1
+            return timeCounter
+        end
+        
+        local id1 = BlockchainIntegration.generateEventId()
+        local id2 = BlockchainIntegration.generateEventId()
+        
+        -- Restore original timer
+        love.timer.getTime = originalGetTime
+        
+        TestFramework.assert.assertNotNil(id1, "Should generate first ID")
+        TestFramework.assert.assertNotNil(id2, "Should generate second ID")
+        TestFramework.assert.assertNotEqual(id1, id2, "IDs should be unique: " .. tostring(id1) .. " vs " .. tostring(id2))
+    end,
+    
+    ["trigger achievement unlock"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        BlockchainIntegration.triggerAchievementUnlock("speed_demon", 500)
+        
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "Achievement event should be queued")
+        local event = BlockchainIntegration.eventQueue[1]
+        TestFramework.assert.assertEqual(BlockchainIntegration.eventTypes.ACHIEVEMENT_UNLOCKED, event.type, "Event type should match")
+        TestFramework.assert.assertEqual("speed_demon", event.data.achievement, "Achievement ID should match")
+        TestFramework.assert.assertEqual(500, event.data.score, "Score should match")
+    end,
+    
+    ["trigger token earned"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        BlockchainIntegration.triggerTokenEarned(100, "combo_bonus")
+        
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "Token event should be queued")
+        local event = BlockchainIntegration.eventQueue[1]
+        TestFramework.assert.assertEqual(BlockchainIntegration.eventTypes.TOKENS_EARNED, event.type, "Event type should match")
+        TestFramework.assert.assertEqual(100, event.data.amount, "Amount should match")
+        TestFramework.assert.assertEqual("combo_bonus", event.data.reason, "Reason should match")
+    end,
+    
+    ["trigger NFT unlock"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        local metadata = {
+            name = "Origin Fragment",
+            description = "A mysterious artifact",
+            attributes = {rarity = "legendary"}
         }
         
-        local success  = Utils.ErrorHandler.safeCall(function()
-            BlockchainIntegration.mintAchievementNFT(achievement)
+        BlockchainIntegration.triggerNFTUnlock("origin_fragment_1", metadata)
+        
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "NFT event should be queued")
+        local event = BlockchainIntegration.eventQueue[1]
+        TestFramework.assert.assertEqual(BlockchainIntegration.eventTypes.NFT_UNLOCKED, event.type, "Event type should match")
+        TestFramework.assert.assertEqual("origin_fragment_1", event.data.nftId, "NFT ID should match")
+    end,
+    
+    ["trigger upgrade purchase"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        BlockchainIntegration.triggerUpgradePurchase("jump_power", 150, 3)
+        
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "Upgrade event should be queued")
+        local event = BlockchainIntegration.eventQueue[1]
+        TestFramework.assert.assertEqual(BlockchainIntegration.eventTypes.UPGRADE_PURCHASED, event.type, "Event type should match")
+        TestFramework.assert.assertEqual("jump_power", event.data.upgrade, "Upgrade type should match")
+        TestFramework.assert.assertEqual(150, event.data.cost, "Cost should match")
+        TestFramework.assert.assertEqual(3, event.data.newLevel, "New level should match")
+    end,
+    
+    ["trigger high score"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        BlockchainIntegration.triggerHighScore(10000, 15, 250)
+        
+        TestFramework.assert.assertTrue(#BlockchainIntegration.eventQueue > 0, "High score event should be queued")
+        local event = BlockchainIntegration.eventQueue[1]
+        TestFramework.assert.assertEqual(BlockchainIntegration.eventTypes.HIGH_SCORE_SET, event.type, "Event type should match")
+        TestFramework.assert.assertEqual(10000, event.data.score, "Score should match")
+        TestFramework.assert.assertEqual(15, event.data.combo, "Combo should match")
+        TestFramework.assert.assertEqual(250, event.data.ringsCollected, "Rings should match")
+    end,
+    
+    ["events not queued when disabled"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.disable()
+        
+        BlockchainIntegration.triggerAchievementUnlock("test", 100)
+        
+        TestFramework.assert.assertEqual(0, #BlockchainIntegration.eventQueue, "Event should not be queued when disabled")
+    end,
+    
+    ["batch processing check"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        -- Add some events
+        BlockchainIntegration.triggerTokenEarned(50, "test1")
+        BlockchainIntegration.triggerTokenEarned(100, "test2")
+        
+        -- Set last batch time to trigger processing
+        BlockchainIntegration.lastBatchTime = love.timer.getTime() - BlockchainIntegration.batchInterval - 1
+        
+        BlockchainIntegration.checkBatchProcessing()
+        
+        -- Events should be processed and cleared
+        TestFramework.assert.assertEqual(0, #BlockchainIntegration.eventQueue, "Queue should be cleared after batch processing")
+    end,
+    
+    ["update function"] = function()
+        BlockchainIntegration.init()
+        BlockchainIntegration.enable()
+        
+        -- Add an event
+        BlockchainIntegration.triggerTokenEarned(50, "test")
+        
+        -- Update should check batch processing
+        local success = pcall(function()
+            BlockchainIntegration.update(0.016)
         end)
-        TestFramework.utils.assertTrue(success, "NFT minting should not crash")
+        
+        TestFramework.assert.assertTrue(success, "Update should not error")
     end,
     
-    ["record high score"] = function()
+    ["get status"] = function()
         BlockchainIntegration.init()
+        BlockchainIntegration.enable()
         
-        local success  = Utils.ErrorHandler.safeCall(function()
-            BlockchainIntegration.recordHighScore(50000, "player123")
-        end)
-        TestFramework.utils.assertTrue(success, "Recording high score should not crash")
-    end,
-    
-    ["token rewards calculation"] = function()
-        BlockchainIntegration.init()
+        -- Add some events
+        BlockchainIntegration.triggerTokenEarned(50, "test1")
+        BlockchainIntegration.triggerAchievementUnlock("test2", 200)
         
-        local score = 10000
-        local combo = 50
-        local tokens = BlockchainIntegration.calculateTokenRewards(score, combo)
+        local status = BlockchainIntegration.getStatus()
         
-        TestFramework.utils.assertTrue(tokens > 0, "Should calculate positive token rewards")
-        TestFramework.utils.assertTrue(tokens >= score / 1000, "Token rewards should scale with score")
-    end,
-    
-    ["claim token rewards"] = function()
-        BlockchainIntegration.init()
-        
-        local tokens = 100
-        local success  = Utils.ErrorHandler.safeCall(function()
-            BlockchainIntegration.claimTokens(tokens, "player123")
-        end)
-        TestFramework.utils.assertTrue(success, "Claiming tokens should not crash")
-    end,
-    
-    ["leaderboard integration"] = function()
-        BlockchainIntegration.init()
-        
-        -- Submit some scores
-        BlockchainIntegration.submitToLeaderboard("player1", 5000)
-        BlockchainIntegration.submitToLeaderboard("player2", 8000)
-        BlockchainIntegration.submitToLeaderboard("player3", 3000)
-        
-        local leaderboard = BlockchainIntegration.getLeaderboard(10)
-        TestFramework.utils.assertNotNil(leaderboard, "Should return leaderboard data")
-    end,
-    
-    ["verify NFT ownership"] = function()
-        BlockchainIntegration.init()
-        
-        local hasNFT = BlockchainIntegration.checkNFTOwnership("player123", "achievement_nft_001")
-        TestFramework.utils.assertNotNil(hasNFT, "Should return ownership status")
-    end,
-    
-    ["transaction history"] = function()
-        BlockchainIntegration.init()
-        
-        -- Create some transactions
-        BlockchainIntegration.trackEvent({type = "token_earned", amount = 50})
-        BlockchainIntegration.trackEvent({type = "nft_minted", id = "nft_001"})
-        
-        local history = BlockchainIntegration.getTransactionHistory("player123")
-        TestFramework.utils.assertNotNil(history, "Should return transaction history")
-    end,
-    
-    ["gas fee estimation"] = function()
-        BlockchainIntegration.init()
-        
-        local fee = BlockchainIntegration.estimateGasFee("mint_nft")
-        TestFramework.utils.assertTrue(fee >= 0, "Gas fee should be non-negative")
-    end,
-    
-    ["blockchain sync status"] = function()
-        BlockchainIntegration.init()
-        
-        local status = BlockchainIntegration.getSyncStatus()
-        TestFramework.utils.assertNotNil(status, "Should return sync status")
-        TestFramework.utils.assertNotNil(status.connected, "Status should have connected field")
-        TestFramework.utils.assertNotNil(status.pendingTransactions, "Status should have pending transactions")
-    end,
-    
-    ["smart contract interaction"] = function()
-        BlockchainIntegration.init()
-        
-        local success  = Utils.ErrorHandler.safeCall(function()
-            BlockchainIntegration.callSmartContract("GameRewards", "claimDailyBonus", {})
-        end)
-        TestFramework.utils.assertTrue(success, "Smart contract call should not crash")
-    end,
+        TestFramework.assert.assertTrue(status.enabled, "Status should show enabled")
+        TestFramework.assert.assertEqual(2, status.queuedEvents, "Should show 2 queued events")
+        TestFramework.assert.assertNotNil(status.lastBatchTime, "Should have last batch time")
+    end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runSuite("Blockchain Integration Tests", tests)
+    local success = TestFramework.runTests(tests, "Blockchain Integration Tests")
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")

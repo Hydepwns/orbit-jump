@@ -3,6 +3,31 @@ local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 
+-- Function to get PauseMenu with proper initialization
+local function getPauseMenu()
+    -- Clear any cached version
+    package.loaded["src.ui.pause_menu"] = nil
+    package.loaded["src/ui/pause_menu"] = nil
+    
+    -- Also clear from Utils cache
+    if Utils.moduleCache then
+        Utils.moduleCache["src.ui.pause_menu"] = nil
+    end
+    
+    -- Setup mocks before loading
+    Mocks.setup()
+    
+    -- Load fresh instance using regular require to bypass cache
+    local PauseMenu = require("src.ui.pause_menu")
+    
+    -- Ensure it's initialized
+    if PauseMenu and PauseMenu.init then
+        PauseMenu.init()
+    end
+    
+    return PauseMenu
+end
+
 -- Setup mocks
 Mocks.setup()
 
@@ -12,8 +37,7 @@ TestFramework.init()
 -- Test suite
 local tests = {
     ["test pause menu initialization"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
+        local PauseMenu = getPauseMenu()
         
         TestFramework.assert.equal(false, PauseMenu.isPaused, "Should start unpaused")
         TestFramework.assert.equal(1, PauseMenu.selectedOption, "Should start with first option selected")
@@ -21,8 +45,7 @@ local tests = {
     end,
 
     ["test pause functionality"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
+        local PauseMenu = getPauseMenu()
         
         PauseMenu.pause()
         
@@ -31,7 +54,14 @@ local tests = {
     end,
 
     ["test resume functionality"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
+        -- Clear cache to ensure fresh module
+        package.loaded["src.ui.pause_menu"] = nil
+        package.loaded["src/ui/pause_menu"] = nil
+        if Utils.moduleCache then
+            Utils.moduleCache["src.ui.pause_menu"] = nil
+        end
+        
+        local PauseMenu = require("src.ui.pause_menu")
         PauseMenu.init()
         
         PauseMenu.pause()
@@ -41,7 +71,14 @@ local tests = {
     end,
 
     ["test toggle functionality"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
+        -- Clear cache to ensure fresh module
+        package.loaded["src.ui.pause_menu"] = nil
+        package.loaded["src/ui/pause_menu"] = nil
+        if Utils.moduleCache then
+            Utils.moduleCache["src.ui.pause_menu"] = nil
+        end
+        
+        local PauseMenu = require("src.ui.pause_menu")
         PauseMenu.init()
         
         -- Toggle from unpaused to paused
@@ -79,21 +116,28 @@ local tests = {
     end,
 
     ["test fade update when paused"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
+        local PauseMenu = getPauseMenu()
         
+        -- Ensure we start from 0
+        PauseMenu.fadeAlpha = 0
         PauseMenu.pause()
         local initialAlpha = PauseMenu.fadeAlpha
         
         PauseMenu.update(0.1) -- 0.1 seconds
         
-        TestFramework.assert.greaterThan(initialAlpha, PauseMenu.fadeAlpha, "Fade should increase when paused")
+        -- Debug info
+        print("Paused test - Initial alpha:", initialAlpha, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
+        
+        -- The fade should increase when paused (rate is 5 per second)
+        -- With 0.1 seconds, expect 0.5 increase: 0 + (0.1 * 5) = 0.5
+        TestFramework.assert.greaterThan(PauseMenu.fadeAlpha, initialAlpha, "Fade should increase when paused")
     end,
 
     ["test fade update when unpaused"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
+        local PauseMenu = getPauseMenu()
         
+        -- Build up fade first
+        PauseMenu.fadeAlpha = 0
         PauseMenu.pause()
         PauseMenu.update(0.2) -- Build up some fade
         local initialAlpha = PauseMenu.fadeAlpha
@@ -101,7 +145,12 @@ local tests = {
         PauseMenu.resume()
         PauseMenu.update(0.1) -- 0.1 seconds
         
-        TestFramework.assert.lessThan(initialAlpha, PauseMenu.fadeAlpha, "Fade should decrease when unpaused")
+        -- Debug info  
+        print("Unpaused test - Initial alpha:", initialAlpha, "Final alpha:", PauseMenu.fadeAlpha, "isPaused:", PauseMenu.isPaused)
+        
+        -- The fade should decrease when unpaused (rate is 5 per second)
+        -- With 0.1 seconds, expect 0.5 decrease from initial
+        TestFramework.assert.lessThan(PauseMenu.fadeAlpha, initialAlpha, "Fade should decrease when unpaused")
     end,
 
     ["test fade limits"] = function()
@@ -111,12 +160,12 @@ local tests = {
         -- Test maximum fade
         PauseMenu.pause()
         PauseMenu.update(1.0) -- Long enough to reach max
-        TestFramework.assert.lessThanOrEqual(1.0, PauseMenu.fadeAlpha, "Fade should not exceed 1.0")
+        TestFramework.assert.lessThanOrEqual(PauseMenu.fadeAlpha, 1.0, "Fade should not exceed 1.0")
         
         -- Test minimum fade
         PauseMenu.resume()
         PauseMenu.update(1.0) -- Long enough to reach min
-        TestFramework.assert.greaterThanOrEqual(0.0, PauseMenu.fadeAlpha, "Fade should not go below 0.0")
+        TestFramework.assert.greaterThanOrEqual(PauseMenu.fadeAlpha, 0.0, "Fade should not go below 0.0")
     end,
 
     ["test keyboard navigation up"] = function()
@@ -316,14 +365,15 @@ local tests = {
     end,
 
     ["test settings option action"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
-        PauseMenu.pause()
+        -- Clear cache to ensure fresh module
+        package.loaded["src.ui.pause_menu"] = nil
+        package.loaded["src/ui/pause_menu"] = nil
+        if Utils.moduleCache then
+            Utils.moduleCache["src.ui.pause_menu"] = nil
+        end
         
-        -- Mock SettingsMenu
+        -- Mock SettingsMenu before loading PauseMenu
         local settingsMenuCalled = false
-        local resumeCalled = false
-        
         local originalRequire = Utils.require
         Utils.require = function(module)
             if module == "src.ui.settings_menu" then
@@ -335,6 +385,12 @@ local tests = {
             end
             return originalRequire(module)
         end
+        
+        local PauseMenu = require("src.ui.pause_menu")
+        PauseMenu.init()
+        PauseMenu.pause()
+        
+        local resumeCalled = false
         
         local originalResume = PauseMenu.resume
         PauseMenu.resume = function()
@@ -352,11 +408,14 @@ local tests = {
     end,
 
     ["test save game option action"] = function()
-        local PauseMenu = Utils.require("src.ui.pause_menu")
-        PauseMenu.init()
-        PauseMenu.pause()
+        -- Clear cache to ensure fresh module
+        package.loaded["src.ui.pause_menu"] = nil
+        package.loaded["src/ui/pause_menu"] = nil
+        if Utils.moduleCache then
+            Utils.moduleCache["src.ui.pause_menu"] = nil
+        end
         
-        -- Mock SaveSystem
+        -- Mock SaveSystem before loading PauseMenu
         local saveCalled = false
         local originalRequire = Utils.require
         Utils.require = function(module)
@@ -369,6 +428,10 @@ local tests = {
             end
             return originalRequire(module)
         end
+        
+        local PauseMenu = require("src.ui.pause_menu")
+        PauseMenu.init()
+        PauseMenu.pause()
         
         PauseMenu.options[3].action()
         
@@ -420,5 +483,14 @@ local tests = {
     end
 }
 
--- Run tests
-TestFramework.runTests(tests) 
+-- Test runner
+local function run()
+    -- Setup mocks and framework before running tests
+    Mocks.setup()
+    TestFramework.init()
+    Utils.Logger.info("Running Pause Menu Tests")
+    Utils.Logger.info("==================================================")
+    return TestFramework.runTests(tests)
+end
+
+return {run = run} 

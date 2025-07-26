@@ -660,5 +660,11 @@ local tests = {
     end
 }
 
--- Run tests
-TestFramework.runTests(tests) 
+-- Test runner
+local function run()
+    Utils.Logger.info("Running Settings Menu Tests")
+    Utils.Logger.info("==================================================")
+    return TestFramework.runTests(tests)
+end
+
+return {run = run} 

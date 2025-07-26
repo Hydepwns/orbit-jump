@@ -1,7 +1,8 @@
 -- Tests for Dev Tools
 package.path = package.path .. ";../../?.lua"
 
-local TestFramework = Utils.require("tests.test_framework")
+local Utils = require("src.utils.utils")
+local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
 
 Mocks.setup()
@@ -15,217 +16,234 @@ TestFramework.init()
 local tests = {
     ["dev tools initialization"] = function()
         DevTools.init()
-        TestFramework.utils.assertNotNil(DevTools.enabled, "Dev tools enabled flag should exist")
-        TestFramework.utils.assertNotNil(DevTools.console, "Console should be initialized")
-        TestFramework.utils.assertNotNil(DevTools.commands, "Commands should be initialized")
+        TestFramework.assert.assertNotNil(DevTools.state, "Dev tools state should exist")
+        TestFramework.assert.assertNotNil(DevTools.state.debugMode, "Debug mode flag should exist")
+        TestFramework.assert.assertFalse(DevTools.state.debugMode, "Debug mode should be off initially")
+        TestFramework.assert.assertFalse(DevTools.state.showHitboxes, "Hitboxes should be off initially")
+        TestFramework.assert.assertFalse(DevTools.state.showPerformance, "Performance should be off initially")
+        TestFramework.assert.assertFalse(DevTools.state.paused, "Game should not be paused initially")
     end,
     
-    ["toggle dev tools"] = function()
+    ["toggle debug mode"] = function()
         DevTools.init()
-        local initial = DevTools.enabled
+        local initial = DevTools.state.debugMode
         
-        DevTools.toggle()
-        TestFramework.utils.assertEqual(not initial, DevTools.enabled, "Should toggle enabled state")
+        DevTools.handleInput("f1")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.debugMode, "Should toggle debug mode")
         
-        DevTools.toggle()
-        TestFramework.utils.assertEqual(initial, DevTools.enabled, "Should toggle back")
+        DevTools.handleInput("f1")
+        TestFramework.assert.assertEqual(initial, DevTools.state.debugMode, "Should toggle back")
     end,
     
-    ["console command registration"] = function()
+    ["toggle hitboxes"] = function()
         DevTools.init()
+        local initial = DevTools.state.showHitboxes
         
-        local testExecuted = false
-        DevTools.registerCommand("test", "Test command", function()
-            testExecuted = true
-        end)
-        
-        TestFramework.utils.assertNotNil(DevTools.commands.test, "Command should be registered")
-        TestFramework.utils.assertEqual("Test command", DevTools.commands.test.description, "Description should match")
-        
-        -- Execute command
-        DevTools.executeCommand("test")
-        TestFramework.utils.assertTrue(testExecuted, "Command should execute")
+        DevTools.handleInput("f2")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.showHitboxes, "Should toggle hitboxes")
     end,
     
-    ["command with arguments"] = function()
+    ["toggle performance overlay"] = function()
         DevTools.init()
+        local initial = DevTools.state.showPerformance
         
-        local receivedArgs = nil
-        DevTools.registerCommand("argtest", "Arg test", function(args)
-            receivedArgs = args
-        end)
-        
-        DevTools.executeCommand("argtest", {"arg1", "arg2"})
-        TestFramework.utils.assertNotNil(receivedArgs, "Should receive arguments")
-        TestFramework.utils.assertEqual("arg1", receivedArgs[1], "First argument should match")
-        TestFramework.utils.assertEqual("arg2", receivedArgs[2], "Second argument should match")
+        DevTools.handleInput("f3")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.showPerformance, "Should toggle performance")
     end,
     
-    ["built-in commands"] = function()
+    ["toggle debug info"] = function()
         DevTools.init()
+        local initial = DevTools.state.showDebugInfo
         
-        -- Check that built-in commands exist
-        TestFramework.utils.assertNotNil(DevTools.commands.help, "Help command should exist")
-        TestFramework.utils.assertNotNil(DevTools.commands.clear, "Clear command should exist")
-        TestFramework.utils.assertNotNil(DevTools.commands.fps, "FPS command should exist")
-        TestFramework.utils.assertNotNil(DevTools.commands.teleport, "Teleport command should exist")
-        TestFramework.utils.assertNotNil(DevTools.commands.give, "Give command should exist")
+        DevTools.handleInput("f4")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.showDebugInfo, "Should toggle debug info")
     end,
     
-    ["console input handling"] = function()
+    ["pause game"] = function()
         DevTools.init()
-        DevTools.enabled = true
+        local initial = DevTools.state.paused
         
-        -- Add text to console
-        DevTools.console.input = "test"
-        DevTools.handleKeyPress("return")
-        
-        -- Check command history
-        TestFramework.utils.assertTrue(#DevTools.console.history > 0, "Command should be added to history")
-        TestFramework.utils.assertEqual("", DevTools.console.input, "Input should be cleared")
+        DevTools.handleInput("f5")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.paused, "Should toggle pause")
     end,
     
-    ["console output"] = function()
+    ["toggle slow motion"] = function()
         DevTools.init()
+        local initial = DevTools.state.slowMotion
         
-        DevTools.log("Test message")
-        TestFramework.utils.assertTrue(#DevTools.console.output > 0, "Message should be in output")
-        
-        local lastMessage = DevTools.console.output[#DevTools.console.output]
-        TestFramework.utils.assertTrue(string.find(lastMessage.text, "Test message"), "Message should contain text")
+        DevTools.handleInput("f6")
+        TestFramework.assert.assertEqual(not initial, DevTools.state.slowMotion, "Should toggle slow motion")
     end,
     
-    ["log levels"] = function()
+    ["update with slow motion"] = function()
         DevTools.init()
+        DevTools.state.slowMotion = true
         
-        DevTools.log("Info message", "info")
-        DevTools.log("Warning message", "warning")
-        DevTools.log("Error message", "error")
+        local dt = 0.016 -- 60 FPS
+        local modifiedDt = DevTools.update(dt)
         
-        local output = DevTools.console.output
-        TestFramework.utils.assertTrue(#output >= 3, "Should have logged all messages")
+        TestFramework.assert.assertEqual(dt * DevTools.state.slowMotionFactor, modifiedDt, "Should apply slow motion factor")
     end,
     
-    ["variable inspection"] = function()
+    ["update without slow motion"] = function()
         DevTools.init()
+        DevTools.state.slowMotion = false
         
-        local testObject = {
-            name = "test",
-            value = 42,
-            nested = {
-                data = "nested value"
-            }
+        local dt = 0.016
+        local modifiedDt = DevTools.update(dt)
+        
+        TestFramework.assert.assertEqual(dt, modifiedDt, "Should not modify dt")
+    end,
+    
+    ["update when paused"] = function()
+        DevTools.init()
+        DevTools.state.paused = true
+        
+        local dt = 0.016
+        local modifiedDt = DevTools.update(dt)
+        
+        TestFramework.assert.assertEqual(0, modifiedDt, "Should return 0 when paused")
+    end,
+    
+    ["draw does not error"] = function()
+        DevTools.init()
+        DevTools.state.debugMode = true
+        
+        -- Should not throw any errors
+        TestFramework.assert.assertNotNil(DevTools.draw, "Draw function should exist")
+        
+        -- Mock GameState for drawing
+        local mockGameState = {
+            player = {x = 100, y = 100, radius = 10, vx = 50, vy = 50},
+            getPlanets = function() return {{x = 200, y = 200, radius = 50}} end,
+            getRings = function() return {{x = 300, y = 300, radius = 30, innerRadius = 20, collected = false}} end,
+            getScore = function() return 100 end,
+            getCombo = function() return 5 end,
+            getGameTime = function() return 10.5 end,
+            getParticles = function() return {} end
         }
         
-        local inspected = DevTools.inspect(testObject)
-        TestFramework.utils.assertNotNil(inspected, "Should return inspection result")
-        TestFramework.utils.assertTrue(string.find(inspected, "name"), "Should include property names")
-        TestFramework.utils.assertTrue(string.find(inspected, "42"), "Should include values")
-    end,
-    
-    ["fps monitoring"] = function()
-        DevTools.init()
-        
-        -- Update FPS a few times
-        for i = 1, 10 do
-            DevTools.updateFPS(0.016) -- ~60 FPS
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.core.game_state" then
+                return mockGameState
+            else
+                return oldRequire(path)
+            end
         end
         
-        local fps = DevTools.getFPS()
-        TestFramework.utils.assertTrue(fps > 0, "FPS should be calculated")
-        TestFramework.utils.assertTrue(fps >= 50 and fps <= 70, "FPS should be reasonable")
-    end,
-    
-    ["performance profiling"] = function()
-        DevTools.init()
-        
-        DevTools.startProfile("test_operation")
-        
-        -- Simulate some work
-        local sum = 0
-        for i = 1, 100 do
-            sum = sum + i
-        end
-        
-        DevTools.endProfile("test_operation")
-        
-        local profile = DevTools.getProfile("test_operation")
-        TestFramework.utils.assertNotNil(profile, "Profile should exist")
-        TestFramework.utils.assertTrue(profile.time > 0, "Profile should have time")
-    end,
-    
-    ["entity spawning command"] = function()
-        DevTools.init()
-        
-        local spawnedEntities = {}
-        DevTools.registerCommand("spawn", "Spawn entity", function(args)
-            table.insert(spawnedEntities, {type = args[1], x = args[2], y = args[3]})
+        -- Test drawing functions
+        local success = pcall(function()
+            DevTools.debugDraw.hitboxes()
+            DevTools.debugDraw.vectors()
+            DevTools.debugDraw.info()
         end)
         
-        DevTools.executeCommand("spawn", {"planet", "100", "200"})
+        TestFramework.assert.assertTrue(success, "Drawing functions should not error")
         
-        TestFramework.utils.assertEqual(1, #spawnedEntities, "Should spawn entity")
-        TestFramework.utils.assertEqual("planet", spawnedEntities[1].type, "Type should match")
+        -- Restore
+        Utils.require = oldRequire
     end,
     
-    ["console scrolling"] = function()
+    ["analyze performance"] = function()
         DevTools.init()
         
-        -- Add many messages
-        for i = 1, 50 do
-            DevTools.log("Message " .. i)
+        -- Mock PerformanceMonitor
+        local mockPerformanceMonitor = {
+            getReport = function()
+                return {
+                    fps = {average = 60, min = 55, max = 65},
+                    frameTime = {average = 16.67},
+                    memory = {peak = 1024},
+                    collisions = {count = 100, time = 0.001}
+                }
+            end
+        }
+        
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.performance.performance_monitor" then
+                return mockPerformanceMonitor
+            else
+                return oldRequire(path)
+            end
         end
         
-        -- Test scrolling
-        local initialScroll = DevTools.console.scrollOffset
-        DevTools.scrollConsole(-5)
-        TestFramework.utils.assertEqual(initialScroll + 5, DevTools.console.scrollOffset, "Should scroll up")
-        
-        DevTools.scrollConsole(3)
-        TestFramework.utils.assertEqual(initialScroll + 2, DevTools.console.scrollOffset, "Should scroll down")
-    end,
-    
-    ["cheat commands"] = function()
-        DevTools.init()
-        
-        -- Test god mode toggle
-        local godMode = false
-        DevTools.registerCommand("god", "Toggle god mode", function()
-            godMode = not godMode
+        -- Should not error
+        local success = pcall(function()
+            DevTools.analyzePerformance()
         end)
         
-        DevTools.executeCommand("god")
-        TestFramework.utils.assertTrue(godMode, "God mode should be enabled")
+        TestFramework.assert.assertTrue(success, "Performance analysis should not error")
         
-        DevTools.executeCommand("god")
-        TestFramework.utils.assertFalse(godMode, "God mode should be disabled")
+        -- Restore
+        Utils.require = oldRequire
     end,
     
-    ["save/load debug state"] = function()
+    ["game reset"] = function()
         DevTools.init()
         
-        -- Set some debug state
-        DevTools.enabled = true
-        DevTools.console.input = "test input"
-        DevTools.log("Test message")
+        local resetCalled = false
+        local mockGameState = {
+            reset = function()
+                resetCalled = true
+            end
+        }
         
-        -- Save state
-        local state = DevTools.saveState()
-        TestFramework.utils.assertNotNil(state, "Should save state")
+        local oldRequire = Utils.require
+        Utils.require = function(path)
+            if path == "src.core.game_state" then
+                return mockGameState
+            else
+                return oldRequire(path)
+            end
+        end
         
-        -- Reset
-        DevTools.init()
+        DevTools.resetGame()
+        TestFramework.assert.assertTrue(resetCalled, "Game reset should be called")
         
-        -- Load state
-        DevTools.loadState(state)
-        TestFramework.utils.assertTrue(DevTools.enabled, "Enabled state should be restored")
-        TestFramework.utils.assertTrue(#DevTools.console.output > 0, "Output should be restored")
+        -- Restore
+        Utils.require = oldRequire
     end,
+    
+    ["take screenshot"] = function()
+        DevTools.init()
+        
+        -- Mock love.graphics.captureScreenshot
+        local captureScreenshotCalled = false
+        love.graphics.captureScreenshot = function(callback)
+            captureScreenshotCalled = true
+            -- Simulate successful screenshot
+            local mockData = {
+                encode = function(self, format, filename)
+                    -- Do nothing
+                end
+            }
+            callback(mockData)
+            return true
+        end
+        
+        DevTools.takeScreenshot()
+        TestFramework.assert.assertTrue(captureScreenshotCalled, "Screenshot should be attempted")
+    end,
+    
+    ["debug key handling"] = function()
+        DevTools.init()
+        
+        -- Test all F-keys
+        local keys = {"f1", "f2", "f3", "f4", "f5", "f6"}
+        for _, key in ipairs(keys) do
+            local success = pcall(function()
+                DevTools.handleInput(key)
+            end)
+            TestFramework.assert.assertTrue(success, "Handling " .. key .. " should not error")
+        end
+    end
 }
 
 -- Run the test suite
 local function run()
-    local success = TestFramework.runSuite("Dev Tools Tests", tests)
+    local success = TestFramework.runTests(tests, "Dev Tools Tests")
     
     -- Update coverage tracking
     local TestCoverage = Utils.require("tests.test_coverage")

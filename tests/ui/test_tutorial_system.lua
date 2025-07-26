@@ -9,8 +9,18 @@ TestFramework.init()
 -- Test suite
 local tests = {
     ["test module loading without mocks"] = function()
+        -- Clear any cached module first
+        package.loaded["src.ui.tutorial_system"] = nil
+        package.loaded["src/ui/tutorial_system"] = nil
+        if Utils.moduleCache then
+            Utils.moduleCache["src.ui.tutorial_system"] = nil
+        end
+        
+        -- Setup mocks before loading
+        Mocks.setup()
+        
         -- Load the module without any mocking
-        local TutorialSystem = Utils.require("src.ui.tutorial_system")
+        local TutorialSystem = require("src.ui.tutorial_system")
         
         -- Verify the module is loaded correctly
         TestFramework.assert.notNil(TutorialSystem, "TutorialSystem should be loaded")
@@ -23,8 +33,16 @@ local tests = {
     end,
 
     ["test basic initialization"] = function()
+        -- Clear any cached module first
+        package.loaded["src.ui.tutorial_system"] = nil
+        package.loaded["src/ui/tutorial_system"] = nil
+        
         -- Load the module without any mocking
-        local TutorialSystem = Utils.require("src.ui.tutorial_system")
+        local TutorialSystem = require("src.ui.tutorial_system")
+        
+        -- Verify it's loaded
+        TestFramework.assert.notNil(TutorialSystem, "TutorialSystem should be loaded")
+        TestFramework.assert.equal("function", type(TutorialSystem.init), "init should be a function")
         
         -- Test basic initialization
         TutorialSystem.init()
@@ -35,5 +53,11 @@ local tests = {
     end,
 }
 
--- Run tests
-TestFramework.runTests(tests)
+-- Test runner
+local function run()
+    Utils.Logger.info("Running Tutorial System Tests")
+    Utils.Logger.info("==================================================")
+    return TestFramework.runTests(tests)
+end
+
+return {run = run}
