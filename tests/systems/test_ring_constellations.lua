@@ -35,6 +35,9 @@ Utils.distance = function(x1, y1, x2, y2)
     return math.sqrt((x2 - x1)^2 + (y2 - y1)^2)
 end
 Utils.atan2 = function(y, x)
+    if y == nil or x == nil then
+        return 0  -- Safe fallback for nil values
+    end
     return math.atan(y, x)  -- Lua 5.3+ uses math.atan with 2 args
 end
 

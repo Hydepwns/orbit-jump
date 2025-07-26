@@ -352,7 +352,10 @@ local tests = {
         local WarpDrive = getWarpDrive()
         local player = createTestPlayer(100, 200)
         
-        WarpDrive.createWarpParticles(player)
+        -- Set up a warp target so particles can be created
+        WarpDrive.warpTarget = createTestPlanet(1000, 500, 50, true)
+        
+        WarpDrive.createWarpParticles(player, 50)
         
         TestFramework.assert.assertEqual(50, #WarpDrive.particles, "Should create 50 particles")
         

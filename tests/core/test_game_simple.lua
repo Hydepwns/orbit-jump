@@ -151,7 +151,7 @@ local tests = {
         -- Mock logger to check for shutdown message
         local originalInfo = Utils.Logger.info
         Utils.Logger.info = function(msg)
-            if string.find(msg, "shutting down") then
+            if string.find(msg, "shutdown complete") then
                 loggedShutdown = true
             end
         end
@@ -185,9 +185,9 @@ local tests = {
         -- Mock logger
         local originalInfo = Utils.Logger.info
         Utils.Logger.info = function(msg)
-            if string.find(msg, "Starting Orbit Jump") then
+            if string.find(msg, "Beginning Orbit Jump initialization sequence") then
                 loggedStart = true
-            elseif string.find(msg, "initialization complete") then
+            elseif string.find(msg, "Game initialization complete") then
                 loggedComplete = true
             end
         end
