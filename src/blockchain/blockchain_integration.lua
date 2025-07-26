@@ -1,6 +1,7 @@
 -- Blockchain Integration for Orbit Jump
 -- Handles Web3 events, smart contracts, and token/NFT management
 
+local Utils = require("src.utils.utils")
 local BlockchainIntegration = {}
 
 -- Configuration

@@ -131,12 +131,14 @@ function Renderer.drawPlanets(planets)
         end
         
         -- Draw rotation indicator
-        Utils.setColor(Utils.colors.white, 0.3)
-        love.graphics.setLineWidth(2)
-        local indicatorAngle = love.timer.getTime() * planet.rotationSpeed
-        local ix = planet.x + math.cos(indicatorAngle) * planet.radius * 0.8
-        local iy = planet.y + math.sin(indicatorAngle) * planet.radius * 0.8
-        love.graphics.line(planet.x, planet.y, ix, iy)
+        if planet.rotationSpeed then
+            Utils.setColor(Utils.colors.white, 0.3)
+            love.graphics.setLineWidth(2)
+            local indicatorAngle = love.timer.getTime() * planet.rotationSpeed
+            local ix = planet.x + math.cos(indicatorAngle) * planet.radius * 0.8
+            local iy = planet.y + math.sin(indicatorAngle) * planet.radius * 0.8
+            love.graphics.line(planet.x, planet.y, ix, iy)
+        end
         
         -- Planet type indicator
         if planet.type and planet.discovered then
