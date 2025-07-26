@@ -132,6 +132,7 @@ function ParticleSystem.create(x, y, vx, vy, color, lifetime, size, particleType
     particle.size = size or 2
     particle.color = color or {1, 1, 1, 1}
     particle.type = particleType or "default"
+    particle.originalAlpha = particle.color[4]
     
     table.insert(ParticleSystem.particles, particle)
     return particle
