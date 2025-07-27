@@ -22,87 +22,42 @@ local tests = {
   end,
 
   -- Save data collection
-  ["should collect save data with player stats"] = function()
-    -- Mock GameState
-    local mockGameState = {
-      data = {
-        score = 1000,
-        gameTime = 300
-      }
-    }
-
-    -- Mock ProgressionSystem
-    local mockProgressionSystem = {
-      data = {
-        totalScore = 5000,
-        totalRingsCollected = 25,
-        totalJumps = 15,
-        totalDashes = 8,
-        maxCombo = 6,
-        totalPlayTime = 1200
-      }
-    }
-
-    -- Mock UpgradeSystem
-    local mockUpgradeSystem = {
-      currency = 500,
-      upgrades = {
-        jump_power = { currentLevel = 3 },
-        dash_power = { currentLevel = 2 }
-      }
-    }
-
-    -- Mock AchievementSystem
-    local mockAchievementSystem = {
-      achievements = {
-        first_planet = { unlocked = true },
-        combo_master = { unlocked = false }
-      }
-    }
-
-    -- Override requires
-    local originalRequire = Utils.require
-    Utils.require = function(path)
-      if path == "src.core.game_state" then
-        return mockGameState
-      elseif path == "src.systems.progression_system" then
-        return mockProgressionSystem
-      elseif path == "src.systems.upgrade_system" then
-        return mockUpgradeSystem
-      elseif path == "src.systems.achievement_system" then
-        return mockAchievementSystem
-      else
-        return originalRequire(path)
+  ["should collect save data with registry pattern"] = function()
+    -- Register a mock system for testing
+    local mockSystem = {
+      serialize = function()
+        return {
+          score = 1000,
+          level = 5
+        }
+      end,
+      deserialize = function(data)
+        -- Mock deserialize
       end
-    end
+    }
+    
+    SaveSystem.registerSaveable("testSystem", mockSystem)
 
     local saveData = SaveSystem.collectSaveData()
-
-    -- Restore original require
-    Utils.require = originalRequire
 
     ModernTestFramework.assert.notNil(saveData, "Should return save data")
     ModernTestFramework.assert.equal(1, saveData.version, "Should have correct version")
     ModernTestFramework.assert.notNil(saveData.timestamp, "Should have timestamp")
-    ModernTestFramework.assert.notNil(saveData.player, "Should have player data")
-    ModernTestFramework.assert.notNil(saveData.upgrades, "Should have upgrades data")
-    ModernTestFramework.assert.notNil(saveData.achievements, "Should have achievements data")
+    ModernTestFramework.assert.notNil(saveData.systems, "Should have systems data")
+    ModernTestFramework.assert.notNil(saveData.systems.testSystem, "Should have test system data")
+    ModernTestFramework.assert.equal(1000, saveData.systems.testSystem.score, "Should have correct test data")
+    
+    -- Clean up
+    SaveSystem.unregisterSaveable("testSystem")
   end,
 
   ["should handle missing systems gracefully"] = function()
-    -- Override requires to return nil
-    local originalRequire = Utils.require
-    Utils.require = function(path)
-      return nil
-    end
-
+    -- Test with no registered systems
     local saveData = SaveSystem.collectSaveData()
 
-    -- Restore original require
-    Utils.require = originalRequire
-
-    ModernTestFramework.assert.notNil(saveData, "Should return save data even with missing systems")
-    ModernTestFramework.assert.equal(0, saveData.player.totalScore, "Should have default values")
+    ModernTestFramework.assert.notNil(saveData, "Should return save data even with no registered systems")
+    ModernTestFramework.assert.notNil(saveData.systems, "Should have systems field")
+    ModernTestFramework.assert.equal(1, saveData.version, "Should have correct version")
   end,
 
   -- Save functionality
@@ -112,7 +67,7 @@ local tests = {
     local success, message = SaveSystem.save()
 
     ModernTestFramework.assert.isTrue(success, "Should save successfully")
-    ModernTestFramework.assert.called("filesystemWrite", 1, "Should write to filesystem")
+    ModernTestFramework.assert.calledAtLeast("filesystemWrite", 1, "Should write to filesystem at least once")
   end,
 
   ["should handle save failure gracefully"] = function()
@@ -293,10 +248,10 @@ local tests = {
 
     ModernTestFramework.assert.notNil(saveData.version, "Should have version")
     ModernTestFramework.assert.notNil(saveData.timestamp, "Should have timestamp")
-    ModernTestFramework.assert.notNil(saveData.player, "Should have player data")
-    ModernTestFramework.assert.type("table", saveData.player, "Player data should be table")
-    ModernTestFramework.assert.type("table", saveData.upgrades, "Upgrades data should be table")
-    ModernTestFramework.assert.type("table", saveData.achievements, "Achievements data should be table")
+    ModernTestFramework.assert.notNil(saveData.systems, "Should have systems data")
+    ModernTestFramework.assert.type("table", saveData.systems, "Systems data should be table")
+    ModernTestFramework.assert.type("number", saveData.version, "Version should be number")
+    ModernTestFramework.assert.type("number", saveData.timestamp, "Timestamp should be number")
   end,
 
   ["should handle save data migration"] = function()

@@ -444,35 +444,16 @@ local tests = {
 
   ["test init module with init function that returns nil"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    local mockModule = {
-      init = function()
-        return nil
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        return true, mockModule.init()
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to return nil
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "nil"
 
     local success = ModuleLoader.initModule("test_module", "init")
 
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isFalse(success, "Should fail when init function returns nil")
   end,
