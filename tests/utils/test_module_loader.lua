@@ -108,112 +108,51 @@ local tests = {
 
   ["test init module with failing init function"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    -- Mock a module with failing init function
-    local mockModule = {
-      init = function()
-        error("Init failed")
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        return false, "Init failed"
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to throw an error
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "error"
 
     local success = ModuleLoader.initModule("test_module", "init")
 
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isFalse(success, "Should fail when init function fails")
   end,
 
   ["test init module with init function that returns false"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    -- Mock a module with init function that returns false
-    local mockModule = {
-      init = function()
-        return false
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        return true, mockModule.init()
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to return false
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "false"
 
     local success = ModuleLoader.initModule("test_module", "init")
 
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isFalse(success, "Should fail when init function returns false")
   end,
 
   ["test init module with init function and arguments"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    local initArgs = {}
-    local mockModule = {
-      init = function(arg1, arg2, arg3)
-        initArgs = { arg1, arg2, arg3 }
-        return true
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        local args = { ... }
-        initArgs = args
-        local unpack = unpack or table.unpack
-        return true, mockModule.init(unpack(args))
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to arguments mode
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "arguments"
 
     local success = ModuleLoader.initModule("test_module", "init", "arg1", "arg2", "arg3")
 
+    -- Get the received arguments
+    local initArgs = testModule.getReceivedArgs()
+
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isTrue(success, "Should successfully init module with arguments")
     TestFramework.assert.equal("arg1", initArgs[1], "Should pass first argument")
@@ -321,42 +260,17 @@ local tests = {
 
   ["test init module with complex module structure"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    local mockModule = {
-      init = function(config)
-        config.initialized = true
-        return true
-      end,
-      getConfig = function()
-        return { initialized = false }
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        local args = { ... }
-        -- Actually call the init function to modify config
-        return true, mockModule.init(args[1])
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to complex mode
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "complex"
 
     local config = { initialized = false }
     local success = ModuleLoader.initModule("test_module", "init", config)
 
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isTrue(success, "Should handle complex module structure")
     TestFramework.assert.isTrue(config.initialized, "Should modify passed config")
@@ -364,41 +278,20 @@ local tests = {
 
   ["test init module with multiple arguments of different types"] = function()
     local ModuleLoader = Utils.require("src.utils.module_loader")
-
-    local receivedArgs = {}
-    local mockModule = {
-      init = function(str, num, tab, bool)
-        receivedArgs = { str, num, tab, bool }
-        return true
-      end
-    }
-
-    -- Mock ErrorHandler.safeCall
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.test_module" then
-          return true, mockModule
-        end
-      elseif func == mockModule.init then
-        local args = { ... }
-        receivedArgs = args
-        local unpack = unpack or table.unpack
-        return true, mockModule.init(unpack(args))
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    
+    -- Load the test module and set it to arguments mode
+    local testModule = Utils.require("src.test_module")
+    local originalTestMode = testModule._testMode
+    testModule._testMode = "arguments"
 
     local testTable = { key = "value" }
     local success = ModuleLoader.initModule("test_module", "init", "string", 42, testTable, true)
 
+    -- Get the received arguments
+    local receivedArgs = testModule.getReceivedArgs()
+
     -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
+    testModule._testMode = originalTestMode
 
     TestFramework.assert.isTrue(success, "Should handle multiple argument types")
     TestFramework.assert.equal("string", receivedArgs[1], "Should pass string argument")
@@ -464,30 +357,11 @@ local tests = {
     -- Reset call tracking
     TestFramework.utils.resetCalls()
 
-    -- Mock ErrorHandler.safeCall to simulate require failure
-    local originalSafeCall = Utils.ErrorHandler.safeCall
-    local mockSafeCall = function(func, ...)
-      if func == require then
-        local modulePath = select(1, ...)
-        if modulePath == "src.integration_test" then
-          -- Simulate safeCall logging the error and returning false
-          Utils.Logger.error("Function call failed: Integration test error")
-          return false, "Integration test error"
-        end
-      end
-      return originalSafeCall(func, ...)
-    end
-    Utils.ErrorHandler.safeCall = mockSafeCall
-    local ErrorHandler = Utils.require("src.utils.error_handler")
-    ErrorHandler.safeCall = mockSafeCall
+    -- Try to load a non-existent module - this should fail and log an error
+    local success = ModuleLoader.initModule("nonexistent_module_test", "init")
 
-    ModuleLoader.initModule("integration_test", "init")
-
-    -- Restore
-    Utils.ErrorHandler.safeCall = originalSafeCall
-    ErrorHandler.safeCall = originalSafeCall
-
-    -- Should have logged the error
+    TestFramework.assert.isFalse(success, "Should fail to load non-existent module")
+    -- The ModuleLoader should have logged an error about failing to load the module
     TestFramework.assert.calledAtLeast("error", 1, "Should log error through integration")
   end,
 

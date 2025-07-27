@@ -210,7 +210,7 @@ return {
         
         PerformanceSystem.clearGrid()
         
-        TestFramework.assert.equal(PerformanceSystem.getGridCellCount(), 0, "Grid should be cleared")
+        TestFramework.assert.equal(0, PerformanceSystem.getGridCellCount(), "Grid should be cleared")
     end,
     
     ["get grid key"] = function()
@@ -239,8 +239,8 @@ return {
         
         TestFramework.assert.notNil(PerformanceSystem.spatialGrid[key1], "Grid cell should exist")
         TestFramework.assert.notNil(PerformanceSystem.spatialGrid[key2], "Grid cell should exist")
-        TestFramework.assert.equal(#PerformanceSystem.spatialGrid[key1], 1, "Cell should contain one object")
-        TestFramework.assert.equal(#PerformanceSystem.spatialGrid[key2], 1, "Cell should contain one object")
+        TestFramework.assert.equal(1, #PerformanceSystem.spatialGrid[key1], "Cell should contain one object")
+        TestFramework.assert.equal(1, #PerformanceSystem.spatialGrid[key2], "Cell should contain one object")
     end,
     
     ["add multiple objects to same grid cell"] = function()
@@ -254,7 +254,7 @@ return {
         
         local key = PerformanceSystem.getGridKey(100, 100)
         
-        TestFramework.assert.equal(#PerformanceSystem.spatialGrid[key], 2, "Cell should contain two objects")
+        TestFramework.assert.equal(2, #PerformanceSystem.spatialGrid[key], "Cell should contain two objects")
     end,
     
     ["get objects in radius"] = function()
@@ -301,7 +301,7 @@ return {
         
         PerformanceSystem.rebuildPlanetGrid(planets)
         
-        TestFramework.assert.equal(PerformanceSystem.getGridCellCount(), 3, "Should create grid cells for all planets")
+        TestFramework.assert.equal(3, PerformanceSystem.getGridCellCount(), "Should create grid cells for all planets")
     end,
     
     ["rebuild planet grid clears old planets"] = function()
@@ -439,7 +439,7 @@ return {
         PerformanceSystem.updateMetrics(0.020, 600, 120)
         
         TestFramework.assert.equal(PerformanceSystem.metrics.frameCount, 2, "Frame count should be incremented")
-        TestFramework.assert.greaterThan(PerformanceSystem.metrics.averageFrameTime, 0.016, "Average frame time should be calculated")
+        TestFramework.assert.greaterThan(0.018, PerformanceSystem.metrics.averageFrameTime, "Average frame time should be calculated")
     end,
     
     ["dynamic quality adjustment"] = function()
@@ -450,7 +450,7 @@ return {
         
         local report = PerformanceSystem.getPerformanceReport()
         
-        TestFramework.assert.lessThan(report.averageFrameTime, 0.05, "Should maintain reasonable frame time")
+        TestFramework.assert.lessThan(0.05, report.averageFrameTime, "Should maintain reasonable frame time")
     end,
     
     ["get performance report"] = function()
