@@ -1085,34 +1085,76 @@ function Mocks.setup()
       return pool
     end
 
-    -- Mock Logger
-    if not Utils.Logger then
-      Utils.Logger = {
+    -- Mock Logger (force replace existing logger to ensure tracking works)
+    Utils.Logger = {
+        levels = {DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4},
+        currentLevel = 2, -- INFO by default
+        
+        -- Track outputs for testing
+        outputs = {},
+        
+        init = function(level, filename) 
+          callTracker.init = callTracker.init or 0
+          callTracker.init = callTracker.init + 1
+          Utils.Logger.currentLevel = level or 2
+          if filename then
+            Utils.Logger.logFile = io.open(filename, "a")
+          end
+          return true
+        end,
+        
+        log = function(level, message, ...)
+          local levelName = level
+          local levelNum = Utils.Logger.levels[levelName]
+          if levelNum and levelNum >= Utils.Logger.currentLevel then
+            local formatted = string.format(message, ...)
+            local timestamp = os.date and os.date("%Y-%m-%d %H:%M:%S") or "2024-01-01 00:00:00"
+            local logMessage = string.format("[%s] %s: %s", timestamp, levelName, formatted)
+            if Utils.Logger.output then
+              Utils.Logger.output(logMessage)
+            end
+          end
+        end,
+        
+        output = function(message)
+          table.insert(Utils.Logger.outputs, message)
+        end,
+        
         info = function(msg, ...)
           callTracker.info = callTracker.info or 0
           callTracker.info = callTracker.info + 1
+          Utils.Logger.log("INFO", msg, ...)
         end,
+        
         warn = function(msg, ...)
           callTracker.warn = callTracker.warn or 0
           callTracker.warn = callTracker.warn + 1
+          Utils.Logger.log("WARN", msg, ...)
         end,
+        
         error = function(msg, ...)
           callTracker.error = callTracker.error or 0
           callTracker.error = callTracker.error + 1
+          Utils.Logger.log("ERROR", msg, ...)
         end,
+        
         debug = function(msg, ...)
           callTracker.debug = callTracker.debug or 0
           callTracker.debug = callTracker.debug + 1
+          Utils.Logger.log("DEBUG", msg, ...)
         end,
-        init = function() end,
-        levels = {
-          DEBUG = 0,
-          INFO = 1,
-          WARN = 2,
-          ERROR = 3
-        }
+        
+        close = function()
+          callTracker.close = callTracker.close or 0
+          callTracker.close = callTracker.close + 1
+        end,
+        
+        setLevel = function(level)
+          callTracker.setLevel = callTracker.setLevel or 0
+          callTracker.setLevel = callTracker.setLevel + 1
+          Utils.Logger.currentLevel = level
+        end
       }
-    end
 
     -- Mock ErrorHandler
     if not Utils.ErrorHandler then
