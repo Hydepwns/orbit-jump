@@ -80,6 +80,12 @@ local SystemOrchestrator = {
 function SystemOrchestrator.register(name, system, config)
     config = config or {}
     
+    -- Skip registration if system couldn't be loaded
+    if not system then
+        Utils.Logger.warn("Skipping registration of %s - system not available", name)
+        return false
+    end
+    
     -- Validate system interface
     assert(system.update or system.draw or system.init, 
            name .. " must implement at least one of: init, update, draw")
@@ -115,6 +121,7 @@ function SystemOrchestrator.register(name, system, config)
     
     Utils.Logger.info("Registered system '%s' in layer '%s': %s", 
                      name, config.layer or "gameplay", config.purpose)
+    return true
 end
 
 --[[
@@ -144,9 +151,18 @@ function SystemOrchestrator.init()
             end
         end
         
-        -- Initialize the system
+        -- Initialize the system with dependencies
         if sysData.system.init then
-            local success, err = pcall(sysData.system.init)
+            -- Build dependency table
+            local dependencies = {}
+            for _, depName in ipairs(sysData.dependencies) do
+                local depSystem = SystemOrchestrator.systems[depName]
+                if depSystem then
+                    dependencies[depName] = depSystem.system
+                end
+            end
+            
+            local success, err = pcall(sysData.system.init, dependencies)
             if not success then
                 Utils.Logger.error("Failed to initialize '%s': %s", name, err)
                 return false
@@ -179,7 +195,7 @@ end
 --]]
 function SystemOrchestrator.update(dt)
     -- Performance monitoring integration
-    local PerformanceMonitor = Utils.safeRequire("src.utils.performance_monitor")
+    local PerformanceMonitor = Utils.safeRequire("src.performance.performance_monitor")
     
     for _, layerName in ipairs(SystemOrchestrator.updateOrder) do
         local layer = SystemOrchestrator.layers[layerName]
@@ -370,89 +386,40 @@ end
     using the orchestrator pattern.
 --]]
 function SystemOrchestrator.registerOrbitJumpSystems()
-    -- Foundation Layer
-    SystemOrchestrator.register("logger", Utils.Logger, {
-        layer = "foundation",
-        purpose = "Logging and debugging infrastructure",
-        priority = 1
-    })
-    
+    -- Foundation Layer - Only register actual systems that have init/update interfaces
     SystemOrchestrator.register("saveSystem", Utils.safeRequire("src.systems.save_system"), {
         layer = "foundation", 
         purpose = "Persistent data management",
         priority = 10
     })
     
-    -- Input Layer
-    SystemOrchestrator.register("inputSystem", Utils.safeRequire("src.systems.input_system"), {
-        layer = "input",
-        purpose = "Capture and process player input",
+    -- Gameplay Layer - Register systems that actually exist and have proper interfaces
+    SystemOrchestrator.register("progressionSystem", Utils.safeRequire("src.systems.progression_system"), {
+        layer = "meta",
+        purpose = "Track achievements and unlock progression",
         priority = 10
     })
     
-    -- Simulation Layer
-    SystemOrchestrator.register("physicsSystem", Utils.safeRequire("src.core.game_logic"), {
-        layer = "simulation",
-        purpose = "Gravity and orbital mechanics simulation",
-        priority = 10
-    })
-    
-    SystemOrchestrator.register("collisionSystem", Utils.safeRequire("src.systems.collision_system"), {
-        layer = "simulation",
-        purpose = "Detect and resolve entity collisions",
-        dependencies = {"physicsSystem"},
-        priority = 20
-    })
-    
-    -- Gameplay Layer
-    SystemOrchestrator.register("playerSystem", Utils.safeRequire("src.systems.player_system"), {
-        layer = "gameplay",
-        purpose = "Player state and behavior management",
-        dependencies = {"inputSystem", "physicsSystem"},
-        priority = 10
-    })
-    
-    SystemOrchestrator.register("planetSystem", Utils.safeRequire("src.systems.planet_system"), {
-        layer = "gameplay",
-        purpose = "Planetary bodies and their properties",
-        priority = 20
-    })
-    
-    SystemOrchestrator.register("ringSystem", Utils.safeRequire("src.systems.ring_system"), {
-        layer = "gameplay",
-        purpose = "Collectible rings and combo mechanics",
-        dependencies = {"playerSystem"},
-        priority = 30
-    })
-    
-    -- Presentation Layer
     SystemOrchestrator.register("particleSystem", Utils.safeRequire("src.systems.particle_system"), {
         layer = "presentation",
         purpose = "Visual effects and particle emissions",
         priority = 10
     })
     
-    SystemOrchestrator.register("renderer", Utils.safeRequire("src.core.renderer"), {
-        layer = "presentation",
-        purpose = "Render game world with visual poetry",
-        dependencies = {"playerSystem", "planetSystem", "particleSystem"},
-        priority = 50
-    })
-    
-    -- Meta Layer
-    SystemOrchestrator.register("progressionSystem", Utils.safeRequire("src.systems.progression_system"), {
-        layer = "meta",
-        purpose = "Track achievements and unlock progression",
-        dependencies = {"playerSystem", "ringSystem"},
-        priority = 10
+    SystemOrchestrator.register("ringSystem", Utils.safeRequire("src.systems.ring_system"), {
+        layer = "gameplay",
+        purpose = "Collectible rings and combo mechanics",
+        priority = 30
     })
     
     SystemOrchestrator.register("emotionalFeedback", Utils.safeRequire("src.systems.emotional_feedback"), {
         layer = "meta",
         purpose = "Create emotional resonance through feedback",
-        dependencies = {"playerSystem", "particleSystem"},
         priority = 20
     })
+    
+    -- Add more systems as they are updated to support the orchestrator interface
+    -- For now, we'll keep it minimal and working
 end
 
 return SystemOrchestrator

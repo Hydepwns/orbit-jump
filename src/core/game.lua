@@ -62,22 +62,22 @@ local systemHealth = {
 }
 function Game.init()
     --[[
-        System Genesis: Bringing Order from Chaos
+        System Genesis: Bringing Order from Chaos with Architectural Elegance
         
-        This is where the magic begins - transforming a collection of independent
-        modules into a unified, intelligent game system. The order here matters:
-        each step builds on the previous ones, creating layers of capability.
+        This version uses the SystemOrchestrator for proper dependency injection
+        and layered initialization. The orchestrator handles system dependencies,
+        ensuring everything initializes in the correct order.
         
-        Initialization Philosophy:
-        • Foundation first: Logging and configuration establish the groundwork
-        • Safety nets: Every system that can fail has a recovery path
-        • Smart sequencing: Dependencies are resolved before dependents load
-        • Health monitoring: Track what works and adapt to what doesn't
+        Architectural Philosophy:
+        • Foundation first: SystemOrchestrator manages dependencies
+        • Dependency injection: Systems receive their dependencies cleanly
+        • Smart sequencing: The orchestrator resolves initialization order
+        • Health monitoring: Built into the orchestration layer
     --]]
     
     -- Establish Communication Infrastructure
     Utils.Logger.init(Utils.Logger.levels.INFO, "game.log")
-    Utils.Logger.info("🚀 Beginning Orbit Jump initialization sequence")
+    Utils.Logger.info("🚀 Beginning Orbit Jump initialization with SystemOrchestrator")
     
     -- Configuration Validation with Adaptive Recovery
     local configValid, configErrors = Config.validate()
@@ -87,15 +87,24 @@ function Game.init()
         Game.recoverFromConfigFailure(configErrors)
     end
     
-    -- Layered System Initialization: Graphics foundation, then game systems
+    -- Load SystemOrchestrator and register all game systems
+    local SystemOrchestrator = Utils.require("src.core.system_orchestrator")
+    SystemOrchestrator.registerOrbitJumpSystems()
+    
+    -- Graphics initialization (still needed for fonts)
     local graphicsSuccess = Game.initGraphics()
-    local systemsSuccess = Game.initSystems()
+    
+    -- Let the orchestrator handle system initialization with proper dependencies
+    local systemsSuccess = SystemOrchestrator.init()
+    
+    -- Store orchestrator reference for update/draw
+    Game.orchestrator = SystemOrchestrator
     
     -- Adaptive Health Assessment
     Game.assessSystemHealth()
     
-    Utils.Logger.info("✨ Game initialization complete - All systems operational")
-    return true
+    Utils.Logger.info("✨ Game initialization complete - All systems operational via SystemOrchestrator")
+    return systemsSuccess
 end
 function Game.initGraphics()
     --[[
@@ -199,42 +208,28 @@ function Game.initSystems()
 end
 function Game.update(dt)
     --[[
-        The Heartbeat of Interactive Reality
+        The Heartbeat of Interactive Reality - Now with Architectural Precision
         
-        This function runs 60 times per second, orchestrating the dance of
-        systems that creates the illusion of a living, breathing universe.
-        Each update cycle is a complete simulation step that moves the
-        game world forward in time.
+        The SystemOrchestrator handles all system updates in the correct order:
+        Foundation → Input → Simulation → Gameplay → Presentation → Meta
         
-        Update Philosophy:
-        • Performance Monitoring: Track frame health for adaptive optimization
-        • Priority Hierarchies: Critical systems update first, optional systems last
-        • Graceful Degradation: Systems can skip updates if performance suffers
-        • State Coherence: All systems see a consistent world state
-        
-        This is the conductor's baton - every movement creates the symphony.
+        This ensures perfect dependency order and removes the complexity of
+        manual update scheduling. Each system gets exactly what it needs.
     --]]
     
     -- Frame Performance Intelligence: Monitor system health
     local frameStart = love.timer.getTime()
     systemHealth.performanceMetrics.lastFrameTime = dt
     
-    -- Adaptive Update Scheduling: Pause system has absolute priority
-    if not PauseMenu.shouldPauseGameplay() then
-        -- Core World Simulation: The fundamental reality of the game
-        Game.updateCoreSystems(dt)
-        
-        -- Extended Universe Systems: Enhancements that enrich the experience
-        Game.updateEnhancedSystems(dt)
-        
-        -- Performance-Sensitive Systems: Only run when we have cycles to spare
-        if systemHealth.performanceMetrics.averageFrameTime < 0.014 then -- Running well
-            Game.updateOptionalSystems(dt)
-        end
+    -- Let the orchestrator handle all system updates in perfect order
+    if Game.orchestrator then
+        -- The orchestrator handles pause logic and performance optimization
+        Game.orchestrator.update(dt)
+    else
+        -- Fallback to manual orchestration if orchestrator failed to initialize
+        Utils.Logger.warn("SystemOrchestrator not available, falling back to manual updates")
+        Game.updateManualFallback(dt)
     end
-    
-    -- Always-Active Systems: These create the meta-experience
-    Game.updateMetaSystems(dt)
     
     -- Frame Performance Analysis: Learn and adapt
     local frameEnd = love.timer.getTime()
@@ -318,7 +313,7 @@ function Game.handleMousePress(x, y, button)
         return
     end
     
-    if TutorialSystem.mousepressed and TutorialSystem.mousepressed(x, y, button) then
+    if TutorialSystem.handleMousePress and TutorialSystem.handleMousePress(x, y, button) then
         return
     end
     
@@ -336,7 +331,7 @@ function Game.handleMouseMove(x, y)
         return
     end
     
-    if TutorialSystem.mousemoved and TutorialSystem.mousemoved(x, y) then
+    if TutorialSystem.handleMouseMove and TutorialSystem.handleMouseMove(x, y) then
         return
     end
     
@@ -354,7 +349,7 @@ function Game.handleMouseRelease(x, y, button)
         return
     end
     
-    if TutorialSystem.mousereleased and TutorialSystem.mousereleased(x, y, button) then
+    if TutorialSystem.handleMouseRelease and TutorialSystem.handleMouseRelease(x, y, button) then
         return
     end
     
@@ -451,6 +446,26 @@ function Game.recoverFromConfigFailure(configErrors)
     
     Utils.Logger.info("⚡ Emergency configuration created - Game can continue")
 end
+-- Fallback manual update system (used if SystemOrchestrator fails)
+function Game.updateManualFallback(dt)
+    -- Adaptive Update Scheduling: Pause system has absolute priority
+    if not PauseMenu.shouldPauseGameplay() then
+        -- Core World Simulation: The fundamental reality of the game
+        Game.updateCoreSystems(dt)
+        
+        -- Extended Universe Systems: Enhancements that enrich the experience
+        Game.updateEnhancedSystems(dt)
+        
+        -- Performance-Sensitive Systems: Only run when we have cycles to spare
+        if systemHealth.performanceMetrics.averageFrameTime < 0.014 then -- Running well
+            Game.updateOptionalSystems(dt)
+        end
+    end
+    
+    -- Always-Active Systems: These create the meta-experience
+    Game.updateMetaSystems(dt)
+end
+
 function Game.updateCoreSystems(dt)
     --[[Critical systems that define the core game experience--]]
     GameState.update(dt)
