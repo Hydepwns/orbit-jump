@@ -1,5 +1,18 @@
--- Performance Monitor for Orbit Jump
--- Tracks and reports performance metrics to help identify bottlenecks
+--[[
+    Performance Monitor: Real-time Monitoring with Educational Insights
+    
+    This combines real-time performance tracking with educational insights
+    to help developers understand performance characteristics and learn
+    optimization strategies.
+    
+    Design Philosophy:
+    - Performance data without context is just noise
+    - Every metric should teach something about optimization
+    - Suggestions should be specific and actionable
+    - The monitor itself should have near-zero overhead
+    
+    "In the pursuit of speed, understanding beats guessing every time."
+--]]
 
 local Utils = require("src.utils.utils")
 local PerformanceMonitor = {}
@@ -40,6 +53,41 @@ PerformanceMonitor.metrics = {
     }
 }
 
+-- Performance thresholds based on 60fps target (16.67ms budget)
+PerformanceMonitor.THRESHOLDS = {
+    frame_time = 16.67,           -- Total frame budget in ms
+    update_time = 8.0,            -- Half budget for logic
+    render_time = 8.0,            -- Half budget for rendering
+    gc_allocation = 10,           -- KB allocated per frame before concern
+    particle_update = 1.0,        -- Particle system budget
+    collision_check = 2.0,        -- Collision detection budget
+    state_management = 0.5        -- State updates should be quick
+}
+
+-- Educational insights for common performance patterns
+PerformanceMonitor.INSIGHTS = {
+    allocation_in_loop = {
+        pattern = "Memory allocation detected in hot loop",
+        explanation = "Creating tables or strings in loops triggers garbage collection",
+        suggestion = "Pre-allocate tables outside loops, use table pools for temporary objects"
+    },
+    excessive_particles = {
+        pattern = "Particle count exceeding performance budget",
+        explanation = "Each particle requires position updates and rendering",
+        suggestion = "Consider particle pooling, spatial culling, or LOD systems"
+    },
+    redundant_calculations = {
+        pattern = "Same calculation performed multiple times per frame",
+        explanation = "Recalculating values wastes precious CPU cycles",
+        suggestion = "Cache results, use dirty flags, or move calculations outside loops"
+    },
+    unoptimized_collision = {
+        pattern = "Collision checking all entities against all others",
+        explanation = "O(n²) collision checks scale poorly with entity count",
+        suggestion = "Implement spatial partitioning (quadtree/grid) for O(n log n) performance"
+    }
+}
+
 -- Configuration
 PerformanceMonitor.config = {
     enabled = true,
@@ -47,7 +95,8 @@ PerformanceMonitor.config = {
     logInterval = 5.0, -- Seconds between performance logs
     showOnScreen = false,
     trackMemory = true,
-    trackCollisions = true
+    trackCollisions = true,
+    educationalMode = true -- Enable educational insights
 }
 
 -- Internal state
@@ -276,6 +325,146 @@ function PerformanceMonitor.init(config)
     PerformanceMonitor.reset()
     Utils.Logger.info("Performance monitor initialized")
     return true
+end
+
+--[[
+    Educational profiling with insights - from the Utils version
+    
+    This function measures not just time, but provides context about why
+    performance matters and how to improve it.
+--]]
+function PerformanceMonitor.profile(name, fn, ...)
+    if not PerformanceMonitor.config.educationalMode then
+        return fn(...)
+    end
+    
+    local startTime = love.timer.getTime()
+    local startMem = collectgarbage("count")
+    
+    -- Execute the function
+    local results = {fn(...)}
+    
+    local duration = (love.timer.getTime() - startTime) * 1000  -- Convert to ms
+    local memDelta = collectgarbage("count") - startMem
+    
+    -- Generate educational insights based on performance characteristics
+    if PerformanceMonitor.config.educationalMode then
+        local insight = PerformanceMonitor.generateInsight(name, duration, memDelta)
+        if insight then
+            Utils.Logger.info("Performance Insight [%s]: %s", name, insight.message)
+            if insight.suggestions then
+                for i, suggestion in ipairs(insight.suggestions) do
+                    Utils.Logger.info("  Suggestion %d: %s", i, suggestion)
+                end
+            end
+        end
+    end
+    
+    return unpack(results)
+end
+
+--[[
+    Generate contextual insights based on performance patterns
+    
+    This is where the monitor becomes a teacher, explaining not just what
+    is slow, but why it's slow and how to fix it.
+--]]
+function PerformanceMonitor.generateInsight(name, duration, memory)
+    -- Check against known thresholds
+    local threshold = PerformanceMonitor.THRESHOLDS[name]
+    
+    if name == "particle_update" and duration > PerformanceMonitor.THRESHOLDS.particle_update then
+        return {
+            type = "particle_performance",
+            severity = duration > threshold * 2 and "critical" or "warning",
+            message = string.format("Particle update taking %.2fms (budget: %.2fms)", duration, threshold),
+            explanation = "Particle systems can quickly consume frame budget with high counts",
+            suggestions = {
+                "Reduce particle count or lifetime",
+                "Implement particle LOD (fewer particles when zoomed out)",
+                "Use spatial partitioning to update only visible particles",
+                "Consider GPU-based particle systems for massive counts"
+            }
+        }
+    elseif name == "collision_check" and memory > PerformanceMonitor.THRESHOLDS.gc_allocation then
+        return {
+            type = "collision_allocation",
+            severity = "warning",
+            message = string.format("Collision detection allocating %.1fKB per frame", memory),
+            explanation = "Memory allocation in collision detection causes GC pressure",
+            suggestions = {
+                "Pre-allocate collision result tables",
+                "Use object pools for temporary vectors",
+                "Avoid creating new tables for collision pairs"
+            }
+        }
+    elseif duration > PerformanceMonitor.THRESHOLDS.frame_time then
+        return {
+            type = "frame_budget_exceeded",
+            severity = "critical",
+            message = string.format("%s exceeded frame budget: %.2fms (limit: %.2fms)", 
+                                  name, duration, PerformanceMonitor.THRESHOLDS.frame_time),
+            explanation = "Function is consuming too much of the 16.67ms frame budget",
+            suggestions = {
+                "Profile sub-functions to find bottlenecks",
+                "Consider spreading work across multiple frames",
+                "Look for algorithmic improvements",
+                "Use early-exit optimizations where possible"
+            }
+        }
+    end
+    
+    return nil
+end
+
+--[[
+    Educational helper: Explain a performance concept
+--]]
+function PerformanceMonitor.explainConcept(concept)
+    local concepts = {
+        frame_budget = [[
+The Frame Budget: Your 16.67ms Allowance
+
+At 60 FPS, each frame must complete in 16.67ms (1000ms / 60).
+This includes:
+1. Processing input
+2. Updating game state
+3. Running physics
+4. Checking collisions
+5. Rendering everything
+6. Garbage collection
+
+Going over budget causes stuttering and poor game feel.]],
+        
+        garbage_collection = [[
+Garbage Collection in Lua: The Hidden Performance Killer
+
+Lua automatically manages memory, but this comes at a cost:
+- Creating tables/strings generates garbage
+- GC runs periodically to clean up
+- GC can cause frame spikes
+
+Strategies:
+1. Pre-allocate and reuse objects
+2. Use object pools for temporary data
+3. Avoid string concatenation in loops
+4. Monitor allocation with collectgarbage("count")]],
+        
+        optimization_order = [[
+Optimization Priority: Where to Start
+
+1. Profile first - don't guess!
+2. Optimize the hottest paths (most time spent)
+3. Reduce algorithmic complexity (O(n²) → O(n log n))
+4. Minimize allocations in loops
+5. Cache expensive calculations
+6. Only then consider micro-optimizations
+
+Remember: Premature optimization is evil, but
+necessary optimization is divine.]]
+    }
+    
+    return concepts[concept] or "Concept not found. Available: " .. table.concat(Utils.getKeys(concepts), ", ")
 end
 
 return PerformanceMonitor 
