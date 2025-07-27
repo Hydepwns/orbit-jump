@@ -1,2 +1,7 @@
 .claude
 .DS_Store
+
+# Log files
+*.log
+game.log
+test.log
