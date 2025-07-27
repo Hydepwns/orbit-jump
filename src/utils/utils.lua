@@ -48,6 +48,17 @@ function Utils.clearModuleCache()
     Utils.moduleCache = {}
 end
 
+function Utils.safeRequire(modulePath)
+    -- Safe require that returns nil instead of erroring if module doesn't exist
+    local success, module = pcall(require, modulePath)
+    if success then
+        return module
+    else
+        Utils.Logger.warn("Failed to load module: %s (%s)", modulePath, module)
+        return nil
+    end
+end
+
 --[[
     ═══════════════════════════════════════════════════════════════════════════
     Mathematical Foundation: The Physics of Virtual Worlds

@@ -1,12 +1,12 @@
 -- Module loading utilities
-local Utils = require("src.utils.utils")
+local Utils = Utils or require("src.utils.utils")
 local ErrorHandler = Utils.require("src.utils.error_handler")
 
 local ModuleLoader = {}
 
 function ModuleLoader.initModule(moduleName, initFunction, ...)
     -- Load module
-    local success, module = Utils.ErrorHandler.safeCall(require, "src." .. moduleName)
+    local success, module = Utils.ErrorHandler.safeCall(Utils.require, "src." .. moduleName)
     if not success then
         Utils.Logger.error("Failed to load module %s: %s", moduleName, tostring(module))
         return false

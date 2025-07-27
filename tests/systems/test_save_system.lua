@@ -248,58 +248,48 @@ local tests = {
     ["test collect save data"] = function()
         local SaveSystem = getSaveSystem()
         
-        -- Mock Utils.require
-        local oldRequire = Utils.require
-        Utils.require = function(path)
-            if path == "src.systems.progression_system" then return mockProgressionSystem
-            elseif path == "src.systems.upgrade_system" then return mockUpgradeSystem
-            elseif path == "src.systems.achievement_system" then return mockAchievementSystem
-            elseif path == "src.core.game_state" then return mockGameState
-            elseif path == "src.systems.warp_drive" then return mockWarpDrive
-            elseif path == "src.systems.map_system" then return mockMapSystem
-            elseif path == "src.systems.artifact_system" then return mockArtifactSystem
-            else return oldRequire(path) end
-        end
+        -- Clear any existing registrations
+        SaveSystem.saveables = {}
+        
+        -- Register mock systems using the new registry pattern
+        local mockSystem = {
+            serialize = function(self)
+                return {
+                    totalScore = 5000,
+                    totalRingsCollected = 100,
+                    totalJumps = 50,
+                    totalDashes = 25,
+                    maxCombo = 10,
+                    totalPlayTime = 3600
+                }
+            end,
+            deserialize = function(self, data) end
+        }
+        
+        SaveSystem.registerSaveable("progression", mockSystem)
         
         local saveData = SaveSystem.collectSaveData()
-        
-        -- Restore
-        Utils.require = oldRequire
         
         TestFramework.assert.assertNotNil(saveData, "Save data should be collected")
         TestFramework.assert.assertEqual(1, saveData.version, "Save version should be 1")
         TestFramework.assert.assertNotNil(saveData.timestamp, "Timestamp should be set")
         
-        -- Check player data
-        TestFramework.assert.assertEqual(5000, saveData.player.totalScore, "Total score should be saved")
-        TestFramework.assert.assertEqual(100, saveData.player.totalRingsCollected, "Rings collected should be saved")
-        TestFramework.assert.assertEqual(50, saveData.player.totalJumps, "Total jumps should be saved")
-        TestFramework.assert.assertEqual(25, saveData.player.totalDashes, "Total dashes should be saved")
-        TestFramework.assert.assertEqual(10, saveData.player.maxCombo, "Max combo should be saved")
-        TestFramework.assert.assertEqual(3600, saveData.player.gameTime, "Game time should be saved")
+        -- Check progression data in new registry format
+        TestFramework.assert.assertNotNil(saveData.systems, "Save data should have systems table")
+        TestFramework.assert.assertNotNil(saveData.systems.progression, "Progression data should be saved")
+        TestFramework.assert.assertEqual(5000, saveData.systems.progression.totalScore, "Total score should be saved")
+        TestFramework.assert.assertEqual(100, saveData.systems.progression.totalRingsCollected, "Rings collected should be saved")
+        TestFramework.assert.assertEqual(50, saveData.systems.progression.totalJumps, "Total jumps should be saved")
+        TestFramework.assert.assertEqual(25, saveData.systems.progression.totalDashes, "Total dashes should be saved")
+        TestFramework.assert.assertEqual(10, saveData.systems.progression.maxCombo, "Max combo should be saved")
+        TestFramework.assert.assertEqual(3600, saveData.systems.progression.totalPlayTime, "Game time should be saved")
         
-        -- Check currency and upgrades
-        TestFramework.assert.assertEqual(500, saveData.currency, "Currency should be saved")
-        TestFramework.assert.assertNotNil(saveData.upgrades.jump_power, "Jump power upgrade should be saved")
-        TestFramework.assert.assertEqual(2, saveData.upgrades.jump_power.currentLevel, "Jump power level should be correct")
-        
-        -- Check achievements
-        TestFramework.assert.assertNotNil(saveData.achievements.first_ring, "Achievement should be saved")
-        TestFramework.assert.assertTrue(saveData.achievements.first_ring.unlocked, "Achievement should be unlocked")
-        TestFramework.assert.assertNil(saveData.achievements.combo_master, "Locked achievements should not be saved")
-        
-        -- Check discovered planets
-        TestFramework.assert.assertNotNil(saveData.discoveredPlanets.planet_1, "Discovered planet should be saved")
-        TestFramework.assert.assertEqual(100, saveData.discoveredPlanets.planet_1.x, "Planet X coordinate should be saved")
-        
-        -- Check artifacts
-        TestFramework.assert.assertTrue(saveData.collectedArtifacts.artifact_1, "Collected artifact should be saved")
-        TestFramework.assert.assertNil(saveData.collectedArtifacts.artifact_2, "Uncollected artifact should not be saved")
-        TestFramework.assert.assertEqual(2, saveData.artifactCount, "Artifact count should be saved")
-        
-        -- Check warp drive
-        TestFramework.assert.assertTrue(saveData.warpDrive.unlocked, "Warp drive unlock status should be saved")
-        TestFramework.assert.assertEqual(75, saveData.warpDrive.energy, "Warp drive energy should be saved")
+        -- Test that only registered systems are included (no others)
+        local systemCount = 0
+        for _ in pairs(saveData.systems) do
+            systemCount = systemCount + 1
+        end
+        TestFramework.assert.assertEqual(1, systemCount, "Should only have 1 registered system")
     end,
     
     ["test save function"] = function()

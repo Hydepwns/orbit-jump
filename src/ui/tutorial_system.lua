@@ -350,15 +350,15 @@ function TutorialSystem.handleKeyPress(key)
     -- Let input pass through to game
     return false
 end
-function TutorialSystem.mousepressed(x, y, button)
+function TutorialSystem.handleMousePress(x, y, button)
     -- Always let mouse input pass through during tutorial
     return false
 end
-function TutorialSystem.mousemoved(x, y)
+function TutorialSystem.handleMouseMove(x, y)
     -- Always let mouse input pass through during tutorial
     return false
 end
-function TutorialSystem.mousereleased(x, y, button)
+function TutorialSystem.handleMouseRelease(x, y, button)
     -- Always let mouse input pass through during tutorial
     return false
 end

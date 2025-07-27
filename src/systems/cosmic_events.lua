@@ -2,7 +2,7 @@
 -- Dynamic events that create challenges and opportunities
 
 local Utils = require("src.utils.utils")
-local ObjectPool = require("src.utils.object_pool")
+local ObjectPool = Utils.require("src.utils.object_pool")
 local CosmicEvents = {}
 
 -- Event types

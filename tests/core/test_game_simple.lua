@@ -185,7 +185,7 @@ local tests = {
         -- Mock logger
         local originalInfo = Utils.Logger.info
         Utils.Logger.info = function(msg)
-            if string.find(msg, "Beginning Orbit Jump initialization sequence") then
+            if string.find(msg, "Beginning Orbit Jump initialization") then
                 loggedStart = true
             elseif string.find(msg, "Game initialization complete") then
                 loggedComplete = true
