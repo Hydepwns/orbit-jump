@@ -65,9 +65,37 @@ ProgressionSystem.maxUpgradeLevels = {
     gravityResistance = 5
 }
 
-function ProgressionSystem.init()
+function ProgressionSystem.init(dependencies)
+    ProgressionSystem.dependencies = dependencies or {}
     ProgressionSystem.loadData()
+    
+    -- Register with SaveSystem if available
+    if dependencies and dependencies.saveSystem then
+        dependencies.saveSystem.registerSaveable("progression", ProgressionSystem)
+    end
+    
     return true
+end
+
+-- Serialize for SaveSystem registry
+function ProgressionSystem:serialize()
+    return Utils.deepCopy(self.data)
+end
+
+-- Deserialize for SaveSystem registry  
+function ProgressionSystem:deserialize(data)
+    self.data = data
+end
+
+-- Legacy deserialize support
+function ProgressionSystem:deserializeLegacy(saveData)
+    if saveData.player then
+        self.data.totalScore = saveData.player.totalScore or 0
+        self.data.totalRingsCollected = saveData.player.totalRingsCollected or 0
+        self.data.totalJumps = saveData.player.totalJumps or 0
+        self.data.totalPlayTime = saveData.player.gameTime or 0
+        self.data.highestCombo = saveData.player.maxCombo or 0
+    end
 end
 
 function ProgressionSystem.loadData()

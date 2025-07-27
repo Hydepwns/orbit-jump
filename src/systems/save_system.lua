@@ -1,5 +1,5 @@
--- Save System for Orbit Jump
--- Handles saving and loading game progress
+-- Save System for Orbit Jump - Registry Pattern Implementation
+-- Handles saving and loading game progress without tight coupling
 
 local Utils = require("src.utils.utils")
 local SaveSystem = {}
@@ -14,203 +14,77 @@ SaveSystem.saveVersion = 1
 SaveSystem.showSaveIndicator = false
 SaveSystem.saveIndicatorTimer = 0
 
+-- Registry of saveable systems - this is the key architectural change
+SaveSystem.saveables = {}
+SaveSystem.dependencies = {}
+
 -- Get save directory based on OS
 function SaveSystem.getSaveDirectory()
     local saveDir = love.filesystem.getSaveDirectory()
     return saveDir
 end
 
--- Initialize save system
-function SaveSystem.init()
+-- Initialize save system with dependency injection support
+function SaveSystem.init(dependencies)
+    SaveSystem.dependencies = dependencies or {}
     SaveSystem.lastAutoSave = love.timer.getTime()
     
     -- Ensure save directory exists
     love.filesystem.setIdentity("orbit_jump")
     
     Utils.Logger.info("Save system initialized. Save directory: %s", SaveSystem.getSaveDirectory())
+    Utils.Logger.info("Registered %d saveable systems", Utils.tableLength(SaveSystem.saveables))
     return true
 end
 
--- Collect all game data to save
+-- Register a system for saving/loading
+function SaveSystem.registerSaveable(name, system)
+    if not system.serialize then
+        Utils.Logger.error("System %s does not implement serialize() method", name)
+        return false
+    end
+    
+    if not system.deserialize then
+        Utils.Logger.error("System %s does not implement deserialize() method", name)
+        return false
+    end
+    
+    SaveSystem.saveables[name] = system
+    Utils.Logger.info("Registered saveable system: %s", name)
+    return true
+end
+
+-- Unregister a system (useful for testing)
+function SaveSystem.unregisterSaveable(name)
+    SaveSystem.saveables[name] = nil
+end
+
+-- Collect all game data using registry pattern - no hard dependencies!
 function SaveSystem.collectSaveData()
     local saveData = {
         version = SaveSystem.saveVersion,
         timestamp = os.time(),
-        
-        -- Player stats
-        player = {
-            totalScore = 0,
-            totalRingsCollected = 0,
-            totalJumps = 0,
-            totalDashes = 0,
-            maxCombo = 0,
-            gameTime = 0
-        },
-        
-        -- Progression
-        upgrades = {},
-        achievements = {},
-        
-        -- Discovery
-        discoveredPlanets = {},
-        collectedArtifacts = {},
-        
-        -- Currency
-        currency = 0
+        systems = {} -- All system data goes here
     }
     
-    -- Get player stats from GameState
-    local GameState = Utils.require("src.core.game_state")
-    if GameState and GameState.data then
-        saveData.player.totalScore = GameState.data.score or 0
-        saveData.player.gameTime = GameState.data.gameTime or 0
-    end
-    
-    -- Get progression data
-    local ProgressionSystem = Utils.require("src.systems.progression_system")
-    if ProgressionSystem and ProgressionSystem.data then
-        saveData.player.totalScore = ProgressionSystem.data.totalScore or 0
-        saveData.player.totalRingsCollected = ProgressionSystem.data.totalRingsCollected or 0
-        saveData.player.totalJumps = ProgressionSystem.data.totalJumps or 0
-        saveData.player.totalDashes = ProgressionSystem.data.totalDashes or 0
-        saveData.player.maxCombo = ProgressionSystem.data.maxCombo or 0
-        saveData.player.gameTime = ProgressionSystem.data.totalPlayTime or 0
-    end
-    
-    -- Get upgrade data
-    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
-    if UpgradeSystem then
-        saveData.currency = UpgradeSystem.currency or 0
-        saveData.upgrades = {}
+    -- Collect data from all registered systems
+    for name, system in pairs(SaveSystem.saveables) do
+        local success, systemData = Utils.ErrorHandler.safeCall(function()
+            return system:serialize()
+        end)
         
-        if UpgradeSystem.upgrades then
-            for id, upgrade in pairs(UpgradeSystem.upgrades) do
-                saveData.upgrades[id] = {
-                    currentLevel = upgrade.currentLevel or 0
-                }
-            end
+        if success and systemData then
+            saveData.systems[name] = systemData
+            Utils.Logger.debug("Collected save data for system: %s", name)
+        else
+            Utils.Logger.error("Failed to collect save data for system %s: %s", name, systemData or "unknown error")
         end
-    end
-    
-    -- LEARNING SYSTEM INTEGRATION: Save adaptive memory data
-    SaveSystem.collectLearningData(saveData)
-    
-    -- Get achievement data
-    local AchievementSystem = Utils.require("src.systems.achievement_system")
-    if AchievementSystem then
-        saveData.achievements = {}
-        
-        -- Save achievement unlock status
-        if AchievementSystem.achievements then
-            for id, achievement in pairs(AchievementSystem.achievements) do
-                if achievement.unlocked then
-                    saveData.achievements[id] = {
-                        unlocked = true,
-                        unlockedAt = achievement.unlockedAt
-                    }
-                end
-            end
-        end
-        
-        -- Save stats
-        saveData.achievementStats = AchievementSystem.stats or {}
-    end
-    
-    -- Get discovered planets from MapSystem
-    local MapSystem = Utils.require("src.systems.map_system")
-    if MapSystem and MapSystem.discoveredPlanets then
-        saveData.discoveredPlanets = {}
-        for id, planet in pairs(MapSystem.discoveredPlanets) do
-            saveData.discoveredPlanets[id] = {
-                x = planet.x,
-                y = planet.y,
-                type = planet.type,
-                discovered = true
-            }
-        end
-    end
-    
-    -- Get collected artifacts
-    local ArtifactSystem = Utils.require("src.systems.artifact_system")
-    if ArtifactSystem then
-        saveData.collectedArtifacts = {}
-        if ArtifactSystem.artifacts then
-            for _, artifact in ipairs(ArtifactSystem.artifacts) do
-                if artifact.discovered then
-                    saveData.collectedArtifacts[artifact.id] = true
-                end
-            end
-        end
-        saveData.artifactCount = ArtifactSystem.collectedCount or 0
-    end
-    
-    -- Get warp drive status
-    local WarpDrive = Utils.require("src.systems.warp_drive")
-    if WarpDrive then
-        saveData.warpDrive = {
-            unlocked = WarpDrive.isUnlocked,
-            energy = WarpDrive.energy
-        }
     end
     
     return saveData
 end
 
--- Collect learning and adaptive system data
-function SaveSystem.collectLearningData(saveData)
-    --[[
-        Learning Data Persistence: The Memory That Survives Death
-        
-        This function ensures that all the adaptive learning our systems have
-        done survives across game sessions. The warp drive's route optimizations,
-        the player analytics behavioral model, the adaptive physics preferences -
-        all of it gets preserved so the game continues to feel personalized.
-    --]]
-    
-    -- Warp Drive Memory
-    local WarpDrive = Utils.require("src.systems.warp_drive")
-    if WarpDrive and WarpDrive.memory then
-        saveData.warpDriveMemory = WarpDrive.memory
-        
-        local stats = WarpDrive.getMemoryStats()
-        Utils.Logger.info("💾 Saving warp memory: %d routes, %.1f%% efficiency", 
-            stats.knownRoutes, stats.efficiency * 100)
-    end
-    
-    -- Player Analytics Memory
-    local PlayerAnalytics = Utils.require("src.systems.player_analytics")
-    if PlayerAnalytics and PlayerAnalytics.memory then
-        saveData.playerAnalytics = PlayerAnalytics.memory
-        
-        local profile = PlayerAnalytics.getPlayerProfile()
-        Utils.Logger.info("📊 Saving analytics: skill=%.1f%%, style=%s, mood=%s",
-            (profile.skillLevel or 0) * 100, 
-            profile.movementStyle or "unknown",
-            profile.currentMood or "neutral")
-    end
-    
-    -- Adaptive Physics State
-    local PlayerSystem = Utils.require("src.systems.player_system")
-    if PlayerSystem and PlayerSystem.getAdaptivePhysicsStatus then
-        local physicsStatus = PlayerSystem.getAdaptivePhysicsStatus()
-        saveData.adaptivePhysics = {
-            spaceDrag = physicsStatus.spaceDrag,
-            cameraResponse = physicsStatus.cameraResponse,
-            lastAdaptation = physicsStatus.lastAdaptation
-        }
-        
-        Utils.Logger.info("⚙️ Saving adaptive physics: drag=%.3f, camera=%.1f",
-            physicsStatus.spaceDrag, physicsStatus.cameraResponse)
-    end
-    
-    -- Emotional Feedback Learning
-    local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
-    if EmotionalFeedback and EmotionalFeedback.getLearningData then
-        saveData.emotionalLearning = EmotionalFeedback.getLearningData()
-    end
-    
-    Utils.Logger.info("🧠 Learning data collected for persistence")
-end
+-- This function is no longer needed - learning data is collected via registry pattern
 
 -- Save game data
 function SaveSystem.save()
@@ -309,145 +183,52 @@ function SaveSystem.load()
     return true
 end
 
--- Apply loaded save data to game systems
+-- Apply loaded save data using registry pattern - no hard dependencies!
 function SaveSystem.applySaveData(saveData)
-    -- Restore progression data
-    local ProgressionSystem = Utils.require("src.systems.progression_system")
-    if ProgressionSystem and saveData.player then
-        ProgressionSystem.data.totalScore = saveData.player.totalScore or 0
-        ProgressionSystem.data.totalRingsCollected = saveData.player.totalRingsCollected or 0
-        ProgressionSystem.data.totalJumps = saveData.player.totalJumps or 0
-        ProgressionSystem.data.totalDashes = saveData.player.totalDashes or 0
-        ProgressionSystem.data.maxCombo = saveData.player.maxCombo or 0
-        ProgressionSystem.data.totalPlayTime = saveData.player.gameTime or 0
+    -- Handle legacy save format for backward compatibility
+    if not saveData.systems and saveData.player then
+        Utils.Logger.info("Loading legacy save format")
+        SaveSystem.applyLegacySaveData(saveData)
+        return
     end
     
-    -- Restore upgrades
-    local UpgradeSystem = Utils.require("src.systems.upgrade_system")
-    if UpgradeSystem and saveData.upgrades then
-        UpgradeSystem.currency = saveData.currency or 0
-        
-        for id, upgradeData in pairs(saveData.upgrades) do
-            if UpgradeSystem.upgrades[id] then
-                UpgradeSystem.upgrades[id].currentLevel = upgradeData.currentLevel or 0
+    -- Apply data to all registered systems
+    if saveData.systems then
+        for name, systemData in pairs(saveData.systems) do
+            local system = SaveSystem.saveables[name]
+            if system then
+                local success, errorMsg = Utils.ErrorHandler.safeCall(function()
+                    system:deserialize(systemData)
+                end)
                 
-                -- Trigger onPurchase callbacks for unlocked upgrades
-                if id == "warp_drive" and upgradeData.currentLevel > 0 then
-                    local WarpDrive = Utils.require("src.systems.warp_drive")
-                    WarpDrive.unlock()
+                if success then
+                    Utils.Logger.debug("Restored save data for system: %s", name)
+                else
+                    Utils.Logger.error("Failed to restore save data for system %s: %s", name, errorMsg or "unknown error")
                 end
+            else
+                Utils.Logger.warn("No system registered for save data: %s", name)
             end
         end
     end
-    
-    -- Restore achievements
-    local AchievementSystem = Utils.require("src.systems.achievement_system")
-    if AchievementSystem and saveData.achievements then
-        for id, achievementData in pairs(saveData.achievements) do
-            if AchievementSystem.achievements[id] and achievementData.unlocked then
-                AchievementSystem.achievements[id].unlocked = true
-                AchievementSystem.achievements[id].unlockedAt = achievementData.unlockedAt
-            end
-        end
-        
-        -- Restore stats
-        if saveData.achievementStats then
-            AchievementSystem.stats = saveData.achievementStats
-        end
-    end
-    
-    -- Restore discovered planets
-    local MapSystem = Utils.require("src.systems.map_system")
-    if MapSystem and saveData.discoveredPlanets then
-        MapSystem.discoveredPlanets = saveData.discoveredPlanets
-    end
-    
-    -- Restore collected artifacts
-    local ArtifactSystem = Utils.require("src.systems.artifact_system")
-    if ArtifactSystem and saveData.collectedArtifacts then
-        for artifactId, _ in pairs(saveData.collectedArtifacts) do
-            for _, artifact in ipairs(ArtifactSystem.artifacts) do
-                if artifact.id == artifactId then
-                    artifact.discovered = true
-                end
-            end
-        end
-        ArtifactSystem.collectedCount = saveData.artifactCount or 0
-    end
-    
-    -- Restore warp drive
-    if saveData.warpDrive then
-        local WarpDrive = Utils.require("src.systems.warp_drive")
-        if WarpDrive then
-            WarpDrive.isUnlocked = saveData.warpDrive.unlocked or false
-            WarpDrive.energy = saveData.warpDrive.energy or WarpDrive.maxEnergy
-        end
-    end
-    
-    -- LEARNING SYSTEM RESTORATION: Bring back the memories
-    SaveSystem.restoreLearningData(saveData)
 end
 
--- Restore learning and adaptive system data
-function SaveSystem.restoreLearningData(saveData)
-    --[[
-        Memory Resurrection: Bringing Back the System's Soul
-        
-        This is where the magic of persistent learning comes alive. All the
-        behavioral patterns, route optimizations, and adaptive preferences
-        that the systems learned during previous sessions are restored,
-        making the game feel like it truly remembers the player.
-    --]]
+-- Legacy save data support for backward compatibility
+function SaveSystem.applyLegacySaveData(saveData)
+    Utils.Logger.info("Applying legacy save format - consider using 'Upgrade Save' in settings")
     
-    -- Restore Warp Drive Memory
-    if saveData.warpDriveMemory then
-        local WarpDrive = Utils.require("src.systems.warp_drive")
-        if WarpDrive then
-            WarpDrive.memory = saveData.warpDriveMemory
+    -- Try to apply legacy data to registered systems if they support it
+    for name, system in pairs(SaveSystem.saveables) do
+        if system.deserializeLegacy then
+            local success, errorMsg = Utils.ErrorHandler.safeCall(function()
+                system:deserializeLegacy(saveData)
+            end)
             
-            local stats = WarpDrive.getMemoryStats()
-            Utils.Logger.info("🧠 Restored warp memory: %d routes, %.1f%% efficiency", 
-                stats.knownRoutes, stats.efficiency * 100)
+            if not success then
+                Utils.Logger.error("Failed to apply legacy data to system %s: %s", name, errorMsg or "unknown error")
+            end
         end
     end
-    
-    -- Restore Player Analytics Memory
-    if saveData.playerAnalytics then
-        local PlayerAnalytics = Utils.require("src.systems.player_analytics")
-        if PlayerAnalytics then
-            PlayerAnalytics.memory = saveData.playerAnalytics
-            
-            local profile = PlayerAnalytics.getPlayerProfile()
-            Utils.Logger.info("📊 Restored analytics: skill=%.1f%%, style=%s",
-                (profile.skillLevel or 0) * 100,
-                profile.movementStyle or "unknown")
-        end
-    end
-    
-    -- Restore Adaptive Physics State
-    if saveData.adaptivePhysics then
-        local PlayerSystem = Utils.require("src.systems.player_system")
-        if PlayerSystem then
-            -- Restore the adaptive parameters
-            -- Note: The actual AdaptivePhysics table is local to PlayerSystem,
-            -- so we'll need to add a restoration function there
-            PlayerSystem.restoreAdaptivePhysics(saveData.adaptivePhysics)
-            
-            Utils.Logger.info("⚙️ Restored adaptive physics: drag=%.3f, camera=%.1f",
-                saveData.adaptivePhysics.spaceDrag or 0.99,
-                saveData.adaptivePhysics.cameraResponse or 2.0)
-        end
-    end
-    
-    -- Restore Emotional Feedback Learning
-    if saveData.emotionalLearning then
-        local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
-        if EmotionalFeedback and EmotionalFeedback.restoreLearningData then
-            EmotionalFeedback.restoreLearningData(saveData.emotionalLearning)
-        end
-    end
-    
-    Utils.Logger.info("🧠 Learning data restored - Systems remember you")
 end
 
 -- Auto-save update
@@ -496,7 +277,7 @@ function SaveSystem.hasSave()
     return love.filesystem.getInfo(SaveSystem.saveFileName) ~= nil
 end
 
--- Get save info
+-- Get save info - works with both new and legacy formats
 function SaveSystem.getSaveInfo()
     if not SaveSystem.hasSave() then
         return nil
@@ -514,11 +295,25 @@ function SaveSystem.getSaveInfo()
         return nil
     end
     
+    -- Handle both new and legacy save formats
+    local score = 0
+    local playtime = 0
+    
+    if saveData.systems and saveData.systems.progression then
+        local prog = saveData.systems.progression
+        score = prog.totalScore or 0
+        playtime = prog.totalPlayTime or 0
+    elseif saveData.player then
+        score = saveData.player.totalScore or 0
+        playtime = saveData.player.gameTime or 0
+    end
+    
     return {
         timestamp = saveData.timestamp,
         version = saveData.version,
-        score = saveData.player and saveData.player.totalScore or 0,
-        playtime = saveData.player and saveData.player.gameTime or 0
+        score = score,
+        playtime = playtime,
+        format = saveData.systems and "registry" or "legacy"
     }
 end
 
