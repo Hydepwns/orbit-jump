@@ -54,7 +54,7 @@ local tests = {
 
   ["test handle module error"] = function()
     -- Reset call tracking
-    TestFramework.resetCalls()
+    TestFramework.utils.resetCalls()
 
     -- Test the actual handleModuleError function
     Utils.ErrorHandler.handleModuleError("test_module", "test error message")
@@ -108,7 +108,7 @@ local tests = {
 
   ["test error handler integration with logger"] = function()
     -- Reset call tracking
-    TestFramework.resetCalls()
+    TestFramework.utils.resetCalls()
 
     local errorFunc = function()
       error("integration test error")

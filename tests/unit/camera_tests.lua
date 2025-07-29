@@ -25,6 +25,10 @@ local tests = {
     ["should capture screen dimensions"] = function()
         local camera = Camera:new()
         
+        -- Initialize dimensions manually for testing
+        camera:initDimensions()
+        
+        -- In test environment, dimensions default to 800x600
         ModernTestFramework.assert.equal(800, camera.screenWidth, "Camera should capture screen width")
         ModernTestFramework.assert.equal(600, camera.screenHeight, "Camera should capture screen height")
     end,
@@ -135,6 +139,9 @@ local tests = {
         camera.y = 200
         camera.scale = 2.0
         camera.rotation = math.pi/4
+        
+        -- Initialize dimensions for transformation
+        camera:initDimensions()
         
         ModernTestFramework.utils.resetCalls()
         
