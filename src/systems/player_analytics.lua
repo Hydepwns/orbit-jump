@@ -143,6 +143,18 @@ PlayerAnalytics.sessionStartTime = 0
 PlayerAnalytics.lastActionTime = 0
 PlayerAnalytics.currentAnalysisWindow = {}
 
+-- Exposed properties for testing
+PlayerAnalytics.data = {
+    events = {},
+    gameplay = {},
+    progression = {}
+}
+PlayerAnalytics.session = {
+    id = "",
+    startTime = 0,
+    active = false
+}
+
 --[[
     ═══════════════════════════════════════════════════════════════════════════
     System Lifecycle: Birth, Growth, and Memory
@@ -150,9 +162,29 @@ PlayerAnalytics.currentAnalysisWindow = {}
 --]]
 
 function PlayerAnalytics.init()
-    PlayerAnalytics.sessionStartTime = love.timer.getTime()
+    PlayerAnalytics.sessionStartTime = love and love.timer and love.timer.getTime() or os.time()
     PlayerAnalytics.lastActionTime = PlayerAnalytics.sessionStartTime
     PlayerAnalytics.isTracking = true
+    
+    -- Initialize data structures
+    PlayerAnalytics.data = {
+        events = {},
+        gameplay = {
+            jumps = 0,
+            landings = 0,
+            dashes = 0,
+            events = {}
+        },
+        progression = {}
+    }
+    
+    -- Initialize session
+    PlayerAnalytics.session = {
+        id = tostring(PlayerAnalytics.sessionStartTime),
+        startTime = PlayerAnalytics.sessionStartTime,
+        duration = 0,
+        active = true
+    }
     
     -- Initialize memory structures if they don't exist
     PlayerAnalytics.initializeMemoryStructures()
@@ -212,7 +244,7 @@ function PlayerAnalytics.onPlayerJump(jumpPower, jumpAngle, startX, startY, targ
     movement.totalJumps = movement.totalJumps + 1
     
     -- Calculate jump distance
-    local jumpDistance = Utils.distance(startX, startY, targetX, targetY)
+    local jumpDistance = Utils.fastDistance(startX, startY, targetX, targetY)
     movement.totalDistance = movement.totalDistance + jumpDistance
     movement.averageJumpDistance = movement.totalDistance / movement.totalJumps
     
@@ -322,7 +354,7 @@ function PlayerAnalytics.analyzeExplorationStyle(planet, discoveryMethod, attemp
     end
     
     -- Update exploration radius
-    local distanceFromOrigin = Utils.distance(0, 0, planet.x, planet.y)
+    local distanceFromOrigin = Utils.fastDistance(0, 0, planet.x, planet.y)
     exploration.explorationRadius = math.max(exploration.explorationRadius, distanceFromOrigin)
 end
 
@@ -538,6 +570,279 @@ function PlayerAnalytics.initializeSessionProfile()
             playSchedule = {}, seasonalChanges = {}, progressSatisfaction = 0
         }
     end
+end
+
+--[[
+    ═══════════════════════════════════════════════════════════════════════════
+    Public API: Tracking Methods for Tests
+    ═══════════════════════════════════════════════════════════════════════════
+--]]
+
+function PlayerAnalytics.trackEvent(eventName, params)
+    --[[Track generic analytics event--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    local event = {
+        name = eventName,
+        params = params or {},
+        timestamp = love and love.timer and love.timer.getTime() or os.time(),
+        sessionId = PlayerAnalytics.session.id
+    }
+    
+    table.insert(PlayerAnalytics.data.events, event)
+    
+    -- Process specific event types
+    if eventName == "gameplay_action" then
+        PlayerAnalytics.processGameplayEvent(params)
+    elseif eventName == "progression_update" then
+        PlayerAnalytics.processProgressionEvent(params)
+    end
+    
+    Utils.Logger.debug("📊 Event tracked: %s", eventName)
+end
+
+function PlayerAnalytics.trackGameplay(params)
+    --[[Track gameplay-specific metrics--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    local gameplayEvent = {
+        action = params.action,
+        from_planet = params.from_planet,
+        to_planet = params.to_planet,
+        distance = params.distance,
+        success = params.success,
+        timestamp = love and love.timer and love.timer.getTime() or os.time()
+    }
+    
+    table.insert(PlayerAnalytics.data.gameplay.events, gameplayEvent)
+    
+    -- Update counters based on action type
+    if params.action == "jump" then
+        PlayerAnalytics.data.gameplay.jumps = PlayerAnalytics.data.gameplay.jumps + 1
+        
+        -- Update movement profile if successful
+        if params.success then
+            PlayerAnalytics.onPlayerJump(
+                params.power or 500,
+                params.angle or 0,
+                params.startX or 0,
+                params.startY or 0,
+                params.targetX or params.distance,
+                params.targetY or 0,
+                params.planningTime or 2
+            )
+        end
+    elseif params.action == "landing" then
+        PlayerAnalytics.data.gameplay.landings = PlayerAnalytics.data.gameplay.landings + 1
+    elseif params.action == "dash" then
+        PlayerAnalytics.data.gameplay.dashes = PlayerAnalytics.data.gameplay.dashes + 1
+    end
+    
+    Utils.Logger.debug("📊 Gameplay tracked: %s", params.action)
+end
+
+function PlayerAnalytics.trackProgression(params)
+    --[[Track player progression metrics--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    local progressionEvent = {
+        type = params.type,
+        level = params.level,
+        value = params.value,
+        milestone = params.milestone,
+        timestamp = love and love.timer and love.timer.getTime() or os.time()
+    }
+    
+    table.insert(PlayerAnalytics.data.progression, progressionEvent)
+    
+    -- Update skill progression
+    if params.type == "skill" then
+        PlayerAnalytics.memory.skillProgression.currentSkill = params.value or PlayerAnalytics.memory.skillProgression.currentSkill
+    end
+    
+    Utils.Logger.debug("📊 Progression tracked: %s level %s", params.type, params.level)
+end
+
+function PlayerAnalytics.getSessionReport()
+    --[[Get comprehensive session analytics report--]]
+    local report = {
+        sessionId = PlayerAnalytics.session.id,
+        duration = (love and love.timer and love.timer.getTime() or os.time()) - PlayerAnalytics.session.startTime,
+        eventCount = #PlayerAnalytics.data.events,
+        gameplayCount = #PlayerAnalytics.data.gameplay,
+        progressionCount = #PlayerAnalytics.data.progression,
+        profile = PlayerAnalytics.getPlayerProfile(),
+        recommendations = PlayerAnalytics.getSystemRecommendations()
+    }
+    
+    return report
+end
+
+function PlayerAnalytics.processGameplayEvent(params)
+    --[[Internal helper to process gameplay events--]]
+    -- Already handled in trackGameplay, this is for consistency
+end
+
+function PlayerAnalytics.processProgressionEvent(params)
+    --[[Internal helper to process progression events--]]
+    -- Already handled in trackProgression, this is for consistency
+end
+
+function PlayerAnalytics.updateSession(paramsOrDt)
+    --[[Update current session information--]]
+    if not PlayerAnalytics.session then return end
+    
+    -- Handle both dt number and params table
+    local params = {}
+    local dt = 0
+    
+    if type(paramsOrDt) == "number" then
+        dt = paramsOrDt
+    else
+        params = paramsOrDt or {}
+        dt = params.dt or 0
+    end
+    
+    -- Update session duration
+    if dt > 0 then
+        PlayerAnalytics.session.duration = (PlayerAnalytics.session.duration or 0) + dt
+    end
+    
+    if params.endSession then
+        PlayerAnalytics.session.active = false
+        PlayerAnalytics.session.endTime = love and love.timer and love.timer.getTime() or os.time()
+        
+        -- Record session end mood
+        local endMood = PlayerAnalytics.inferCurrentMood()
+        table.insert(PlayerAnalytics.memory.sessionData.sessionEndMood, endMood)
+    end
+    
+    if params.pauseSession then
+        PlayerAnalytics.memory.emotionalProfile.pauseFrequency = 
+            PlayerAnalytics.memory.emotionalProfile.pauseFrequency + 1
+    end
+end
+
+function PlayerAnalytics.trackPreference(preferenceName, value)
+    --[[Track player preferences--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    -- Store preferences in memory
+    if not PlayerAnalytics.memory.preferences then
+        PlayerAnalytics.memory.preferences = {}
+    end
+    
+    PlayerAnalytics.memory.preferences[preferenceName] = value
+    
+    -- Also track as event
+    PlayerAnalytics.trackEvent("preference_changed", {
+        preference = preferenceName,
+        value = value
+    })
+end
+
+function PlayerAnalytics.trackPerformance(metrics)
+    --[[Track performance metrics--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    local performanceEvent = {
+        fps = metrics.fps,
+        frameTime = metrics.frameTime,
+        memoryUsage = metrics.memoryUsage,
+        timestamp = love and love.timer and love.timer.getTime() or os.time()
+    }
+    
+    -- Track as event
+    PlayerAnalytics.trackEvent("performance_metrics", performanceEvent)
+    
+    -- Update session energy based on performance
+    if metrics.fps and metrics.fps < 30 then
+        PlayerAnalytics.memory.emotionalProfile.sessionEnergy = 
+            math.max(0, PlayerAnalytics.memory.emotionalProfile.sessionEnergy - 0.1)
+    end
+end
+
+function PlayerAnalytics.getSummary()
+    --[[Get analytics summary--]]
+    local summary = {
+        totalEvents = #PlayerAnalytics.data.events,
+        totalGameplay = #PlayerAnalytics.data.gameplay.events,
+        totalProgression = #PlayerAnalytics.data.progression,
+        sessionData = {
+            id = PlayerAnalytics.session.id,
+            duration = (love and love.timer and love.timer.getTime() or os.time()) - PlayerAnalytics.session.startTime,
+            active = PlayerAnalytics.session.active
+        },
+        playerProfile = PlayerAnalytics.getPlayerProfile(),
+        memory = {
+            totalJumps = PlayerAnalytics.memory.movementProfile.totalJumps,
+            averageJumpDistance = PlayerAnalytics.memory.movementProfile.averageJumpDistance,
+            skillLevel = PlayerAnalytics.memory.skillProgression.currentSkill,
+            currentMood = PlayerAnalytics.memory.emotionalProfile.currentMood
+        }
+    }
+    
+    return summary
+end
+
+function PlayerAnalytics.trackError(error)
+    --[[Track error events--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    PlayerAnalytics.trackEvent("error", {
+        message = error.message or tostring(error),
+        stack = error.stack or debug and debug.traceback and debug.traceback() or "",
+        timestamp = love and love.timer and love.timer.getTime() or os.time()
+    })
+end
+
+function PlayerAnalytics.trackAchievement(achievement)
+    --[[Track achievement events--]]
+    if not PlayerAnalytics.isTracking then return end
+    
+    PlayerAnalytics.trackEvent("achievement", {
+        id = achievement.id,
+        name = achievement.name,
+        description = achievement.description,
+        unlocked = true,
+        timestamp = love and love.timer and love.timer.getTime() or os.time()
+    })
+    
+    -- Update emotional state for achievement
+    PlayerAnalytics.onEmotionalEvent("success", 0.8, {type = "achievement"})
+end
+
+function PlayerAnalytics.saveToPersistence()
+    --[[Save analytics data for persistence--]]
+    return {
+        memory = PlayerAnalytics.memory,
+        sessionHistory = {
+            totalSessions = PlayerAnalytics.memory.sessionData.totalSessions,
+            averageSessionLength = PlayerAnalytics.memory.sessionData.averageSessionLength
+        }
+    }
+end
+
+function PlayerAnalytics.loadFromPersistence(data)
+    --[[Load analytics data from persistence--]]
+    if data and data.memory then
+        PlayerAnalytics.memory = Utils.mergeTables(PlayerAnalytics.memory, data.memory)
+    end
+end
+
+function PlayerAnalytics.getSaveData()
+    --[[Get data ready for saving--]]
+    return PlayerAnalytics.saveToPersistence()
+end
+
+function PlayerAnalytics.loadData(saveData)
+    --[[Load data from save--]]
+    if not saveData then
+        return false
+    end
+    
+    PlayerAnalytics.loadFromPersistence(saveData)
+    return true
 end
 
 return PlayerAnalytics

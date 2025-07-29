@@ -88,8 +88,89 @@ function EmotionalFeedback.init()
     emotionalState.flow_state_duration = 0
     emotionalState.surprise_cooldown = 0
     
+    -- Initialize exposed properties for testing
+    EmotionalFeedback.emotions = emotionalState
+    EmotionalFeedback.currentMood = { type = "neutral", intensity = 0.5 }
+    
     Utils.Logger.info("💝 Emotional feedback system initialized - Ready to create joy")
     return true
+end
+
+function EmotionalFeedback.processEvent(eventType, params)
+    --[[
+        Central event processing router for the emotional feedback system
+        Routes different events to their specific handlers
+    --]]
+    
+    if eventType == "landing" then
+        -- Landing event parameters
+        local player = params.player or {x = 0, y = 0, vx = 0, vy = 0}
+        local planet = params.planet or {type = "normal"}
+        local speed = params.speed or 100
+        local isGentle = speed < 100
+        
+        EmotionalFeedback.onLanding(player, planet, speed, isGentle)
+        
+        -- Update mood based on landing quality
+        if speed < 50 then
+            EmotionalFeedback.currentMood = { type = "perfect", intensity = 1.0 }
+        elseif speed < 100 then
+            EmotionalFeedback.currentMood = { type = "smooth", intensity = 0.8 }
+        elseif speed < 200 then
+            EmotionalFeedback.currentMood = { type = "excited", intensity = 0.7 }
+        else
+            EmotionalFeedback.currentMood = { type = "intense", intensity = 0.6 }
+        end
+        
+    elseif eventType == "jump" then
+        -- Jump event parameters
+        local pullPower = params.pullPower or 0.5
+        local jumpSuccess = params.success ~= false
+        local isFirstJump = params.isFirstJump or false
+        
+        EmotionalFeedback.onJump(pullPower, jumpSuccess, isFirstJump)
+        EmotionalFeedback.currentMood = { type = "energetic", intensity = 0.7 + pullPower * 0.3 }
+        
+    elseif eventType == "dash" then
+        -- Dash event parameters
+        local isEmergency = params.emergency or false
+        local dashSuccess = params.success ~= false
+        
+        EmotionalFeedback.onDash(isEmergency, dashSuccess)
+        EmotionalFeedback.currentMood = { type = "powerful", intensity = isEmergency and 0.9 or 0.7 }
+        
+    elseif eventType == "achievement" then
+        -- Achievement unlocked
+        EmotionalFeedback.triggerSpecialCelebration(params.type or "generic")
+        EmotionalFeedback.currentMood = { type = "triumphant", intensity = 1.0 }
+        
+    elseif eventType == "failure" then
+        -- Failure event
+        EmotionalFeedback.onFailure(params.type or "generic")
+        EmotionalFeedback.currentMood = { type = "determined", intensity = 0.4 }
+        
+    elseif eventType == "combo" then
+        -- Combo achievement
+        local count = params.count or 0
+        emotionalState.achievement_streak = count
+        emotionalState.confidence = math.min(1.0, emotionalState.confidence + count * 0.05)
+        EmotionalFeedback.currentMood = { type = count > 5 and "triumphant" or "excited", intensity = math.min(1.0, 0.5 + count * 0.1) }
+        
+    elseif eventType == "near_miss" then
+        -- Near miss event
+        emotionalState.momentum = emotionalState.momentum + 0.3
+        EmotionalFeedback.currentMood = { type = "intense", intensity = 0.8 }
+        emotionalMemory.dramatic_saves = emotionalMemory.dramatic_saves + 1
+        
+    elseif eventType == "discovery" then
+        -- Discovery event
+        EmotionalFeedback.triggerSpecialCelebration("discovery")
+        EmotionalFeedback.currentMood = { type = "excited", intensity = 0.9 }
+        emotionalState.confidence = math.min(1.0, emotionalState.confidence + 0.2)
+    end
+    
+    -- Update exposed emotions reference
+    EmotionalFeedback.emotions = emotionalState
 end
 
 function EmotionalFeedback.update(dt)
@@ -121,6 +202,20 @@ function EmotionalFeedback.update(dt)
     -- Achievement streak decays if no recent successes
     if emotionalState.last_celebration > 5.0 then  -- 5 seconds of no achievements
         emotionalState.achievement_streak = math.max(0, emotionalState.achievement_streak - 1)
+    end
+    
+    -- Decay mood intensity over time
+    if EmotionalFeedback.currentMood and type(EmotionalFeedback.currentMood) == "table" and EmotionalFeedback.currentMood.intensity then
+        local MOOD_DECAY = 0.2 * dt
+        local newIntensity = math.max(0, EmotionalFeedback.currentMood.intensity - MOOD_DECAY)
+        
+        -- Update the intensity in place
+        EmotionalFeedback.currentMood.intensity = newIntensity
+        
+        -- Reset to neutral if intensity is too low
+        if newIntensity < 0.1 then
+            EmotionalFeedback.currentMood = { type = "neutral", intensity = 0.5 }
+        end
     end
 end
 
@@ -580,6 +675,54 @@ end
 function EmotionalFeedback.getEmotionalMemory()
     --[[Return emotional memory for persistence and achievements--]]
     return Utils.deepCopy(emotionalMemory)
+end
+
+function EmotionalFeedback.getFeedbackMessage()
+    --[[Get contextual feedback message based on current mood--]]
+    local messages = {
+        neutral = "Keep exploring!",
+        perfect = "Perfect landing!",
+        smooth = "Smooth approach!",
+        excited = "What a rush!",
+        intense = "Intense landing!",
+        energetic = "Great jump!",
+        powerful = "Powerful dash!",
+        triumphant = "Achievement unlocked!",
+        determined = "Keep trying!"
+    }
+    
+    local moodType = EmotionalFeedback.currentMood and EmotionalFeedback.currentMood.type or "neutral"
+    return messages[moodType] or messages.neutral
+end
+
+function EmotionalFeedback.getVisualEffects()
+    --[[Get current visual effects based on emotional state--]]
+    -- This is a placeholder for future visual effects system
+    return nil
+end
+
+function EmotionalFeedback.getAudioCue()
+    --[[Get appropriate audio cue for current emotional state--]]
+    local moodType = EmotionalFeedback.currentMood and EmotionalFeedback.currentMood.type or "neutral"
+    local intensity = EmotionalFeedback.currentMood and EmotionalFeedback.currentMood.intensity or 0.5
+    
+    -- Map moods to audio cues
+    local audioCues = {
+        neutral = { sound = "ambient", volume = 0.5 },
+        perfect = { sound = "achievement", volume = 0.8 },
+        smooth = { sound = "success", volume = 0.6 },
+        excited = { sound = "energy", volume = 0.7 },
+        intense = { sound = "tension", volume = 0.7 },
+        energetic = { sound = "boost", volume = 0.6 },
+        powerful = { sound = "power", volume = 0.8 },
+        triumphant = { sound = "victory", volume = 0.9 },
+        determined = { sound = "resolve", volume = 0.5 }
+    }
+    
+    local cue = audioCues[moodType] or audioCues.neutral
+    cue.intensity = intensity
+    
+    return cue
 end
 
 function EmotionalFeedback.debugEmotionalState()
