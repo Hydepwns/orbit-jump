@@ -124,6 +124,18 @@ end
 -- Cull planets based on camera position
 function PerformanceSystem.cullPlanets(planets, camera)
     local visiblePlanets = {}
+    
+    -- Safety check: if camera is nil, return all planets as visible
+    if not camera then
+        for _, planet in ipairs(planets) do
+            planet.distanceFromCamera = 0
+            planet.lodLevel = "high"
+            table.insert(visiblePlanets, planet)
+        end
+        PerformanceSystem.metrics.visiblePlanets = #visiblePlanets
+        return visiblePlanets
+    end
+    
     local camX, camY = camera.x, camera.y
     local cullDistance = PerformanceSystem.config.planetCullDistance * camera.scale
     
@@ -143,6 +155,19 @@ end
 -- Cull rings based on camera position
 function PerformanceSystem.cullRings(rings, camera)
     local visibleRings = {}
+    
+    -- Safety check: if camera is nil, return all rings as visible
+    if not camera then
+        for _, ring in ipairs(rings) do
+            if not ring.collected then
+                ring.distanceFromCamera = 0
+                table.insert(visibleRings, ring)
+            end
+        end
+        PerformanceSystem.metrics.visibleRings = #visibleRings
+        return visibleRings
+    end
+    
     local camX, camY = camera.x, camera.y
     local cullDistance = PerformanceSystem.config.ringCullDistance * camera.scale
     
@@ -176,6 +201,16 @@ end
 -- Optimize particle updates
 function PerformanceSystem.cullParticles(particles, camera)
     local visibleParticles = {}
+    
+    -- Safety check: if camera is nil, return all particles as visible
+    if not camera then
+        for i, particle in ipairs(particles) do
+            table.insert(visibleParticles, particle)
+        end
+        PerformanceSystem.metrics.activeParticles = #visibleParticles
+        return visibleParticles
+    end
+    
     local camX, camY = camera.x, camera.y
     local cullDistance = PerformanceSystem.config.particleCullDistance * camera.scale
     

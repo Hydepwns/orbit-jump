@@ -360,7 +360,8 @@ function PerformanceMonitor.profile(name, fn, ...)
         end
     end
     
-    return unpack(results)
+    local unpack = table.unpack or unpack
+    return unpack and unpack(results) or results[1], results[2], results[3]
 end
 
 --[[
