@@ -22,6 +22,16 @@ local ErrorHandlerTests = Utils.require("tests.utils.test_error_handler")
 local ModuleLoaderTests = Utils.require("tests.utils.test_module_loader")
 local ConstantsTests = Utils.require("tests.utils.test_constants")
 
+-- New test suites
+local SystemOrchestratorTests = Utils.require("tests.core.test_system_orchestrator")
+local EventBusTests = Utils.require("tests.utils.test_event_bus")
+local SpatialGridTests = Utils.require("tests.utils.test_spatial_grid")
+local EmotionalFeedbackTests = Utils.require("tests.systems.test_emotional_feedback")
+local PlayerAnalyticsTests = Utils.require("tests.systems.test_player_analytics")
+local ObjectPoolTests = Utils.require("tests.utils.test_object_pool")
+local RenderBatchTests = Utils.require("tests.utils.test_render_batch")
+local AssetLoaderTests = Utils.require("tests.utils.test_asset_loader")
+
 -- Collect all test suites
 local allTestSuites = {
     ["Game Logic"] = GameLogicTests,
@@ -36,7 +46,15 @@ local allTestSuites = {
     ["Performance System"] = PerformanceSystemTests,
     ["Error Handler"] = ErrorHandlerTests,
     ["Module Loader"] = ModuleLoaderTests,
-    ["Constants"] = ConstantsTests
+    ["Constants"] = ConstantsTests,
+    ["System Orchestrator"] = SystemOrchestratorTests,
+    ["Event Bus"] = EventBusTests,
+    ["Spatial Grid"] = SpatialGridTests,
+    ["Emotional Feedback"] = EmotionalFeedbackTests,
+    ["Player Analytics"] = PlayerAnalyticsTests,
+    ["Object Pool"] = ObjectPoolTests,
+    ["Render Batch"] = RenderBatchTests,
+    ["Asset Loader"] = AssetLoaderTests
 }
 
 -- Run all test suites

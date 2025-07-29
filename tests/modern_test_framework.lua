@@ -128,6 +128,14 @@ ModernTestFramework.assert = {
         end
     end,
     
+    -- Pattern matching assertion
+    match = function(actual, pattern, message)
+        if not string.match(actual, pattern) then
+            error(string.format("Assertion failed: expected '%s' to match pattern '%s'. %s", 
+                actual, pattern, message or ""))
+        end
+    end,
+    
     -- Table assertions
     tableEqual = function(expected, actual, message)
         if type(expected) ~= "table" or type(actual) ~= "table" then
@@ -146,6 +154,46 @@ ModernTestFramework.assert = {
                 error(string.format("Assertion failed: unexpected key %s with value %s. %s", 
                     tostring(k), tostring(v), message or ""))
             end
+        end
+    end,
+    
+    -- Collection assertions
+    isEmpty = function(collection, message)
+        if type(collection) == "table" then
+            for k, v in pairs(collection) do
+                error(string.format("Assertion failed: expected empty table, but found key %s with value %s. %s", 
+                    tostring(k), tostring(v), message or ""))
+            end
+        elseif type(collection) == "string" then
+            if #collection > 0 then
+                error(string.format("Assertion failed: expected empty string, got '%s'. %s", 
+                    collection, message or ""))
+            end
+        else
+            error(string.format("Assertion failed: cannot check emptiness of type %s. %s", 
+                type(collection), message or ""))
+        end
+    end,
+    
+    -- Deep equality comparison for tables
+    deepEqual = function(expected, actual, message)
+        local function deepCompare(t1, t2)
+            if type(t1) ~= type(t2) then return false end
+            if type(t1) ~= "table" then return t1 == t2 end
+            
+            for k, v in pairs(t1) do
+                if not deepCompare(v, t2[k]) then return false end
+            end
+            
+            for k, v in pairs(t2) do
+                if t1[k] == nil then return false end
+            end
+            
+            return true
+        end
+        
+        if not deepCompare(expected, actual) then
+            error(string.format("Assertion failed: tables are not deeply equal. %s", message or ""))
         end
     end,
     
