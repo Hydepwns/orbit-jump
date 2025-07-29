@@ -305,4 +305,16 @@ function RenderBatch:getStats()
     }
 end
 
+-- Check if batch is empty
+function RenderBatch:isEmpty()
+    for category, subcategories in pairs(self.batches) do
+        for subcategory, items in pairs(subcategories) do
+            if #items > 0 then
+                return false
+            end
+        end
+    end
+    return true
+end
+
 return RenderBatch

@@ -233,4 +233,30 @@ function AssetLoader.clear()
     AssetLoader.totalAssets = 0
 end
 
+-- Check if asset storage is empty
+function AssetLoader.isEmpty()
+    local imageCount = 0
+    local soundCount = 0
+    local fontCount = 0
+    local shaderCount = 0
+    
+    for _ in pairs(AssetLoader.images) do
+        imageCount = imageCount + 1
+    end
+    
+    for _ in pairs(AssetLoader.sounds) do
+        soundCount = soundCount + 1
+    end
+    
+    for _ in pairs(AssetLoader.fonts) do
+        fontCount = fontCount + 1
+    end
+    
+    for _ in pairs(AssetLoader.shaders) do
+        shaderCount = shaderCount + 1
+    end
+    
+    return imageCount == 0 and soundCount == 0 and fontCount == 0 and shaderCount == 0
+end
+
 return AssetLoader

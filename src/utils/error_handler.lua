@@ -25,7 +25,11 @@ function ErrorHandler.safeCall(func, ...)
     return false, errorMessage
   end
   -- Return all results including success flag
-  return table.unpack and table.unpack(results) or unpack(results)
+  if table.unpack then
+    return table.unpack(results)
+  else
+    return unpack(results)
+  end
 end
 
 function ErrorHandler.validateModule(module, requiredFunctions)

@@ -72,6 +72,10 @@ end
 -- Lua version compatibility: Ensuring graceful behavior across environments
 local atan2 = math.atan2 or function(y, x)
     -- Fallback for newer Lua versions where atan2 was removed
+    -- Handle nil values gracefully
+    if not y or not x then
+        return 0
+    end
     return math.atan(y, x)
 end
 Utils.atan2 = atan2
@@ -442,6 +446,9 @@ end
 -- Raw pcall wrapper for internal use
 function Utils.ErrorHandler.rawPcall(func, ...)
     return pcall(func, ...)
+end
+function Utils.ErrorHandler.handleModuleError(moduleName, err)
+    Utils.Logger.error("Module %s error: %s", moduleName, tostring(err))
 end
 
 function Utils.ErrorHandler.validateInput(value, expectedType, name)
