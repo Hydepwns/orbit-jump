@@ -5,33 +5,65 @@ local Camera = {}
 Camera.__index = Camera
 
 function Camera:new()
-    local self = setmetatable({}, Camera)
-    self.x = 0
-    self.y = 0
-    self.scale = 1
-    self.rotation = 0
+    local success, result = pcall(function()
+        local self = setmetatable({}, Camera)
+        self.x = 0
+        self.y = 0
+        self.scale = 1
+        self.rotation = 0
+        
+        -- Smooth follow parameters
+        self.smoothSpeed = 8
+        self.lookAheadFactor = 0.15
+        
+        -- Shake parameters
+        self.shakeIntensity = 0
+        self.shakeDuration = 0
+        self.enableShake = true
+        
+        -- Bounds (optional)
+        self.bounds = nil
+        
+        -- Screen dimensions cache - defer until needed
+        self.screenWidth = nil
+        self.screenHeight = nil
+        self._dimensionsInitialized = false
+        
+        return self
+    end)
     
-    -- Smooth follow parameters
-    self.smoothSpeed = 8
-    self.lookAheadFactor = 0.15
+    if not success then
+        print("Error creating camera: " .. tostring(result))
+        return nil
+    end
     
-    -- Shake parameters
-    self.shakeIntensity = 0
-    self.shakeDuration = 0
-    self.enableShake = true
-    
-    -- Bounds (optional)
-    self.bounds = nil
-    
-    -- Screen dimensions cache
-    self.screenWidth = love.graphics.getWidth()
-    self.screenHeight = love.graphics.getHeight()
-    
-    return self
+    return result
+end
+
+-- Initialize screen dimensions when needed
+function Camera:initDimensions()
+    if not self._dimensionsInitialized then
+        local screenWidth, screenHeight
+        if love and love.graphics then
+            screenWidth = love.graphics.getWidth()
+            screenHeight = love.graphics.getHeight()
+        else
+            -- Fallback values if LÖVE graphics not available
+            screenWidth = 800
+            screenHeight = 600
+        end
+        
+        self.screenWidth = screenWidth
+        self.screenHeight = screenHeight
+        self._dimensionsInitialized = true
+    end
 end
 
 function Camera:follow(target, dt)
     if not target then return end
+    
+    -- Ensure dimensions are initialized
+    self:initDimensions()
     
     -- Calculate target position with look-ahead based on velocity
     local targetX = target.x

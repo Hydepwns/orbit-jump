@@ -15,6 +15,7 @@
 --]]
 
 local Utils = require("src.utils.utils")
+local ErrorHandler = Utils.require("src.utils.error_handler")
 
 local SystemOrchestrator = {
     -- Systems organized by architectural responsibility
@@ -113,6 +114,9 @@ function SystemOrchestrator.register(name, system, config)
         table.sort(layer.systems, function(a, b)
             local sysA = SystemOrchestrator.systems[a]
             local sysB = SystemOrchestrator.systems[b]
+            if not sysA or not sysB then
+                return false  -- Keep original order if either system is missing
+            end
             return sysA.updatePriority < sysB.updatePriority
         end)
     else
@@ -203,16 +207,22 @@ function SystemOrchestrator.update(dt)
         for _, systemName in ipairs(layer.systems) do
             local sysData = SystemOrchestrator.systems[systemName]
             
-            if sysData.enabled and sysData.system.update then
+            if sysData and sysData.enabled and sysData.system.update then
                 if PerformanceMonitor then
                     -- Profile with educational insights
                     PerformanceMonitor.profile(systemName, function()
-                        sysData.system.update(dt)
+                        local success, err = ErrorHandler.safeCall(sysData.system.update, dt)
+                        if not success then
+                            Utils.Logger.error("System '%s' update error: %s", systemName, err)
+                        end
                     end)
                 else
                     -- Direct update without profiling
                     local startTime = love.timer.getTime()
-                    sysData.system.update(dt)
+                    local success, err = ErrorHandler.safeCall(sysData.system.update, dt)
+                    if not success then
+                        Utils.Logger.error("System '%s' update error: %s", systemName, err)
+                    end
                     sysData.performance.updateTime = love.timer.getTime() - startTime
                     sysData.performance.calls = sysData.performance.calls + 1
                 end
@@ -237,9 +247,12 @@ function SystemOrchestrator.draw()
             for _, systemName in ipairs(layer.systems) do
                 local sysData = SystemOrchestrator.systems[systemName]
                 
-                if sysData.enabled and sysData.system.draw then
+                if sysData and sysData.enabled and sysData.system.draw then
                     local startTime = love.timer.getTime()
-                    sysData.system.draw()
+                    local success, err = ErrorHandler.safeCall(sysData.system.draw)
+                    if not success then
+                        Utils.Logger.error("System '%s' draw error: %s", systemName, err)
+                    end
                     sysData.performance.drawTime = love.timer.getTime() - startTime
                 end
             end
@@ -263,6 +276,8 @@ function SystemOrchestrator.setEnabled(name, enabled)
     if sysData then
         sysData.enabled = enabled
         Utils.Logger.info("System '%s' %s", name, enabled and "enabled" or "disabled")
+    else
+        Utils.Logger.warn("System '%s' not found", name)
     end
 end
 
@@ -391,6 +406,100 @@ function SystemOrchestrator.registerOrbitJumpSystems()
         layer = "foundation", 
         purpose = "Persistent data management",
         priority = 10
+    })
+    
+    -- GameState System - Initialize game state and player
+    SystemOrchestrator.register("gameStateSystem", {
+        init = function()
+            Utils.Logger.info("Initializing game state system...")
+            local GameState = Utils.require("src.core.game_state")
+            local screenWidth, screenHeight = love.graphics.getDimensions()
+            local success = GameState.init(screenWidth, screenHeight)
+            if success then
+                Utils.Logger.info("Game state system initialized successfully")
+                return true
+            else
+                Utils.Logger.error("Game state system initialization failed")
+                return false
+            end
+        end,
+        update = function(dt)
+            -- GameState update logic
+            local GameState = Utils.require("src.core.game_state")
+            if GameState.update then
+                GameState.update(dt)
+            end
+            return true
+        end
+    }, {
+        layer = "foundation",
+        purpose = "Game state management and player initialization",
+        priority = 1
+    })
+    
+    -- Camera System - Initialize camera for the game
+    SystemOrchestrator.register("cameraSystem", {
+        init = function()
+            Utils.Logger.info("Initializing camera system...")
+            local Camera = Utils.require("src.core.camera")
+            if Camera then
+                local screenWidth, screenHeight = love.graphics.getDimensions()
+                local camera = Camera:new()
+                if camera then
+                    camera.screenWidth = screenWidth
+                    camera.screenHeight = screenHeight
+                    
+                    -- Initialize camera to center on screen (where player starts)
+                    camera.x = 0
+                    camera.y = 0
+                    
+                    Utils.Logger.info("Camera system initialized: %dx%d", screenWidth, screenHeight)
+                    
+                    -- Store camera in a global location that Game can access
+                    _G.GameCamera = camera
+                    return true
+                else
+                    Utils.Logger.error("Failed to create camera instance")
+                    return false
+                end
+            else
+                Utils.Logger.error("Camera module not available")
+                return false
+            end
+        end,
+        update = function(dt)
+            -- Camera update logic if needed
+            return true
+        end
+    }, {
+        layer = "foundation",
+        purpose = "Camera initialization and management",
+        priority = 5
+    })
+    
+    -- Renderer System - Initialize rendering system
+    SystemOrchestrator.register("rendererSystem", {
+        init = function()
+            Utils.Logger.info("Initializing renderer system...")
+            local Renderer = Utils.require("src.core.renderer")
+            local fonts = _G.GameFonts
+            if Renderer and Renderer.init and fonts then
+                Renderer.init(fonts)
+                Utils.Logger.info("Renderer system initialized successfully")
+                return true
+            else
+                Utils.Logger.error("Renderer module or fonts not available")
+                return false
+            end
+        end,
+        update = function(dt)
+            -- Renderer doesn't need update logic
+            return true
+        end
+    }, {
+        layer = "presentation",
+        purpose = "Rendering system initialization",
+        priority = 1
     })
     
     -- Gameplay Layer - Register systems that actually exist and have proper interfaces

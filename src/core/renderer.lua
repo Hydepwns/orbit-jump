@@ -228,7 +228,7 @@ function Renderer.drawPlanets(planets)
         
         -- Planet type indicator
         if planet.type and planet.discovered then
-            love.graphics.setFont(Renderer.fonts.light or love.graphics.getFont())
+            love.graphics.setFont((Renderer.fonts and Renderer.fonts.light) or love.graphics.getFont())
             if planet.type == "ice" then
                 Utils.setColor({0.6, 0.8, 1}, 0.8)
                 love.graphics.print("ICE", planet.x - 10, planet.y - 10)
@@ -458,7 +458,18 @@ end
 
 -- Mobile on-screen controls
 function Renderer.drawMobileControls(player, fonts)
-    -- Utils is already available from the top of the file
+    if not player then return end
+    
+    -- Safety check for fonts
+    if not fonts then
+        fonts = {
+            regular = love.graphics.getFont(),
+            bold = love.graphics.getFont(),
+            light = love.graphics.getFont(),
+            extraBold = love.graphics.getFont()
+        }
+    end
+    
     local isMobile = Utils.MobileInput.isMobile()
     
     if not isMobile then return end

@@ -125,21 +125,52 @@ function Game.initGraphics()
     local SPACE_BLACK = {0.05, 0.05, 0.1}  -- Slightly blue-shifted for warmth
     love.graphics.setBackgroundColor(SPACE_BLACK[1], SPACE_BLACK[2], SPACE_BLACK[3])
     
-    -- Adaptive Font Loading: Intelligent Typography with Graceful Degradation
-    local fontLoadSuccess, fontError = Utils.ErrorHandler.safeCall(function()
-        fonts.regular = love.graphics.newFont("assets/fonts/MonaspaceArgon-Regular.otf", 16)
+    -- Initialize typography system with intelligent fallback
+    local fonts = {
+        regular = nil,
+        bold = nil,
+        light = nil,
+        extraBold = nil
+    }
+    
+    -- Try to load custom fonts first
+    local fontError = nil
+    local success, regularFont = pcall(love.graphics.newFont, "assets/fonts/MonaspaceArgon-Regular.otf", 16)
+    if success then
+        fonts.regular = regularFont
         fonts.bold = love.graphics.newFont("assets/fonts/MonaspaceArgon-Bold.otf", 16)
         fonts.light = love.graphics.newFont("assets/fonts/MonaspaceArgon-Light.otf", 16)
         fonts.extraBold = love.graphics.newFont("assets/fonts/MonaspaceArgon-ExtraBold.otf", 24)
-    end)
-    
-    if not fontLoadSuccess then
-        Utils.Logger.warn("Custom fonts unavailable (%s) - Activating intelligent fallback system", tostring(fontError))
-        systemHealth.fontLoadFailed = true
-        Game.createIntelligentFontFallbacks()
-    else
         Utils.Logger.info("✅ Typography system loaded - MonaspaceArgon font family active")
+    else
+        fontError = regularFont
+        Utils.Logger.warn("Custom fonts unavailable (%s) - Activating intelligent fallback system", tostring(fontError))
+        
+        -- Fallback to system fonts with intelligent sizing
+        local fallbackError = nil
+        local success, fallbackFont = pcall(love.graphics.newFont, 16)
+        if success then
+            fonts.regular = love.graphics.newFont(16)     -- Base size
+            fonts.bold = love.graphics.newFont(18)        -- Slightly larger for emphasis
+            fonts.light = love.graphics.newFont(14)       -- Smaller for secondary info
+            fonts.extraBold = love.graphics.newFont(24)   -- Larger for headers
+            Utils.Logger.info("🎨 Intelligent font fallback system activated")
+        else
+            fallbackError = fallbackFont
+            Utils.Logger.warn("Even default font creation failed (%s) - Using system default", tostring(fallbackError))
+            
+            -- Last resort: use system default
+            local defaultFont = love.graphics.getFont()
+            fonts.regular = defaultFont
+            fonts.bold = defaultFont
+            fonts.light = defaultFont
+            fonts.extraBold = defaultFont
+            Utils.Logger.info("🎨 Intelligent font fallback system activated")
+        end
     end
+    
+    -- Make fonts available globally for SystemOrchestrator
+    _G.GameFonts = fonts
     
     -- Set the primary interface font
     love.graphics.setFont(fonts.regular)
@@ -153,9 +184,34 @@ function Game.initSystems()
     -- GameState, Renderer, and Camera are already loaded at the top
     
     -- Initialize camera instance first
+    Utils.Logger.info("Attempting to create camera...")
+    Utils.Logger.info("Camera module available: %s", Camera and "yes" or "no")
+    if Camera then
+        Utils.Logger.info("Camera.new function available: %s", Camera.new and "yes" or "no")
+        -- Test camera creation
+        local testCamera = Camera:new()
+        Utils.Logger.info("Test camera creation: %s", testCamera and "success" or "failed")
+        if testCamera then
+            Utils.Logger.info("Test camera properties: x=%f, y=%f, scale=%f", testCamera.x, testCamera.y, testCamera.scale)
+        end
+    end
     Game.camera = Camera:new()
+    if not Game.camera then
+        Utils.Logger.error("Failed to create camera instance")
+        return
+    end
+    Utils.Logger.info("Camera created successfully, setting dimensions...")
     Game.camera.screenWidth = screenWidth
     Game.camera.screenHeight = screenHeight
+    
+    Utils.Logger.info("Camera initialized: %dx%d", screenWidth, screenHeight)
+    
+    -- Verify camera is still available after initialization
+    if not Game.camera then
+        Utils.Logger.error("Camera became nil immediately after initialization!")
+    else
+        Utils.Logger.info("Camera verification successful - camera is available")
+    end
     
     GameState.init(screenWidth, screenHeight)
     GameState.camera = Game.camera  -- Share camera instance
@@ -231,6 +287,11 @@ function Game.update(dt)
         Game.updateManualFallback(dt)
     end
     
+    -- Get camera from SystemOrchestrator if available
+    if _G.GameCamera then
+        Game.camera = _G.GameCamera
+    end
+    
     -- Frame Performance Analysis: Learn and adapt
     local frameEnd = love.timer.getTime()
     Game.updatePerformanceMetrics(frameEnd - frameStart)
@@ -253,13 +314,20 @@ function Game.draw()
         
         -- Use culling for performance
         -- PerformanceSystem is already loaded at the top
-        local visiblePlanets = PerformanceSystem.cullPlanets(GameState.getPlanets(), Game.camera)
-        local visibleRings = PerformanceSystem.cullRings(GameState.getRings(), Game.camera)
-        local visibleParticles = PerformanceSystem.cullParticles(GameState.getParticles(), Game.camera)
-        
-        Renderer.drawPlanets(visiblePlanets)
-        Renderer.drawRings(visibleRings)
-        Renderer.drawParticles(visibleParticles)
+        if Game.camera then
+            local visiblePlanets = PerformanceSystem.cullPlanets(GameState.getPlanets(), Game.camera)
+            local visibleRings = PerformanceSystem.cullRings(GameState.getRings(), Game.camera)
+            local visibleParticles = PerformanceSystem.cullParticles(GameState.getParticles(), Game.camera)
+            
+            Renderer.drawPlanets(visiblePlanets)
+            Renderer.drawRings(visibleRings)
+            Renderer.drawParticles(visibleParticles)
+        else
+            -- Fallback: draw all objects without culling if camera is not available
+            Renderer.drawPlanets(GameState.getPlanets())
+            Renderer.drawRings(GameState.getRings())
+            Renderer.drawParticles(GameState.getParticles())
+        end
         Renderer.drawPlayer(player, player.isDashing)
         
         -- Draw pull indicator if dragging
@@ -284,7 +352,7 @@ function Game.draw()
     
     -- Draw mobile controls if needed
     if Utils.MobileInput.isMobile() then
-        Renderer.drawMobileControls(GameState.player, fonts)
+        Renderer.drawMobileControls(GameState.player, _G.GameFonts)
     end
 end
 function Game.handleKeyPress(key)
