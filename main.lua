@@ -29,6 +29,10 @@ function love.mousereleased(x, y, button)
   Game.handleMouseRelease(x, y, button)
 end
 
+function love.wheelmoved(x, y)
+  Game.handleWheelMoved(x, y)
+end
+
 function love.quit()
   Game.quit()
 end
