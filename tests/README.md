@@ -22,6 +22,17 @@ tests/
 │   ├── utils_tests.lua
 │   ├── camera_tests.lua
 │   └── collision_tests.lua
+├── ui/                          # UI and interface tests
+│   ├── layout/                  # UI layout and positioning tests
+│   │   ├── ui_layout_tests.lua          # Basic layout validation
+│   │   ├── ui_layout_tests_enhanced.lua # Advanced testing framework
+│   │   └── README.md                    # Layout testing documentation
+│   ├── test_ui_system.lua
+│   ├── test_pause_menu.lua
+│   ├── test_settings_menu.lua
+│   ├── test_tutorial_system.lua
+│   ├── test_upgrade_system.lua
+│   └── test_achievement_system.lua
 ├── integration/                 # Integration tests (end-to-end flows)
 │   └── (future integration tests)
 └── performance/                 # Performance and benchmark tests
