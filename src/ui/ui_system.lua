@@ -2,6 +2,16 @@
 -- Handles progression display, upgrade menus, and blockchain status
 
 local Utils = require("src.utils.utils")
+-- Try to load the enhanced debug system, fall back to basic version if needed
+local UIDebug = Utils.safeRequire("src.ui.debug.ui_debug_enhanced") or 
+                Utils.safeRequire("src.ui.debug.ui_debug") or 
+                {
+                    init = function() end,
+                    draw = function() end,
+                    keypressed = function() return false end,
+                    updatePerformanceMetrics = function() end,
+                    registerElement = function() end
+                }
 local UISystem = {}
 
 -- UI state
@@ -68,16 +78,25 @@ function UISystem.updateResponsiveLayout()
     -- Store scale for use in drawing
     UISystem.uiScale = uiScale
     UISystem.isMobile = isMobile
+    
+    -- Register elements with debug system
+    for name, element in pairs(UISystem.elements) do
+        UIDebug.registerElement("UISystem." .. name, element)
+    end
 end
 
 function UISystem.init(fonts)
     UISystem.fonts = fonts
     UISystem.updateResponsiveLayout()
+    UIDebug.init()
 end
 
 function UISystem.update(dt, progressionSystem, blockchainIntegration)
     UISystem.progressionSystem = progressionSystem
     UISystem.blockchainIntegration = blockchainIntegration
+    
+    -- Update performance metrics for debug system
+    UIDebug.updatePerformanceMetrics(dt)
     
     -- Update responsive layout if screen size changed
     local currentWidth, currentHeight = 800, 600 -- Default values
@@ -108,6 +127,9 @@ function UISystem.draw()
             UISystem.drawBlockchainUI()
         end
     end
+    
+    -- Draw debug visualization last (on top)
+    UIDebug.draw()
 end
 
 function UISystem.drawGameUI()
@@ -502,6 +524,11 @@ end
 
 -- Input handling
 function UISystem.keypressed(key)
+    -- Handle debug system keys first
+    if UIDebug.keypressed(key) then
+        return true
+    end
+    
     if UISystem.currentScreen == "menu" then
         if key == "up" then
             UISystem.menuSelection = math.max(1, UISystem.menuSelection - 1)
