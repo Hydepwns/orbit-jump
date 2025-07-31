@@ -313,17 +313,22 @@ function PlayerMovement.calculateAdaptiveDrag(profile)
     
     local baseDrag = AdaptivePhysics.baseSpaceDrag
     
-    -- Factor 1: Skill Level
-    local skillFactor = (1.0 - profile.skillLevel) * 0.005  -- Up to 0.5% drag increase
+    -- Factor 1: Skill Level (access from metrics)
+    local skillLevel = profile.metrics and profile.metrics.skillLevel or 0.5  -- Default to medium skill
+    local skillFactor = (1.0 - skillLevel) * 0.005  -- Up to 0.5% drag increase
     
-    -- Factor 2: Risk Tolerance  
-    local riskFactor = (1.0 - profile.riskTolerance) * 0.003  -- Up to 0.3% drag increase
+    -- Factor 2: Risk Tolerance (not implemented yet, default to neutral)
+    local riskTolerance = profile.metrics and profile.metrics.riskTolerance or 0.5
+    local riskFactor = (1.0 - riskTolerance) * 0.003  -- Up to 0.3% drag increase
     
-    -- Factor 3: Current Mood
+    -- Factor 3: Current Mood (check if emotional insights exist)
     local moodFactor = 0
-    if profile.currentMood == "frustrated" then
+    local currentMood = profile.insights and profile.insights.emotional and 
+                       profile.insights.emotional[1] and profile.insights.emotional[1].currentMood
+    
+    if currentMood == "frustrated" then
         moodFactor = 0.002  -- More drag when frustrated = easier control
-    elseif profile.currentMood == "confident" then
+    elseif currentMood == "confident" then
         moodFactor = -0.001  -- Less drag when confident = more expression
     end
     
@@ -343,24 +348,30 @@ function PlayerMovement.calculateAdaptiveCameraSpeed(profile)
     local baseCameraSpeed = AdaptivePhysics.baseCameraResponse
     
     -- Factor 1: Skill Level
-    local skillFactor = profile.skillLevel * 0.5  -- Up to 0.5 speed increase
+    local skillLevel = profile.metrics and profile.metrics.skillLevel or 0.5  -- Default to medium skill
+    local skillFactor = skillLevel * 0.5  -- Up to 0.5 speed increase
     
     -- Factor 2: Current Mood
     local moodFactor = 0
-    if profile.currentMood == "frustrated" then
+    local currentMood = profile.insights and profile.insights.emotional and 
+                       profile.insights.emotional[1] and profile.insights.emotional[1].currentMood
+    
+    if currentMood == "frustrated" then
         moodFactor = -0.3  -- Slower camera when frustrated = less chaos
-    elseif profile.currentMood == "confident" then
+    elseif currentMood == "confident" then
         moodFactor = 0.2   -- Faster camera when confident = more dynamic
-    elseif profile.currentMood == "focused" then
+    elseif currentMood == "focused" then
         moodFactor = 0.1   -- Slightly faster when focused
     end
     
     -- Factor 3: Movement Style
     local movementFactor = 0
-    if profile.movementStyle == "bold_expert" then
-        movementFactor = 0.3  -- Fast camera for bold experts
-    elseif profile.movementStyle == "cautious_beginner" then
-        movementFactor = -0.2  -- Slower camera for cautious beginners
+    local movementStyle = profile.playstyle and profile.playstyle.movement
+    
+    if movementStyle == "adventurous" then
+        movementFactor = 0.3  -- Fast camera for adventurous players
+    elseif movementStyle == "methodical" then
+        movementFactor = -0.2  -- Slower camera for methodical players
     end
     
     -- Combine factors (keep within reasonable bounds)

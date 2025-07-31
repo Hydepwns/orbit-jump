@@ -257,12 +257,14 @@ end
 function WorldGenerator.generateInitialWorld()
     local planets = {}
     
-    -- Create starting planet at center
-    table.insert(planets, WorldGenerator.generatePlanet(0, 0, "standard"))
+    -- Create starting planet at center (discovered by default)
+    local startingPlanet = WorldGenerator.generatePlanet(0, 0, "standard")
+    startingPlanet.discovered = true  -- Player starts here, so it's already discovered
+    table.insert(planets, startingPlanet)
     
     -- Create a few nearby planets in a circle
     local planetCount = 5
-    local radius = 500
+    local radius = 400  -- Closer to starting planet
     for i = 1, planetCount do
         local angle = (i / planetCount) * math.pi * 2
         local x = math.cos(angle) * radius
@@ -272,7 +274,14 @@ function WorldGenerator.generateInitialWorld()
         local types = {"standard", "ice", "lava", "tech"}
         local planetType = types[math.random(#types)]
         
-        table.insert(planets, WorldGenerator.generatePlanet(x, y, planetType))
+        local planet = WorldGenerator.generatePlanet(x, y, planetType) 
+        
+        -- Make the first nearby planet discovered so it's more visible
+        if i == 1 then
+            planet.discovered = true
+        end
+        
+        table.insert(planets, planet)
     end
     
     return planets
