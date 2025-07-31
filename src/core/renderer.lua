@@ -207,13 +207,13 @@ function Renderer.drawPlanets(planets)
         if planet.discovered then
             Utils.drawCircle(planet.x, planet.y, planet.radius, planetColor)
         else
-            -- Undiscovered planets are dimmer
-            local dimColor = {planetColor[1] * 0.5, planetColor[2] * 0.5, planetColor[3] * 0.5}
+            -- Undiscovered planets are slightly dimmer but still visible
+            local dimColor = {planetColor[1] * 0.7, planetColor[2] * 0.7, planetColor[3] * 0.7}
             Utils.drawCircle(planet.x, planet.y, planet.radius, dimColor)
             
-            -- Add mysterious glow
-            Utils.setColor(Utils.colors.white, 0.1)
-            love.graphics.circle("line", planet.x, planet.y, planet.radius + 10)
+            -- Add mysterious glow that's more visible
+            Utils.setColor(Utils.colors.white, 0.3)
+            love.graphics.circle("line", planet.x, planet.y, planet.radius + 5)
         end
         
         -- Draw rotation indicator

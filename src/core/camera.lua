@@ -1,6 +1,7 @@
 -- Camera system for Orbit Jump
 -- Smooth follow camera with zoom and shake support
 
+local Utils = require("src.utils.utils")
 local Camera = {}
 Camera.__index = Camera
 
@@ -20,6 +21,13 @@ function Camera:new()
         self.shakeIntensity = 0
         self.shakeDuration = 0
         self.enableShake = true
+        
+        -- Zoom parameters
+        self.minZoom = 0.3
+        self.maxZoom = 3.0
+        self.zoomSpeed = 0.1
+        self.targetScale = 1
+        self.zoomSmoothSpeed = 8
         
         -- Bounds (optional)
         self.bounds = nil
@@ -89,6 +97,13 @@ function Camera:follow(target, dt)
         self.y = math.max(self.bounds.minY, math.min(self.bounds.maxY - self.screenHeight / self.scale, self.y))
     end
     
+    -- Update smooth zoom
+    if math.abs(self.targetScale - self.scale) > 0.01 then
+        self.scale = self.scale + (self.targetScale - self.scale) * self.zoomSmoothSpeed * dt
+    else
+        self.scale = self.targetScale
+    end
+    
     -- Update shake
     if self.shakeDuration > 0 then
         self.shakeDuration = self.shakeDuration - dt
@@ -132,15 +147,29 @@ function Camera:shake(intensity, duration)
 end
 
 function Camera:setScale(scale)
-    self.scale = math.max(0.1, math.min(5, scale))
+    self.targetScale = math.max(self.minZoom, math.min(self.maxZoom, scale))
+end
+
+function Camera:zoom(factor)
+    -- Positive factor zooms in, negative zooms out
+    local newScale = self.targetScale * (1 + factor)
+    self:setScale(newScale)
 end
 
 function Camera:zoomIn(factor)
-    self:setScale(self.scale * (1 + factor))
+    factor = factor or self.zoomSpeed
+    self:zoom(factor)
 end
 
 function Camera:zoomOut(factor)
-    self:setScale(self.scale * (1 - factor))
+    factor = factor or self.zoomSpeed
+    self:zoom(-factor)
+end
+
+function Camera:handleWheelMoved(x, y)
+    -- y > 0 means scroll up (zoom in), y < 0 means scroll down (zoom out)
+    local zoomFactor = y * self.zoomSpeed
+    self:zoom(zoomFactor)
 end
 
 function Camera:worldToScreen(worldX, worldY)

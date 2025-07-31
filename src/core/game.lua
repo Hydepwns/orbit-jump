@@ -371,6 +371,20 @@ function Game.handleKeyPress(key)
         return
     end
     
+    -- Handle camera zoom keys
+    if _G.GameCamera then
+        if key == "=" or key == "+" then
+            _G.GameCamera:zoomIn()
+            return
+        elseif key == "-" then
+            _G.GameCamera:zoomOut()
+            return
+        elseif key == "0" then
+            _G.GameCamera:setScale(1) -- Reset zoom
+            return
+        end
+    end
+    
     GameState.handleKeyPress(key)
 end
 function Game.handleMousePress(x, y, button)
@@ -427,6 +441,14 @@ function Game.handleMouseRelease(x, y, button)
     
     GameState.handleMouseRelease(x, y, button)
 end
+
+function Game.handleWheelMoved(x, y)
+    -- Handle scroll wheel for camera zoom
+    if _G.GameCamera and _G.GameCamera.handleWheelMoved then
+        _G.GameCamera:handleWheelMoved(x, y)
+    end
+end
+
 function Game.quit()
     --[[
         Graceful Shutdown: Ending with Dignity

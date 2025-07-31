@@ -437,6 +437,62 @@ function SystemOrchestrator.registerOrbitJumpSystems()
         priority = 1
     })
     
+    -- World Generator System - Generate initial world with planets
+    SystemOrchestrator.register("worldGeneratorSystem", {
+        init = function()
+            Utils.Logger.info("Initializing world generation system...")
+            local WorldGenerator = Utils.require("src.systems.world_generator")
+            local GameState = Utils.require("src.core.game_state")
+            
+            if WorldGenerator and GameState then
+                -- Initialize world generator
+                WorldGenerator.init()
+                
+                -- Generate initial world with planets
+                local initialPlanets = WorldGenerator.generateInitialWorld()
+                
+                if initialPlanets and #initialPlanets > 0 then
+                    -- Set planets in game state
+                    GameState.setPlanets(initialPlanets)
+                    Utils.Logger.info("World generated successfully with %d planets", #initialPlanets)
+                    return true
+                else
+                    Utils.Logger.error("Failed to generate initial world")
+                    return false
+                end
+            else
+                Utils.Logger.error("Could not load WorldGenerator or GameState")
+                return false
+            end
+        end,
+        update = function(dt)
+            -- Dynamic world generation based on player position
+            local GameState = Utils.require("src.core.game_state")
+            local WorldGenerator = Utils.require("src.systems.world_generator")
+            
+            if GameState and WorldGenerator and GameState.player then
+                -- Generate new sectors around player if needed
+                local newPlanets = WorldGenerator.generateAroundPosition(
+                    GameState.player.x, 
+                    GameState.player.y, 
+                    GameState.objects.planets
+                )
+                
+                if newPlanets and #newPlanets > 0 then
+                    -- Add new planets to existing ones
+                    for _, planet in ipairs(newPlanets) do
+                        table.insert(GameState.objects.planets, planet)
+                    end
+                end
+            end
+            return true
+        end
+    }, {
+        layer = "foundation",
+        purpose = "Generate and manage the game world and planets",
+        priority = 2  -- After game state but before other systems
+    })
+    
     -- Camera System - Initialize camera for the game
     SystemOrchestrator.register("cameraSystem", {
         init = function()
@@ -468,7 +524,13 @@ function SystemOrchestrator.registerOrbitJumpSystems()
             end
         end,
         update = function(dt)
-            -- Camera update logic if needed
+            -- Update camera following and zoom interpolation
+            if _G.GameCamera then
+                local GameState = Utils.require("src.core.game_state")
+                if GameState and GameState.player then
+                    _G.GameCamera:follow(GameState.player, dt)
+                end
+            end
             return true
         end
     }, {
