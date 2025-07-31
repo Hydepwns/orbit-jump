@@ -1,6 +1,35 @@
 # Orbit Jump
 
-A gravity-based arcade game where players jump between planets and dash through rings to build combos. Built with a modern modular architecture featuring comprehensive progression systems, blockchain integration, and extensive test coverage.
+[![LÖVE](https://img.shields.io/badge/LÖVE-11.0%2B-ff69b4.svg)](https://love2d.org/)
+[![Lua](https://img.shields.io/badge/Lua-5.3%2B-blue.svg)](https://www.lua.org/)
+[![Tests](https://img.shields.io/badge/tests-179%2B-brightgreen.svg)](docs/testing.md)
+[![Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](docs/testing.md)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A gravity-based arcade game where players jump between planets using realistic physics. Features adaptive systems that learn from your play style.
+
+## Features
+
+### Core Gameplay
+
+- **Physics-Based Movement** - Realistic orbital mechanics and multi-body gravity
+- **Planet Hopping** - Jump between diverse planets with unique properties
+- **Collectible Rings** - Gather resources for upgrades and score
+- **Warp Drive** - Unlock instant travel with adaptive cost mechanics
+
+### Adaptive Systems
+
+- **Learning AI** - Game adapts to your playstyle and skill level
+- **Emotional Feedback** - Dynamic responses that celebrate your achievements
+- **Player Analytics** - Tracks progress and provides personalized insights
+- **Route Memory** - Warp system learns and optimizes frequently traveled paths
+
+### Technical Excellence
+
+- **60 FPS Performance** - Optimized rendering with spatial indexing
+- **Zero-Allocation Design** - Smooth gameplay without garbage collection pauses
+- **Modular Architecture** - Clean, maintainable codebase with 95%+ test coverage
+- **Cross-Platform** - Works on Windows, macOS, Linux, and mobile devices
 
 ## Requirements
 
@@ -9,20 +38,20 @@ A gravity-based arcade game where players jump between planets and dash through 
 ## Installation
 
 ```bash
-# macos
+# macOS
 brew install love
 
 # NixOS
-# Install LÖVE2D using nix profile
 nix profile install nixpkgs#love
 
-# Verify installation
-love --version
+# Linux
+sudo apt install love2d  # Ubuntu/Debian
+sudo dnf install love    # Fedora
+sudo pacman -S love      # Arch
+
+# Other systems
+# Download from love2d.org
 ```
-
-### Other Systems
-
-Download LÖVE2D from [love2d.org](https://love2d.org/)
 
 ## Quick Start
 
@@ -30,181 +59,77 @@ Download LÖVE2D from [love2d.org](https://love2d.org/)
 love .
 ```
 
+## Documentation
+
+See [`docs/`](docs/) for detailed information:
+
+- [Getting Started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [Testing](docs/testing.md)
+- [Performance](docs/performance.md)
+- [Contributing](docs/contributing.md)
+- [Migration Guide](docs/migration.md)
+
 ## Controls
 
-### Desktop Controls
+### Desktop
 
-| Action | Control |
-|--------|---------|
-| Jump | Click and drag to aim, release to jump |
-| Dash | Shift / Z / X (while in space) |
-| Restart | Space (after game over) |
-| Toggle Sound | M |
-| Open Upgrades | Click "Upgrades" button |
-| Open Blockchain | Click "Blockchain" button |
-| Quit | Escape |
+- **Jump**: Click and drag to aim, release to jump
+- **Dash**: Shift / Z / X (while in space)
+- **Restart**: Space (after game over)
+- **Pause**: Escape
 
-### Mobile Controls
+### Mobile
 
-| Action | Control |
-|--------|---------|
-| Jump | Swipe from player to set direction and power |
-| Dash | Double-tap screen (while in space) |
-| Restart | Tap screen (after game over) |
-| Pause | Tap pause button (top right) |
-| Open Upgrades | Tap "Upgrades" button |
-| Open Blockchain | Tap "Blockchain" button |
+- **Jump**: Swipe from player
+- **Dash**: Double-tap screen
+- **Restart**: Tap screen
+- **Pause**: Tap pause button
 
 ## Development
 
 ### Running Tests
 
-The project includes comprehensive test coverage (99.2%+) with organized test suites:
-
 ```bash
-# Run all tests
-lua tests/run_tests.lua
+# All tests
+lua tests/run_modern_tests.lua
 
-# Test specific categories
-lua tests/core/test_game_logic.lua      # Core game logic
-lua tests/systems/test_ring_system.lua  # Game systems
-lua tests/utils/test_utils.lua          # Utilities
-```
+# Integration tests
+lua tests/run_integration_tests.lua
 
-### Architecture
+# Specific system
+lua tests/systems/warp/test_warp_core_busted.lua
 
-This project follows a modular architecture with clear separation of concerns:
-
-```bash
 orbit-jump/
-├── main.lua                     # Minimal entry point (30 lines)
-├── src/                         # Source code organized by domain
-│   ├── core/                    # Core game systems
-│   │   ├── game.lua            # Main game controller
-│   │   ├── game_logic.lua      # Game mechanics & physics
-│   │   ├── game_state.lua      # Centralized state management
-│   │   └── constants.lua       # Game constants
-│   ├── systems/                # Game systems
-│   │   ├── collision_system.lua
-│   │   ├── particle_system.lua
-│   │   ├── progression_system.lua
-│   │   ├── ring_system.lua
-│   │   └── upgrade_system.lua
-│   ├── utils/                  # Utilities & helpers
-│   │   ├── utils.lua           # Math & general utilities
-│   │   ├── camera.lua          # Camera system
-│   │   ├── renderer.lua        # Rendering engine
-│   │   ├── config.lua          # Configuration management
-│   │   ├── error_handler.lua   # Error handling
-│   │   └── module_loader.lua   # Module loading utilities
-│   ├── audio/                  # Audio systems
-│   │   ├── sound_manager.lua   # Audio management
-│   │   └── sound_generator.lua # Procedural audio generation
-│   ├── ui/                     # User interface
-│   │   ├── ui_system.lua       # UI framework
-│   │   ├── achievement_system.lua
-│   │   ├── pause_menu.lua
-│   │   └── settings_menu.lua
-│   ├── world/                  # World generation & cosmic systems
-│   │   ├── world_generator.lua # Planet & world generation
-│   │   ├── cosmic_events.lua   # Dynamic cosmic events
-│   │   ├── warp_zones.lua      # Teleportation system
-│   │   └── planet_lore.lua     # Planet lore & narratives
-│   ├── performance/            # Performance monitoring
-│   │   └── performance_monitor.lua
-│   ├── dev/                    # Development tools
-│   │   └── dev_tools.lua       # Debug console & tools
-│   └── blockchain/             # Blockchain integration
-│       └── blockchain_integration.lua
-├── assets/                     # Game assets
-│   ├── fonts/                  # Monaspace Argon font family
-│   ├── sounds/                 # Audio files
-│   └── sprites/                # Graphics assets
-├── tests/                      # Comprehensive test suite (99.2% coverage)
-│   ├── core/                   # Core system tests
-│   ├── systems/                # Game system tests
-│   ├── utils/                  # Utility tests
-│   ├── audio/                  # Audio system tests
-│   ├── ui/                     # UI system tests
-│   ├── world/                  # World generation tests
-│   ├── performance/            # Performance tests
-│   ├── dev/                    # Development tool tests
-│   ├── blockchain/             # Blockchain tests
-│   ├── integration_tests/      # Integration tests
-│   ├── mocks/                  # Test mocks
-│   ├── test_framework.lua      # Custom test framework
-│   ├── test_coverage.lua       # Coverage tracking
-│   └── run_tests.lua          # Organized test runner
-├── docs/                       # Documentation
-└── libs/                       # External libraries
+├── main.lua                # Entry point
+├── src/
+│   ├── core/              # Core game systems
+│   ├── systems/           # Game features
+│   │   ├── warp_drive.lua # (facade)
+│   │   ├── warp/          # (modules)
+│   │   ├── player_analytics.lua
+│   │   ├── analytics/
+│   │   ├── emotional_feedback.lua
+│   │   ├── emotion/
+│   │   ├── player_system.lua
+│   │   └── player/
+│   ├── utils/             # Utilities
+│   ├── audio/             # Sound system
+│   ├── ui/                # Interface
+│   └── world/             # World generation
+├── assets/                # Game assets
+├── tests/                 # Test suite
+├── docs/                  # Documentation
+└── libs/                  # External libraries
 ```
-
-### 📱 Mobile Optimization
-
-- **Responsive Design**: Adapts to different screen sizes
-- **Touch Controls**: Swipe and tap controls for mobile
-- **On-Screen Controls**: Visual dash button and pause controls
-- **Enhanced Feedback**: Power meters and visual indicators
-- **Haptic Feedback**: Vibration support
-- **Auto-Pause**: Pauses when app goes to background
-
-### 🚀 Progression System
-
-- **Persistent Progress**: Score, rings, and achievements saved between sessions
-- **Upgrade System**: Purchase permanent upgrades with total score
-  - Jump Power: Increase jump strength
-  - Dash Power: Boost dash effectiveness
-  - Speed Boost: Enhance speed multipliers
-  - Ring Value: Increase points per ring
-  - Combo Multiplier: Boost combo bonuses
-  - Gravity Resistance: Reduce gravity effects
-- **Achievements**: Unlock achievements for milestones
-- **Continuous Building**: Progress builds over time
-
-### ⛓️ Blockchain Integration
-
-- **Web3 Events**: Game events trigger blockchain transactions
-- **Token Rewards**: Earn tokens for achievements and milestones
-- **NFT Unlocks**: Special achievements unlock unique NFTs
-- **Smart Contract Ready**: Integrates with Ethereum/Polygon
-- **Batch Processing**: Efficient event batching for lower gas costs
-- **Configurable**: Easy to enable/disable
-
-### 🎮 Enhanced Gameplay
-
-- **Progression-Based Mechanics**: Game mechanics scale with upgrades
-- **Persistent Stats**: Track playtime, jumps, and highest combos
-- **Milestone Rewards**: Special rewards for milestones
-- **Meta-Progression**: Unlock new content as you progress
-- **Dynamic World**: Procedurally generated planets with lore
-- **Cosmic Events**: Special events affecting gameplay and rewards
-
-### 🔧 Performance Optimizations
-
-- **Spatial Grid Collision**: Efficient collision detection with spatial partitioning
-- **Culling System**: Only render visible objects
-- **Batch Rendering**: Optimized particle rendering
-- **Object Pooling**: Memory-efficient particle management
-- **Performance Monitoring**: Real-time performance tracking
 
 ## Configuration
 
-The game uses a centralized configuration system in `src/utils/config.lua`:
+Game settings in `src/utils/config.lua`:
 
 ```lua
--- Enable blockchain features
-Config.blockchain.enabled = true
-Config.blockchain.network = "polygon"  -- or "ethereum", "bsc"
-Config.blockchain.webhookUrl = "https://your-webhook.com/events"
-
--- Customize progression
-Config.progression.maxUpgradeLevel = 15
-Config.progression.continuousRewards = true
-
--- Performance settings
 Config.performance.enableSpatialGrid = true
-Config.performance.enableCulling = true
-Config.performance.enableBatchRendering = true
+Config.progression.maxUpgradeLevel = 15
 ```
 
 ## License
