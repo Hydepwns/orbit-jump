@@ -14,6 +14,15 @@ local allPassed = true
 -- Each entry can specify whether to use mocks
 local testFiles = {
     {file = "tests/core/test_game_logic_busted.lua", useMocks = false},
+    {file = "tests/systems/warp/test_warp_core_busted.lua", useMocks = true},
+    {file = "tests/systems/warp/test_warp_energy_simple.lua", useMocks = true},
+    {file = "tests/systems/warp/test_warp_memory_busted.lua", useMocks = true},
+    {file = "tests/systems/warp/test_warp_navigation_simple.lua", useMocks = true},
+    {file = "tests/systems/analytics/test_behavior_tracker_busted.lua", useMocks = true},
+    {file = "tests/systems/analytics/test_pattern_analyzer_busted.lua", useMocks = true},
+    {file = "tests/systems/analytics/test_insight_generator_busted.lua", useMocks = true},
+    {file = "tests/systems/emotion/test_emotion_simple.lua", useMocks = true},
+    {file = "tests/systems/player/test_player_simple.lua", useMocks = true},
     -- Add more test files here as we convert them
 }
 

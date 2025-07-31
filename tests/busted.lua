@@ -29,13 +29,25 @@ local function printColored(color, text)
     Utils.Logger.output(colors[color] .. text .. colors.reset)
 end
 
--- Test assertions
+-- Comprehensive Test Assertions (Enhanced from ModernTestFramework)
 local assert = {}
 
+-- Basic assertions
 function assert.equals(expected, actual, message)
     if expected ~= actual then
         error(string.format("%s\nExpected: %s\nActual: %s", 
             message or "Values not equal", tostring(expected), tostring(actual)), 2)
+    end
+end
+
+function assert.equal(expected, actual, message)
+    return assert.equals(expected, actual, message)
+end
+
+function assert.not_equal(expected, actual, message)
+    if expected == actual then
+        error(string.format("Assertion failed: expected not %s, got %s. %s", 
+            tostring(expected), tostring(actual), message or ""), 2)
     end
 end
 
@@ -63,6 +75,86 @@ function assert.is_not_nil(value, message)
     end
 end
 
+-- Type assertions
+function assert.is_type(expectedType, value, message)
+    if type(value) ~= expectedType then
+        error(string.format("Assertion failed: expected type %s, got %s. %s", 
+            expectedType, type(value), message or ""), 2)
+    end
+end
+
+-- Numeric comparisons
+function assert.greater_than(expected, actual, message)
+    if actual <= expected then
+        error(string.format("Assertion failed: expected > %s, got %s. %s", 
+            tostring(expected), tostring(actual), message or ""), 2)
+    end
+end
+
+function assert.less_than(expected, actual, message)
+    if actual >= expected then
+        error(string.format("Assertion failed: expected < %s, got %s. %s", 
+            tostring(expected), tostring(actual), message or ""), 2)
+    end
+end
+
+function assert.greater_or_equal(expected, actual, message)
+    if actual < expected then
+        error(string.format("Assertion failed: expected >= %s, got %s. %s", 
+            tostring(expected), tostring(actual), message or ""), 2)
+    end
+end
+
+function assert.less_or_equal(expected, actual, message)
+    if actual > expected then
+        error(string.format("Assertion failed: expected <= %s, got %s. %s", 
+            tostring(expected), tostring(actual), message or ""), 2)
+    end
+end
+
+-- Approximate equality for floating point
+function assert.near(expected, actual, tolerance, message)
+    tolerance = tolerance or 0.001
+    if math.abs(expected - actual) > tolerance then
+        error(string.format("Assertion failed: expected %f ± %f, got %f. %s", 
+            expected, tolerance, actual, message or ""), 2)
+    end
+end
+
+-- String assertions
+function assert.matches(actual, pattern, message)
+    if not string.match(actual, pattern) then
+        error(string.format("Assertion failed: expected '%s' to match pattern '%s'. %s", 
+            actual, pattern, message or ""), 2)
+    end
+end
+
+function assert.contains(haystack, needle, message)
+    if not string.find(haystack, needle, 1, true) then
+        error(string.format("Assertion failed: expected '%s' to contain '%s'. %s", 
+            haystack, needle, message or ""), 2)
+    end
+end
+
+-- Collection assertions
+function assert.is_empty(collection, message)
+    if type(collection) == "table" then
+        for k, v in pairs(collection) do
+            error(string.format("Assertion failed: expected empty table, but found key %s with value %s. %s", 
+                tostring(k), tostring(v), message or ""), 2)
+        end
+    elseif type(collection) == "string" then
+        if #collection > 0 then
+            error(string.format("Assertion failed: expected empty string, got '%s'. %s", 
+                collection, message or ""), 2)
+        end
+    else
+        error(string.format("Assertion failed: cannot check emptiness of type %s. %s", 
+            type(collection), message or ""), 2)
+    end
+end
+
+-- Error testing
 function assert.has_error(fn, message)
     local success = Utils.ErrorHandler.safeCall(fn)
     if success then
@@ -70,8 +162,15 @@ function assert.has_error(fn, message)
     end
 end
 
+function assert.has_no_error(fn, message)
+    local success, err = Utils.ErrorHandler.safeCall(fn)
+    if not success then
+        error(string.format("%s\nUnexpected error: %s", message or "Expected no error", err), 2)
+    end
+end
+
+-- Deep table comparison
 function assert.are_same(expected, actual, message)
-    -- Deep comparison for tables
     local function deepEquals(a, b)
         if type(a) ~= type(b) then return false end
         if type(a) ~= "table" then return a == b end
@@ -89,6 +188,11 @@ function assert.are_same(expected, actual, message)
         error(string.format("%s\nExpected: %s\nActual: %s", 
             message or "Tables not equal", tostring(expected), tostring(actual)), 2)
     end
+end
+
+-- Table structure assertions
+function assert.same(expected, actual, message)
+    return assert.are_same(expected, actual, message)
 end
 
 -- Spy/Mock functionality
@@ -171,53 +275,113 @@ function after_each(fn)
     currentSuite.afterEach = fn
 end
 
--- Test runner
-local function runTest(testName, testFn)
+-- Enhanced test runner with setup/teardown support
+local function runTest(testName, testFn, suite, testContext)
     local startTime = os.clock()
-    local success = Utils.ErrorHandler.safeCall(testFn)
+    local success, error = true, nil
+    
+    -- Reset mocks before each test
+    local Mocks = Utils.require("tests.mocks")
+    if Mocks and Mocks.reset then
+        Mocks.reset()
+    end
+    
+    -- Run beforeEach if defined
+    if suite.beforeEach then
+        success, error = Utils.ErrorHandler.safeCall(suite.beforeEach)
+        if not success then
+            local duration = os.clock() - startTime
+            printColored("red", string.format("✗ %s (%.3fs) - Setup failed: %s", testName, duration, error))
+            table.insert(results.errors, {name = testName, error = "Setup failed: " .. error})
+            return false
+        end
+    end
+    
+    -- Run the actual test
+    if success then
+        success, error = Utils.ErrorHandler.safeCall(testFn)
+    end
+    
+    -- Run afterEach if defined (even if test failed)
+    if suite.afterEach then
+        local teardownSuccess, teardownError = Utils.ErrorHandler.safeCall(suite.afterEach)
+        if not teardownSuccess then
+            if success then
+                success = false
+                error = "Teardown failed: " .. teardownError  
+            else
+                error = error .. " | Teardown failed: " .. teardownError
+            end
+        end
+    end
+    
     local duration = os.clock() - startTime
     
     if success then
-        printColored("green", string.format("✓ %s (%.3fs)", testName, duration))
+        printColored("green", string.format("  ✓ %s (%.3fs)", testName, duration))
+        results.passed = results.passed + 1
         return true
     else
-        printColored("red", string.format("✗ %s (%.3fs) - %s", testName, duration, success))
+        printColored("red", string.format("  ✗ %s (%.3fs)", testName, duration))
+        printColored("red", string.format("    %s", error))
+        table.insert(results.errors, {name = testName, error = error})
+        results.failed = results.failed + 1
         return false
     end
 end
 
--- Test suite runner
-local function runSuite(suiteName, tests)
-    Utils.Logger.info("\n" .. suiteName)
+-- Enhanced test suite runner
+local function runSuite(suite)
+    printColored("yellow", string.format("\n%s", suite.name))
     
-    local passed = 0
-    local failed = 0
+    local suitePassed = 0
+    local suiteFailed = 0
     
-    for i, test in ipairs(tests) do
-        if runTest(test.name, test.fn) then
-            passed = passed + 1
+    for i, test in ipairs(suite.tests) do
+        results.total = results.total + 1
+        if runTest(test.name, test.fn, suite) then
+            suitePassed = suitePassed + 1
         else
-            failed = failed + 1
+            suiteFailed = suiteFailed + 1
         end
     end
     
-    return passed, failed
+    -- Suite summary
+    if #suite.tests > 0 then
+        local suiteColor = suiteFailed == 0 and "green" or "red"
+        printColored(suiteColor, string.format("  %d/%d tests passed", suitePassed, suitePassed + suiteFailed))
+    end
+    
+    return suitePassed, suiteFailed
 end
 
--- Report generator
+-- Enhanced report generator
 local function generateReport(stats)
-    Utils.Logger.info("\n" .. string.rep("=", 50))
-    Utils.Logger.info(string.format("Total: %d | Passed: %d | Failed: %d | Time: %.3fs",
-        stats.total, stats.passed, stats.failed, stats.time))
+    print("\n" .. string.rep("=", 60))
     
-    if stats.failed > 0 then
-        Utils.Logger.info("\nFailures:")
-        for _, err in ipairs(stats.errors) do
-            Utils.Logger.error("  " .. err.error)
+    -- Overall results
+    local successRate = stats.total > 0 and (stats.passed / stats.total * 100) or 0
+    
+    if stats.failed == 0 then
+        printColored("green", "🎉 All tests passed!")
+    else
+        printColored("red", string.format("💥 %d tests failed!", stats.failed))
+    end
+    
+    print(string.format("📊 Results: %d total | %d passed | %d failed (%.1f%% success)", 
+        stats.total, stats.passed, stats.failed, successRate))
+    print(string.format("⏱️  Time: %.3fs", stats.time))
+    
+    -- Detailed failure report
+    if stats.failed > 0 and #stats.errors > 0 then
+        printColored("red", "\n❌ Failed Tests:")
+        for i, err in ipairs(stats.errors) do
+            printColored("red", string.format("  %d. %s", i, err.name))
+            print(string.format("     %s", err.error))
         end
     end
     
-    Utils.Logger.info(string.rep("=", 50))
+    print(string.rep("=", 60))
 end
 
 -- Reset function for running multiple test files
@@ -232,30 +396,39 @@ function BustedLite.reset()
     }
 end
 
--- Run all test suites
+-- Run all test suites  
 function BustedLite.run()
     local startTime = os.clock()
-    local totalPassed = 0
-    local totalFailed = 0
     
+    -- Initialize results
+    results = {
+        total = 0,
+        passed = 0,
+        failed = 0,
+        errors = {}
+    }
+    
+    printColored("yellow", "🚀 Running Busted-style Tests")
+    printColored("yellow", string.rep("=", 50))
+    
+    -- Run all suites
     for _, suite in ipairs(suites) do
-        local passed, failed = runSuite(suite.name, suite.tests)
-        totalPassed = totalPassed + passed
-        totalFailed = totalFailed + failed
+        runSuite(suite)
     end
     
     local endTime = os.clock()
-    local stats = {
-        total = totalPassed + totalFailed,
-        passed = totalPassed,
-        failed = totalFailed,
-        time = endTime - startTime,
+    
+    -- Generate final report
+    local totalTime = endTime - startTime
+    generateReport({
+        total = results.total,
+        passed = results.passed,
+        failed = results.failed,
+        time = totalTime,
         errors = results.errors
-    }
+    })
     
-    generateReport(stats)
-    
-    return totalFailed == 0
+    return results.failed == 0
 end
 
 -- Export global functions
