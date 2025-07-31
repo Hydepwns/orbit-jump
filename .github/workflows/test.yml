@@ -18,9 +18,14 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y lua5.3 liblua5.3-dev
         
-    - name: Run Unit Tests
+    - name: Run Enhanced Busted Test Suite
       run: |
-        # Run our comprehensive test suite
+        # Run our enhanced Busted framework tests
+        lua tests/run_busted_tests.lua
+        
+    - name: Run Legacy Test Suites
+      run: |
+        # Run existing comprehensive test suite
         bash run_tests.sh
       
     - name: Install LÖVE for integration tests
