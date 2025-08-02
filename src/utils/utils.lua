@@ -960,4 +960,55 @@ function Utils.MobileInput.getFontSizes()
     end
 end
 
+--[[
+    ═══════════════════════════════════════════════════════════════════════════
+    Serialization: Safe Data Persistence
+    ═══════════════════════════════════════════════════════════════════════════
+--]]
+
+-- Simple serialization for tutorial data
+function Utils.serialize(data)
+    if type(data) == "table" then
+        local result = "{"
+        local first = true
+        for k, v in pairs(data) do
+            if not first then result = result .. "," end
+            first = false
+            
+            if type(k) == "string" then
+                result = result .. string.format("[%q]", k)
+            else
+                result = result .. "[" .. tostring(k) .. "]"
+            end
+            
+            result = result .. "=" .. Utils.serialize(v)
+        end
+        return result .. "}"
+    elseif type(data) == "string" then
+        return string.format("%q", data)
+    elseif type(data) == "number" or type(data) == "boolean" then
+        return tostring(data)
+    else
+        return "nil"
+    end
+end
+
+-- Simple deserialization for tutorial data
+function Utils.deserialize(str)
+    if not str or str == "" then
+        return nil
+    end
+    
+    local func, err = load("return " .. str)
+    if func then
+        local success, result = pcall(func)
+        if success then
+            return result
+        end
+    end
+    
+    Utils.Logger.warn("Failed to deserialize data: %s", err or "unknown error")
+    return nil
+end
+
 return Utils 

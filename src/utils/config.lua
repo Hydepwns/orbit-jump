@@ -37,6 +37,49 @@ Config.validators = {
         masterVolume = function(value) return type(value) == "number" and value >= 0 and value <= 1 end,
         musicVolume = function(value) return type(value) == "number" and value >= 0 and value <= 1 end,
         sfxVolume = function(value) return type(value) == "number" and value >= 0 and value <= 1 end
+    },
+    addiction = {
+        event_frequency = function(value) 
+            local valid = {"high", "normal", "low", "off"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        notification_frequency = function(value)
+            local valid = {"all", "important", "minimal"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        visual_effects_intensity = function(value)
+            local valid = {"full", "reduced", "minimal"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        audio_feedback_level = function(value)
+            local valid = {"full", "reduced", "essential"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        streak_pressure_mode = function(value)
+            local valid = {"competitive", "casual", "zen"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        progress_visibility = function(value)
+            local valid = {"always", "contextual", "hidden"}
+            for _, v in ipairs(valid) do if value == v then return true end end
+            return false
+        end,
+        colorblind_support = function(value) return type(value) == "boolean" end,
+        hearing_impaired = function(value) return type(value) == "boolean" end,
+        motion_sensitivity = function(value) return type(value) == "boolean" end,
+        xp_gain_animations = function(value) return type(value) == "boolean" end,
+        streak_screen_effects = function(value) return type(value) == "boolean" end,
+        mystery_box_buildup = function(value) return type(value) == "boolean" end,
+        level_up_celebrations = function(value) return type(value) == "boolean" end,
+        milestone_notifications = function(value) return type(value) == "boolean" end,
+        session_break_reminders = function(value) return type(value) == "boolean" end,
+        session_limit_warnings = function(value) return type(value) == "boolean" end,
+        auto_pause_inactive = function(value) return type(value) == "number" and value >= 0 end
     }
 }
 
@@ -141,6 +184,39 @@ Config.ui = {
     }
 }
 
+-- Resolution Configuration
+Config.resolution = {
+    enabled = true,
+    current = {
+        width = 800,
+        height = 600,
+        fullscreen = false,
+        vsync = true,
+        msaa = 0
+    },
+    available = {
+        {width = 640, height = 480, name = "640x480"},
+        {width = 800, height = 600, name = "800x600"},
+        {width = 1024, height = 768, name = "1024x768"},
+        {width = 1280, height = 720, name = "1280x720 (HD)"},
+        {width = 1280, height = 1024, name = "1280x1024"},
+        {width = 1366, height = 768, name = "1366x768"},
+        {width = 1440, height = 900, name = "1440x900"},
+        {width = 1600, height = 900, name = "1600x900"},
+        {width = 1920, height = 1080, name = "1920x1080 (Full HD)"},
+        {width = 2560, height = 1440, name = "2560x1440 (2K)"},
+        {width = 3840, height = 2160, name = "3840x2160 (4K)"}
+    },
+    autoDetect = true, -- Auto-detect best resolution on startup
+    maintainAspectRatio = true, -- Keep 4:3 aspect ratio
+    scaling = {
+        enabled = true,
+        mode = "fit", -- "fit", "stretch", "crop"
+        minScale = 0.5,
+        maxScale = 2.0
+    }
+}
+
 -- Sound Configuration
 Config.sound = {
     enabled = true,
@@ -150,11 +226,50 @@ Config.sound = {
     proceduralAudio = true
 }
 
+-- Addiction Features Configuration
+Config.addiction = {
+    -- Event frequency preferences
+    event_frequency = "normal", -- "high", "normal", "low", "off"
+    
+    -- Notification settings
+    notification_frequency = "important", -- "all", "important", "minimal"
+    
+    -- Visual effects intensity
+    visual_effects_intensity = "full", -- "full", "reduced", "minimal"
+    
+    -- Audio feedback level
+    audio_feedback_level = "full", -- "full", "reduced", "essential"
+    
+    -- Streak pressure mode
+    streak_pressure_mode = "competitive", -- "competitive", "casual", "zen"
+    
+    -- Progress visibility
+    progress_visibility = "always", -- "always", "contextual", "hidden"
+    
+    -- Accessibility features
+    colorblind_support = false, -- Alternative visual indicators
+    hearing_impaired = false, -- Enhanced visual feedback
+    motion_sensitivity = false, -- Reduced screen shake/flash
+    
+    -- Advanced customization
+    xp_gain_animations = true, -- Show floating XP numbers
+    streak_screen_effects = true, -- Full-screen streak effects
+    mystery_box_buildup = true, -- Anticipation animations
+    level_up_celebrations = true, -- Level up fanfare
+    milestone_notifications = true, -- Streak milestone alerts
+    
+    -- Session management
+    session_break_reminders = false, -- Remind to take breaks
+    session_limit_warnings = false, -- Warn about long sessions
+    auto_pause_inactive = 300, -- Auto-pause after N seconds (0 = disabled)
+}
+
 -- Development Configuration
 Config.dev = {
     debugMode = false, -- Enable debug information
     showFPS = false, -- Show FPS counter
     showHitboxes = false, -- Show collision hitboxes
+    showTouchGestures = false, -- Show touch gesture debug info
     logLevel = "info", -- debug, info, warn, error
     autoSave = true -- Auto-save progression data
 }
@@ -169,7 +284,26 @@ Config.mobile = {
     buttonSize = 60, -- Minimum touch target size
     hapticFeedback = true, -- Enable vibration feedback
     autoPause = true, -- Pause when app goes to background
-    orientation = "landscape" -- Preferred orientation
+    orientation = "landscape", -- Preferred orientation
+    
+    -- Touch Gesture Settings
+    gestures = {
+        enabled = true, -- Enable touch gesture system
+        pinchToZoom = true, -- Enable pinch-to-zoom
+        swipeNavigation = true, -- Enable swipe navigation
+        pullbackControl = true, -- Enable touch-based pullback
+        doubleTapDash = true, -- Enable double-tap to dash
+        longPressMenu = true, -- Enable long press for context menu
+        hapticFeedback = true -- Enable haptic feedback for gestures
+    },
+    
+    -- Gesture sensitivity settings
+    sensitivity = {
+        zoom = 0.01, -- Pinch-to-zoom sensitivity
+        swipe = 1.0, -- Swipe sensitivity multiplier
+        pullback = 1.5, -- Pullback control sensitivity
+        tap = 1.0 -- Tap sensitivity multiplier
+    }
 }
 
 -- Responsive UI Configuration
@@ -329,6 +463,88 @@ end
 
 function Config.isDebugMode()
     return Config.dev.debugMode
+end
+
+function Config.getAddictionConfig()
+    return Config.addiction
+end
+
+-- Apply event frequency multipliers
+function Config.getEventFrequencyMultiplier()
+    local mode = Config.addiction.event_frequency
+    if mode == "high" then return 1.0
+    elseif mode == "normal" then return 0.67
+    elseif mode == "low" then return 0.33
+    elseif mode == "off" then return 0.0
+    end
+    return 0.67 -- Default to normal
+end
+
+-- Get visual effects scaling
+function Config.getVisualEffectsScale()
+    local intensity = Config.addiction.visual_effects_intensity
+    if intensity == "full" then return 1.0
+    elseif intensity == "reduced" then return 0.6
+    elseif intensity == "minimal" then return 0.3
+    end
+    return 1.0 -- Default to full
+end
+
+-- Get audio feedback scaling
+function Config.getAudioFeedbackScale()
+    local level = Config.addiction.audio_feedback_level
+    if level == "full" then return 1.0
+    elseif level == "reduced" then return 0.6
+    elseif level == "essential" then return 0.3
+    end
+    return 1.0 -- Default to full
+end
+
+-- Get streak grace period modifier
+function Config.getStreakGracePeriodModifier()
+    local mode = Config.addiction.streak_pressure_mode
+    if mode == "competitive" then return 1.0
+    elseif mode == "casual" then return 1.5
+    elseif mode == "zen" then return 2.0
+    end
+    return 1.0 -- Default to competitive
+end
+
+-- Save configuration to file
+function Config.save()
+    local saveData = {
+        addiction = Config.addiction,
+        sound = Config.sound,
+        ui = Config.ui,
+        game = Config.game,
+        dev = Config.dev,
+        mobile = Config.mobile,
+        resolution = Config.resolution
+    }
+    
+    local serialized = Utils.serialize(saveData)
+    love.filesystem.write("user_config.dat", serialized)
+    Utils.Logger.info("Configuration saved to user_config.dat")
+end
+
+-- Load configuration from file
+function Config.load()
+    if love.filesystem.getInfo("user_config.dat") then
+        local data = love.filesystem.read("user_config.dat")
+        local loadedData = Utils.deserialize(data)
+        
+        if loadedData then
+            -- Merge loaded config with defaults
+            for section, values in pairs(loadedData) do
+                if Config[section] then
+                    for key, value in pairs(values) do
+                        Config[section][key] = value
+                    end
+                end
+            end
+            Utils.Logger.info("Configuration loaded from user_config.dat")
+        end
+    end
 end
 
 return Config 
