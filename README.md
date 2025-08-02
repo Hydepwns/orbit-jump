@@ -16,6 +16,7 @@ A gravity-based arcade game where players jump between planets using realistic p
 - **Planet Hopping** - Jump between diverse planets with unique properties
 - **Collectible Rings** - Gather resources for upgrades and score
 - **Warp Drive** - Unlock instant travel with adaptive cost mechanics
+- **Interactive Tutorial** - Progressive learning system with contextual help
 
 ### Adaptive Systems
 
@@ -26,10 +27,10 @@ A gravity-based arcade game where players jump between planets using realistic p
 
 ### Technical Excellence
 
-- **60 FPS Performance** - Optimized rendering with spatial indexing
+- **60 FPS Performance** - Optimized rendering with spatial indexing and LOD system
 - **Zero-Allocation Design** - Smooth gameplay without garbage collection pauses
 - **Modular Architecture** - Clean, maintainable codebase with 95%+ test coverage
-- **Cross-Platform** - Works on Windows, macOS, Linux, and mobile devices
+- **Cross-Platform** - Desktop and mobile with touch gestures and accessibility features
 
 ## Requirements
 
@@ -76,6 +77,7 @@ See [`docs/`](docs/) for detailed information:
 
 - **Jump**: Click and drag to aim, release to jump
 - **Dash**: Shift / Z / X (while in space)
+- **Tutorial**: T (start/resume), Escape (exit)
 - **Restart**: Space (after game over)
 - **Pause**: Escape
 
@@ -83,6 +85,7 @@ See [`docs/`](docs/) for detailed information:
 
 - **Jump**: Swipe from player
 - **Dash**: Double-tap screen
+- **Zoom**: Pinch gesture
 - **Restart**: Tap screen
 - **Pause**: Tap pause button
 
