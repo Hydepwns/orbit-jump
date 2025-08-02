@@ -171,7 +171,304 @@ function SoundGenerator.generateGameSounds()
     sounds.ambient:setLooping(true)
     sounds.ambient:setVolume(0.2)
     
+    -- Generate addiction feature sounds
+    SoundGenerator.generateAddictionSounds(sounds)
+    
     return sounds
+end
+
+-- Generate addiction feature sounds
+function SoundGenerator.generateAddictionSounds(sounds)
+    -- Level Up - Triumphant fanfare
+    local levelUpData = love.sound.newSoundData(math.floor(1.0 * 44100), 44100, 16, 1)
+    for i = 0, levelUpData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Ascending chord progression: C-E-G-C
+        local phase = t * 4 -- 4 notes over 1 second
+        local noteIndex = math.min(math.floor(phase), 3)
+        local freqs = {523.25, 659.25, 783.99, 1046.50} -- C5, E5, G5, C6
+        local freq = freqs[noteIndex + 1]
+        
+        -- Add harmonics for richness
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.4 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.2 +
+            math.sin(2 * math.pi * freq * 3 * t) * 0.1
+        ) * math.exp(-t * 1.5) * 0.5
+        levelUpData:setSample(i, sample)
+    end
+    sounds.levelUp = love.audio.newSource(levelUpData, "static")
+    
+    -- Level Up Major - Extended celebration
+    local levelUpMajorData = love.sound.newSoundData(math.floor(1.5 * 44100), 44100, 16, 1)
+    for i = 0, levelUpMajorData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Full major chord with arpeggios
+        local phase = t * 6 -- 6 notes over 1.5 seconds
+        local noteIndex = math.min(math.floor(phase), 5)
+        local freqs = {523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98} -- C-E-G-C-E-G
+        local freq = freqs[noteIndex + 1]
+        
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.5 +
+            math.sin(2 * math.pi * freq * 1.5 * t) * 0.25
+        ) * math.exp(-t * 1.0) * 0.4
+        levelUpMajorData:setSample(i, sample)
+    end
+    sounds.levelUpMajor = love.audio.newSource(levelUpMajorData, "static")
+    
+    -- Perfect Landing - Satisfying ding with pitch scaling
+    local perfectLandingData = love.sound.newSoundData(math.floor(0.5 * 44100), 44100, 16, 1)
+    for i = 0, perfectLandingData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Bell-like sound with harmonics
+        local fundamental = 800
+        local sample = (
+            math.sin(2 * math.pi * fundamental * t) * 0.6 +
+            math.sin(2 * math.pi * fundamental * 2 * t) * 0.3 +
+            math.sin(2 * math.pi * fundamental * 3 * t) * 0.1
+        ) * math.exp(-t * 6) * 0.4
+        perfectLandingData:setSample(i, sample)
+    end
+    sounds.perfectLanding = love.audio.newSource(perfectLandingData, "static")
+    
+    -- Streak Milestone Sounds
+    -- Minor milestone (5-20 streak)
+    local streakMinorData = love.sound.newSoundData(math.floor(0.6 * 44100), 44100, 16, 1)
+    for i = 0, streakMinorData:getSampleCount() - 1 do
+        local t = i / 44100
+        local freq = 659.25 -- E5
+        local sample = math.sin(2 * math.pi * freq * t) * math.exp(-t * 4) * 0.4
+        streakMinorData:setSample(i, sample)
+    end
+    sounds.streakMinor = love.audio.newSource(streakMinorData, "static")
+    
+    -- Major milestone (25-45 streak)
+    local streakMajorData = love.sound.newSoundData(math.floor(0.8 * 44100), 44100, 16, 1)
+    for i = 0, streakMajorData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Two-note celebration
+        local phase = t * 3
+        local freq = phase < 1.5 and 659.25 or 783.99 -- E5 then G5
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.5 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.2
+        ) * math.exp(-t * 3) * 0.45
+        streakMajorData:setSample(i, sample)
+    end
+    sounds.streakMajor = love.audio.newSource(streakMajorData, "static")
+    
+    -- Epic milestone (50-95 streak)
+    local streakEpicData = love.sound.newSoundData(math.floor(1.0 * 44100), 44100, 16, 1)
+    for i = 0, streakEpicData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Three-note ascending celebration
+        local phase = t * 4
+        local noteIndex = math.min(math.floor(phase), 2)
+        local freqs = {659.25, 783.99, 1046.50} -- E5-G5-C6
+        local freq = freqs[noteIndex + 1]
+        
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.6 +
+            math.sin(2 * math.pi * freq * 1.5 * t) * 0.3
+        ) * math.exp(-t * 2) * 0.5
+        streakEpicData:setSample(i, sample)
+    end
+    sounds.streakEpic = love.audio.newSource(streakEpicData, "static")
+    
+    -- Legendary milestone (100+ streak)
+    local streakLegendaryData = love.sound.newSoundData(math.floor(1.5 * 44100), 44100, 16, 1)
+    for i = 0, streakLegendaryData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Full orchestral-style celebration
+        local phase = t * 6
+        local noteIndex = math.min(math.floor(phase), 5)
+        local freqs = {523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98}
+        local freq = freqs[noteIndex + 1]
+        
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.7 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.4 +
+            math.sin(2 * math.pi * freq * 3 * t) * 0.2
+        ) * math.exp(-t * 1.2) * 0.6
+        streakLegendaryData:setSample(i, sample)
+    end
+    sounds.streakLegendary = love.audio.newSource(streakLegendaryData, "static")
+    
+    -- Streak Break - Dramatic descending sound
+    local streakBreakData = love.sound.newSoundData(math.floor(1.2 * 44100), 44100, 16, 1)
+    for i = 0, streakBreakData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Descending chromatic sequence with dissonance
+        local freq = 600 * math.exp(-t * 2) -- Exponential frequency decay
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.6 +
+            math.sin(2 * math.pi * freq * 1.1 * t) * 0.3 -- Slight dissonance
+        ) * (1 - math.exp(-t * 8)) * math.exp(-t * 0.8) * 0.5
+        streakBreakData:setSample(i, sample)
+    end
+    sounds.streakBreak = love.audio.newSource(streakBreakData, "static")
+    
+    -- Grace Period - Heartbeat-style urgent pulses
+    local gracePeriodData = love.sound.newSoundData(math.floor(0.8 * 44100), 44100, 16, 1)
+    for i = 0, gracePeriodData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Double pulse like heartbeat
+        local pulseRate = 2.5 -- Heartbeat-like rhythm
+        local pulse = math.sin(2 * math.pi * pulseRate * t)
+        pulse = pulse > 0 and math.pow(pulse, 0.3) or 0 -- Sharp attack, quick decay
+        
+        local freq = 200 + pulse * 400 -- Frequency modulation
+        local sample = math.sin(2 * math.pi * freq * t) * pulse * 0.4
+        gracePeriodData:setSample(i, sample)
+    end
+    sounds.gracePeriod = love.audio.newSource(gracePeriodData, "static")
+    
+    -- Streak Saved - Relief and celebration
+    local streakSavedData = love.sound.newSoundData(math.floor(0.8 * 44100), 44100, 16, 1)
+    for i = 0, streakSavedData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Rising then settling melody
+        local freq = 400 + 400 * math.sin(t * 3) * math.exp(-t * 1.5)
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.5 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.25
+        ) * math.exp(-t * 2) * 0.45
+        streakSavedData:setSample(i, sample)
+    end
+    sounds.streakSaved = love.audio.newSource(streakSavedData, "static")
+    
+    -- Mystery Box Spawn - Anticipation buildup
+    local mysteryBoxSpawnData = love.sound.newSoundData(math.floor(1.0 * 44100), 44100, 16, 1)
+    for i = 0, mysteryBoxSpawnData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Rising tension with sparkle effect
+        local freq = 300 + t * 200 -- Rising frequency
+        local sparkle = math.sin(2 * math.pi * 2000 * t) * math.exp(-t * 3) * 0.1
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * (t * 2) * 0.4 + sparkle
+        ) * 0.5
+        mysteryBoxSpawnData:setSample(i, sample)
+    end
+    sounds.mysteryBoxSpawn = love.audio.newSource(mysteryBoxSpawnData, "static")
+    
+    -- Mystery Box Opening Sounds (by rarity)
+    -- Bronze
+    local bronzeData = love.sound.newSoundData(math.floor(0.6 * 44100), 44100, 16, 1)
+    for i = 0, bronzeData:getSampleCount() - 1 do
+        local t = i / 44100
+        local freq = 440 -- A4
+        local sample = math.sin(2 * math.pi * freq * t) * math.exp(-t * 4) * 0.4
+        bronzeData:setSample(i, sample)
+    end
+    sounds.mysteryBoxBronze = love.audio.newSource(bronzeData, "static")
+    
+    -- Silver - richer sound
+    local silverData = love.sound.newSoundData(math.floor(0.7 * 44100), 44100, 16, 1)
+    for i = 0, silverData:getSampleCount() - 1 do
+        local t = i / 44100
+        local freq = 523.25 -- C5
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.6 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.2
+        ) * math.exp(-t * 3.5) * 0.45
+        silverData:setSample(i, sample)
+    end
+    sounds.mysteryBoxSilver = love.audio.newSource(silverData, "static")
+    
+    -- Gold - even richer with harmonics
+    local goldData = love.sound.newSoundData(math.floor(0.8 * 44100), 44100, 16, 1)
+    for i = 0, goldData:getSampleCount() - 1 do
+        local t = i / 44100
+        local freq = 659.25 -- E5
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.6 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.3 +
+            math.sin(2 * math.pi * freq * 3 * t) * 0.1
+        ) * math.exp(-t * 3) * 0.5
+        goldData:setSample(i, sample)
+    end
+    sounds.mysteryBoxGold = love.audio.newSource(goldData, "static")
+    
+    -- Legendary - majestic fanfare
+    local legendaryData = love.sound.newSoundData(math.floor(1.2 * 44100), 44100, 16, 1)
+    for i = 0, legendaryData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Complex chord progression
+        local phase = t * 4
+        local noteIndex = math.min(math.floor(phase), 3)
+        local freqs = {523.25, 659.25, 783.99, 1046.50}
+        local freq = freqs[noteIndex + 1]
+        
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.7 +
+            math.sin(2 * math.pi * freq * 1.5 * t) * 0.4 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.3
+        ) * math.exp(-t * 1.5) * 0.6
+        legendaryData:setSample(i, sample)
+    end
+    sounds.mysteryBoxLegendary = love.audio.newSource(legendaryData, "static")
+    
+    -- Random Event Sounds
+    -- Ring Rain - cascading chimes
+    local ringRainData = love.sound.newSoundData(math.floor(0.8 * 44100), 44100, 16, 1)
+    for i = 0, ringRainData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Multiple overlapping bell tones
+        local sample = 0
+        for j = 1, 5 do
+            local freq = 800 + j * 200
+            local delay = (j - 1) * 0.1
+            if t > delay then
+                sample = sample + math.sin(2 * math.pi * freq * (t - delay)) * 
+                         math.exp(-(t - delay) * 8) * 0.2
+            end
+        end
+        ringRainData:setSample(i, sample * 0.8)
+    end
+    sounds.eventRingRain = love.audio.newSource(ringRainData, "static")
+    
+    -- Gravity Well - deep pulsing
+    local gravityWellData = love.sound.newSoundData(math.floor(1.0 * 44100), 44100, 16, 1)
+    for i = 0, gravityWellData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Deep thrumming with harmonic overtones
+        local freq = 60 -- Very low frequency
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.8 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.4 +
+            math.sin(2 * math.pi * freq * 4 * t) * 0.2
+        ) * (1 - math.exp(-t * 3)) * math.exp(-t * 0.8) * 0.6
+        gravityWellData:setSample(i, sample)
+    end
+    sounds.eventGravityWell = love.audio.newSource(gravityWellData, "static")
+    
+    -- Time Dilation - ethereal sweep
+    local timeDilationData = love.sound.newSoundData(math.floor(1.2 * 44100), 44100, 16, 1)
+    for i = 0, timeDilationData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Sweeping frequency with reverb-like effect
+        local freq = 400 + 800 * math.sin(t * 0.5) -- Slow frequency modulation
+        local sample = math.sin(2 * math.pi * freq * t) * 
+                      math.sin(2 * math.pi * freq * t * 1.01) * -- Slight detuning for chorus effect
+                      (1 - math.exp(-t * 2)) * math.exp(-t * 0.6) * 0.5
+        timeDilationData:setSample(i, sample)
+    end
+    sounds.eventTimeDilation = love.audio.newSource(timeDilationData, "static")
+    
+    -- XP Gain - satisfying chime
+    local xpGainData = love.sound.newSoundData(math.floor(0.3 * 44100), 44100, 16, 1)
+    for i = 0, xpGainData:getSampleCount() - 1 do
+        local t = i / 44100
+        -- Simple but satisfying bell tone
+        local freq = 1000
+        local sample = (
+            math.sin(2 * math.pi * freq * t) * 0.6 +
+            math.sin(2 * math.pi * freq * 2 * t) * 0.2
+        ) * math.exp(-t * 8) * 0.4
+        xpGainData:setSample(i, sample)
+    end
+    sounds.xpGain = love.audio.newSource(xpGainData, "static")
 end
 
 return SoundGenerator
