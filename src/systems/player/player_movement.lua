@@ -161,8 +161,11 @@ function PlayerMovement.updateInSpace(player, planets, dt)
     -- When dashing: No drag = temporary superhuman movement
     
     -- Position Integration: Velocity becomes motion
-    player.x = player.x + player.vx * dt
-    player.y = player.y + player.vy * dt
+    -- Apply time scaling for events (time dilation effect)
+    local GameState = require("src.core.game_state")
+    local scaledDt = dt * (GameState.player_time_scale or 1.0)
+    player.x = player.x + player.vx * scaledDt
+    player.y = player.y + player.vy * scaledDt
 end
 
 function PlayerMovement.updateTrail(player)

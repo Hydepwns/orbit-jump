@@ -1,12 +1,67 @@
--- Achievement System for Orbit Jump
--- Provides instant gratification and progression tracking
+-- Achievement System for Orbit Jump with Tiered Progression
+-- Provides instant gratification and long-term goals
 
 local Utils = require("src.utils.utils")
 local AchievementSystem = {}
+local achievements = {
+    progress = {},
+    categories = {},
+    total_points = 0,
+    notifications = {},
+    visited_planets = {}
+}
 
--- Achievement definitions
+-- Tiered achievement definitions
 AchievementSystem.achievements = {
-  -- Discovery achievements
+  -- Explorer Category with Tiers
+  {
+    id = "planet_explorer",
+    name = "Planet Explorer",
+    category = "Explorer",
+    description = "Visit unique planets",
+    icon = "🌍",
+    tiers = {
+      {name = "Bronze", count = 10, points = 10, color = {0.7, 0.4, 0.2, 1}},
+      {name = "Silver", count = 50, points = 25, color = {0.8, 0.8, 0.8, 1}},
+      {name = "Gold", count = 100, points = 50, color = {1, 0.8, 0, 1}},
+      {name = "Platinum", count = 250, points = 100, color = {0.8, 0.8, 1, 1}},
+      {name = "Diamond", count = 500, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Universe Explorer"}}
+    }
+  },
+  
+  -- Collector Category with Tiers
+  {
+    id = "ring_baron",
+    name = "Ring Baron",
+    category = "Collector",
+    description = "Collect rings",
+    icon = "💍",
+    tiers = {
+      {name = "Bronze", count = 100, points = 10, color = {0.7, 0.4, 0.2, 1}},
+      {name = "Silver", count = 1000, points = 25, color = {0.8, 0.8, 0.8, 1}},
+      {name = "Gold", count = 5000, points = 50, color = {1, 0.8, 0, 1}},
+      {name = "Platinum", count = 10000, points = 100, color = {0.8, 0.8, 1, 1}},
+      {name = "Diamond", count = 50000, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Ring Baron"}}
+    }
+  },
+  
+  -- Perfectionist Category with Tiers
+  {
+    id = "combo_virtuoso",
+    name = "Combo Virtuoso",
+    category = "Perfectionist",
+    description = "Achieve perfect combos",
+    icon = "🔥",
+    tiers = {
+      {name = "Bronze", count = 5, points = 10, color = {0.7, 0.4, 0.2, 1}},
+      {name = "Silver", count = 25, points = 25, color = {0.8, 0.8, 0.8, 1}},
+      {name = "Gold", count = 50, points = 50, color = {1, 0.8, 0, 1}},
+      {name = "Platinum", count = 100, points = 100, color = {0.8, 0.8, 1, 1}},
+      {name = "Diamond", count = 250, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Flawless"}}
+    }
+  },
+  
+  -- Legacy single-tier achievements (keeping for compatibility)
   first_planet = {
     id = "first_planet",
     name = "Baby Steps",
@@ -319,6 +374,17 @@ function AchievementSystem.unlock(achievementId)
   -- Log the achievement
   Utils.Logger.info("Achievement unlocked: %s", achievement.name)
 
+  -- Track for feedback system
+  local FeedbackSystem = Utils.require("src.systems.feedback_system")
+  if FeedbackSystem then
+    FeedbackSystem.recordEvent("achievement_earned", {
+      achievement_id = achievementId,
+      achievement_name = achievement.name,
+      achievement_category = achievement.category or "general",
+      points_earned = achievement.points
+    })
+  end
+
   -- Add points to upgrade system
   local UpgradeSystem = Utils.require("src.systems.upgrade_system")
   UpgradeSystem.addCurrency(achievement.points)
@@ -403,11 +469,104 @@ function AchievementSystem.draw()
   end
 end
 
+-- Initialize the achievement system
+function AchievementSystem.init()
+    -- Initialize tiered achievements
+    for _, achievement in ipairs(AchievementSystem.achievements) do
+        if achievement.tiers then
+            achievements.progress[achievement.id] = {
+                current_value = 0,
+                current_tier = 0,
+                tiers_unlocked = {}
+            }
+        else
+            -- Legacy single-tier achievements
+            achievements.progress[achievement.id] = {
+                unlocked = achievement.unlocked or false,
+                progress = achievement.progress or 0
+            }
+        end
+    end
+    
+    -- Load saved data
+    AchievementSystem.loadSaveData()
+end
+
+-- Track achievement progress
+function AchievementSystem.trackTieredProgress(achievement_id, value)
+    local achievement = nil
+    for _, a in ipairs(AchievementSystem.achievements) do
+        if a.id == achievement_id then
+            achievement = a
+            break
+        end
+    end
+    
+    if not achievement or not achievement.tiers then return end
+    
+    local progress = achievements.progress[achievement_id]
+    progress.current_value = progress.current_value + (value or 1)
+    
+    -- Check tier unlocks
+    for i, tier in ipairs(achievement.tiers) do
+        if i > progress.current_tier and progress.current_value >= tier.count then
+            progress.current_tier = i
+            progress.tiers_unlocked[tier.name] = true
+            
+            -- Award points
+            achievements.total_points = achievements.total_points + tier.points
+            
+            -- Create notification
+            table.insert(achievements.notifications, {
+                achievement = achievement,
+                tier = tier,
+                timer = 5.0,
+                y = -100,
+                targetY = 50
+            })
+            
+            -- Apply reward if any
+            if tier.reward then
+                AchievementSystem.applyReward(tier.reward)
+            end
+            
+            Utils.Logger.info("Achievement Tier Unlocked: %s - %s", achievement.name, tier.name)
+        end
+    end
+end
+
+-- Apply achievement rewards
+function AchievementSystem.applyReward(reward)
+    if reward.type == "title" then
+        -- Unlock title
+        Utils.Logger.info("Title unlocked: %s", reward.value)
+    elseif reward.type == "effect" then
+        -- Unlock visual effect
+        Utils.Logger.info("Effect unlocked: %s", reward.value)
+    elseif reward.type == "color" then
+        -- Unlock color
+        Utils.Logger.info("Color unlocked: %s", reward.value)
+    end
+end
+
 -- Event handlers
 function AchievementSystem.onPlanetDiscovered(planetType)
   AchievementSystem.stats.planetsDiscovered = AchievementSystem.stats.planetsDiscovered + 1
 
-  -- Update achievements
+  -- Track unique planets for tiered achievement
+  if planetType then
+    local planet_id = tostring(planetType) .. "_" .. tostring(love.timer.getTime())
+    if not achievements.visited_planets[planet_id] then
+      achievements.visited_planets[planet_id] = true
+      local unique_count = 0
+      for _ in pairs(achievements.visited_planets) do
+        unique_count = unique_count + 1
+      end
+      AchievementSystem.trackTieredProgress("planet_explorer", unique_count)
+    end
+  end
+  
+  -- Update legacy achievements
   AchievementSystem.updateProgress("first_planet", AchievementSystem.stats.planetsDiscovered)
   AchievementSystem.updateProgress("planet_hopper", AchievementSystem.stats.planetsDiscovered)
   AchievementSystem.updateProgress("space_explorer", AchievementSystem.stats.planetsDiscovered)
@@ -427,6 +586,11 @@ end
 
 function AchievementSystem.onRingCollected(ringType)
   AchievementSystem.stats.ringsCollected = AchievementSystem.stats.ringsCollected + 1
+  
+  -- Update tiered achievement
+  AchievementSystem.trackTieredProgress("ring_baron", 1)
+  
+  -- Update legacy achievement
   AchievementSystem.updateProgress("ring_collector", AchievementSystem.stats.ringsCollected)
 
   -- Track power rings
@@ -445,6 +609,11 @@ function AchievementSystem.onComboReached(combo)
     AchievementSystem.stats.maxCombo = combo
     AchievementSystem.updateProgress("combo_king", combo)
   end
+end
+
+function AchievementSystem.onPerfectCombo()
+  -- Track perfect combos for tiered achievement
+  AchievementSystem.trackTieredProgress("combo_virtuoso", 1)
 end
 
 function AchievementSystem.onDash()

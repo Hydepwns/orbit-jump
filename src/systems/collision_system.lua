@@ -5,6 +5,10 @@ local Utils = require("src.utils.utils")
 local GameLogic = Utils.require("src.core.game_logic")
 local WarpDrive = Utils.require("src.systems.warp_drive")
 local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
+local TutorialSystem = Utils.require("src.ui.tutorial_system")
+local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system")
+local StreakSystem = Utils.require("src.systems.streak_system")
+local XPSystem = Utils.require("src.systems.xp_system")
 
 local CollisionSystem = {}
 
@@ -89,6 +93,55 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
     -- Emotional Feedback: Celebrate the successful landing
     EmotionalFeedback.onLanding(player, planet, landingSpeed, isGentle)
     
+    -- Notify tutorial systems of landing
+    if TutorialSystem and TutorialSystem.onPlayerAction then
+        TutorialSystem.onPlayerAction("land")
+    end
+    if EnhancedTutorialSystem and EnhancedTutorialSystem.onPlayerAction then
+        EnhancedTutorialSystem.onPlayerAction("land")
+    end
+    
+    -- ADDICTION ENGINE: Check for perfect landing streak
+    if StreakSystem and StreakSystem.onPlayerLanding then
+        StreakSystem.onPlayerLanding(player, planet, gameState)
+    end
+    
+    -- PROGRESSION ENGINE: Award XP for perfect landings
+    local isPerfectLanding = StreakSystem and StreakSystem.isPerfectLanding and StreakSystem.isPerfectLanding(player, planet)
+    if XPSystem and isPerfectLanding then
+        XPSystem.givePerfectLandingXP(player.x, player.y)
+    end
+    
+    -- Track for feedback system
+    local FeedbackSystem = Utils.require("src.systems.feedback_system")
+    if FeedbackSystem and isPerfectLanding then
+        local streakLength = StreakSystem.getCurrentStreak and StreakSystem.getCurrentStreak() or 0
+        FeedbackSystem.onPerfectLanding(streakLength)
+    end
+    
+    -- MASTERY SYSTEM: Track planet landing for mastery
+    local MasterySystem = Utils.require("src.systems.mastery_system")
+    if MasterySystem then
+        local isPerfect = StreakSystem and StreakSystem.isPerfectLanding and StreakSystem.isPerfectLanding(player, planet)
+        local mastery_level_up = MasterySystem.trackPlanetLanding(
+            planet.type or "normal", 
+            isPerfect,
+            {x = player.x, y = player.y},
+            {x = planet.x, y = planet.y},
+            planet.radius
+        )
+        
+        -- Show mastery notification if leveled up
+        if mastery_level_up and gameState and gameState.addNotification then
+            gameState.addNotification({
+                type = "mastery",
+                text = mastery_level_up.planet .. " Mastery Level " .. mastery_level_up.level .. "!",
+                bonus = mastery_level_up.bonus,
+                points = mastery_level_up.points
+            })
+        end
+    end
+    
     -- Reset velocity (this happens after emotional analysis)
     player.vx = 0
     player.vy = 0
@@ -170,6 +223,20 @@ function CollisionSystem.trackPlanetDiscovery(planet, gameState)
             AchievementSystem.onPlanetDiscovered(planet.type)
         end
         
+        -- Notify social systems
+        local WeeklyChallengesSystem = require("src.systems.weekly_challenges_system")
+        if WeeklyChallengesSystem then
+            WeeklyChallengesSystem:onPlanetDiscovered()
+            if planet.type == "void" then
+                WeeklyChallengesSystem:onVoidPlanetVisited()
+            end
+        end
+        
+        local GlobalEventsSystem = require("src.systems.global_events_system")
+        if GlobalEventsSystem then
+            GlobalEventsSystem:onPlanetDiscovered()
+        end
+        
         -- Map system will automatically track discovered planets in its update
         
         -- Show lore
@@ -228,6 +295,30 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
             
             -- Create visual effect
             CollisionSystem.createRingBurst(ring, player)
+            
+            -- Notify tutorial systems of ring collection
+            if TutorialSystem and TutorialSystem.onPlayerAction then
+                TutorialSystem.onPlayerAction("collect_ring")
+            end
+            if EnhancedTutorialSystem and EnhancedTutorialSystem.onPlayerAction then
+                EnhancedTutorialSystem.onPlayerAction("collect_ring")
+            end
+            
+            -- PROGRESSION ENGINE: Award XP for ring collection
+            if XPSystem then
+                local combo = gameState and gameState.getCombo and gameState.getCombo() or 0
+                if combo > 1 then
+                    XPSystem.giveComboXP(combo, ring.x, ring.y)
+                else
+                    XPSystem.giveRingXP(ring.x, ring.y)
+                end
+            end
+            
+            -- ACHIEVEMENT SYSTEM: Track ring collection
+            local AchievementSystem = Utils.require("src.systems.achievement_system")
+            if AchievementSystem then
+                AchievementSystem.onRingCollected(ring.type)
+            end
             
             -- Play sound
             if soundManager then

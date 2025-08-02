@@ -187,6 +187,12 @@ UpgradeSystem.upgrades = {
 }
 -- Currency (uses achievement points)
 UpgradeSystem.currency = 500 -- Start with some points for testing
+
+-- Add currency from achievements
+function UpgradeSystem.addCurrency(amount)
+    UpgradeSystem.currency = UpgradeSystem.currency + amount
+    Utils.Logger.info("Added %d points to upgrade system (total: %d)", amount, UpgradeSystem.currency)
+end
 -- Calculate upgrade cost
 function UpgradeSystem.getUpgradeCost(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]

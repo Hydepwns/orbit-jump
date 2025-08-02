@@ -96,6 +96,12 @@ function PlayerAbilities.jump(player, pullPower, pullAngle, gameState, soundMana
     player.vy = jumpVy
     player.onPlanet = false  -- Critical: Switches physics paradigms
     
+    -- Check for random events on jump
+    local RandomEventsSystem = Utils.require("src.systems.random_events_system")
+    if RandomEventsSystem then
+        RandomEventsSystem:checkForRandomEvent()
+    end
+    
     -- Calculate predicted landing position for learning
     local PlayerMovement = Utils.require("src.systems.player.player_movement")
     local predictedX, predictedY = PlayerMovement.predictLandingPosition(player, jumpVx, jumpVy)

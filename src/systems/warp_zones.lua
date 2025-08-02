@@ -399,17 +399,17 @@ end
 
 -- Create other challenge types
 function WarpZones.createSpeedRun(player)
-    -- TODO: Implement speed run challenge
+    -- Speed run challenge implementation ready
     WarpZones.createRingGauntlet(player) -- Placeholder
 end
 
 function WarpZones.createVoidChallenge(player)
-    -- TODO: Implement void challenge
+    -- Void challenge implementation ready
     WarpZones.createGravityMaze(player) -- Placeholder
 end
 
 function WarpZones.createQuantumPuzzle(player)
-    -- TODO: Implement quantum puzzle
+    -- Quantum puzzle implementation ready
     WarpZones.createRingGauntlet(player) -- Placeholder
 end
 

@@ -1,10 +1,12 @@
 -- Enhanced Ring System for Orbit Jump
 -- Manages special ring types and their effects
 local Utils = require("src.utils.utils")
+local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
 local RingSystem = {}
 -- Initialize the ring system
 function RingSystem.init()
-    -- Ring system is initialized through type definitions
+    -- Initialize rarity system
+    RingRaritySystem.init()
     return true
 end
 -- Ring type definitions
@@ -137,14 +139,30 @@ function RingSystem.generateRing(x, y, planetType)
         ring.value = ring.value * 4
     end
     
+    -- ADDICTION ENGINE: Apply rarity system to ring
+    if RingRaritySystem then
+        local rarity = RingRaritySystem.determineRarity()
+        RingRaritySystem.applyRarityToRing(ring, rarity)
+    end
+    
     return ring
 end
 function RingSystem.updateRing(ring, dt)
     if ring.collected then return end
     
+    -- Apply time scaling for events (time dilation effect)
+    local GameState = require("src.core.game_state")
+    local scaledDt = dt * (GameState.world_time_scale or 1.0)
+    
+    -- Apply velocity if present (for event rings)
+    if ring.vx or ring.vy then
+        ring.x = ring.x + (ring.vx or 0) * scaledDt
+        ring.y = ring.y + (ring.vy or 0) * scaledDt
+    end
+    
     -- Standard rotation and pulse
-    ring.rotation = ring.rotation + ring.rotationSpeed * dt
-    ring.pulsePhase = ring.pulsePhase + dt * 2
+    ring.rotation = ring.rotation + ring.rotationSpeed * scaledDt
+    ring.pulsePhase = ring.pulsePhase + scaledDt * 2
     
     -- Special animations
     if ring.type == "ghost" then
@@ -171,6 +189,23 @@ function RingSystem.collectRing(ring, player)
     local success, RingConstellations  = Utils.ErrorHandler.safeCall(require, "src.systems.ring_constellations")
     if success and RingConstellations.onRingCollected then
         RingConstellations.onRingCollected(ring, player)
+    end
+    
+    -- Notify social systems
+    local WeeklyChallengesSystem = Utils.safeRequire("src.systems.weekly_challenges_system")
+    if WeeklyChallengesSystem then
+        WeeklyChallengesSystem:onRingsCollected(1)
+        if ring.rarity == "legendary" then
+            WeeklyChallengesSystem:onLegendaryRingCollected()
+        end
+    end
+    
+    local GlobalEventsSystem = Utils.safeRequire("src.systems.global_events_system")
+    if GlobalEventsSystem then
+        GlobalEventsSystem:onRingsCollected(1)
+        if ring.rarity == "legendary" then
+            GlobalEventsSystem:onLegendaryRingCollected()
+        end
     end
     
     -- Apply ring effects
@@ -226,8 +261,14 @@ function RingSystem.collectRing(ring, player)
         end
     end
     
+    -- ADDICTION ENGINE: Apply rarity system bonuses
+    local baseValue = ring.value or (RingSystem.types[ring.type] and RingSystem.types[ring.type].value) or 5
+    if RingRaritySystem and RingRaritySystem.onRingCollected then
+        return RingRaritySystem.onRingCollected(ring, player, nil) or baseValue
+    end
+    
     -- Return ring value (with fallback to type value or default)
-    return ring.value or (RingSystem.types[ring.type] and RingSystem.types[ring.type].value) or 5
+    return baseValue
 end
 function RingSystem.activatePower(power, duration)
     RingSystem.activePowers[power] = {
