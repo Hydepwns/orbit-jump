@@ -200,7 +200,13 @@ local tests = {
     -- Camera scale
     ["should handle different scales"] = function()
         local camera = Camera:new()
+        
+        -- Ensure dimensions are initialized
+        camera:initDimensions()
+        
+        -- Set scale directly to avoid smooth zooming
         camera.scale = 2.0
+        camera.targetScale = 2.0
         
         ModernTestFramework.assert.equal(2.0, camera.scale, "Camera should have correct scale")
         
@@ -208,8 +214,11 @@ local tests = {
         local target = {x = 2000, y = 2000}
         camera:follow(target, 0.1)
         
-        -- Should respect bounds with scale
-        ModernTestFramework.assert.isTrue(camera.x <= 1000 - camera.screenWidth / camera.scale, "Should respect bounds with scale")
+        -- With scale 2.0 and screen width 800, max x should be 1000 - 800/2 = 600
+        local expectedMaxX = 1000 - camera.screenWidth / camera.scale
+        ModernTestFramework.assert.isTrue(camera.x <= expectedMaxX, 
+            string.format("Should respect bounds with scale. Camera x: %f, Max x: %f, Screen width: %f, Scale: %f", 
+                camera.x, expectedMaxX, camera.screenWidth, camera.scale))
     end,
     
     -- Camera rotation
