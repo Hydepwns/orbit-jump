@@ -4,6 +4,7 @@
 local Utils = require("src.utils.utils")
 -- Cache commonly used modules
 local TutorialSystem = Utils.require("src.ui.tutorial_system")
+local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system")
 local WorldGenerator = Utils.require("src.systems.world_generator")
 local PlayerSystem = Utils.require("src.systems.player_system")
 local ParticleSystem = Utils.require("src.systems.particle_system")
@@ -38,6 +39,10 @@ GameState.data = {
     maxPullDistance = 250,
     isCharging = false
 }
+
+-- Time scale for random events
+GameState.world_time_scale = 1.0
+GameState.player_time_scale = 1.0
 
 -- Player state
 GameState.player = {
@@ -193,6 +198,16 @@ end
 function GameState.update(dt)
     GameState.data.gameTime = GameState.data.gameTime + dt
     
+    -- Update rings (for event rings with velocity)
+    local RingSystem = Utils.require("src.systems.ring_system")
+    if RingSystem and GameState.objects.rings then
+        for _, ring in ipairs(GameState.objects.rings) do
+            if not ring.collected then
+                RingSystem.updateRing(ring, dt)
+            end
+        end
+    end
+    
     -- Update combo timer
     if GameState.data.comboTimer > 0 then
         GameState.data.comboTimer = GameState.data.comboTimer - dt
@@ -236,6 +251,12 @@ function GameState.update(dt)
         -- Add new planets to our list
         for _, planet in ipairs(newPlanets) do
             table.insert(GameState.objects.planets, planet)
+            
+            -- Check for mystery box spawn on new planet
+            local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
+            if MysteryBoxSystem then
+                MysteryBoxSystem:checkForBoxSpawn(planet)
+            end
         end
     end
     
@@ -272,6 +293,12 @@ function GameState.update(dt)
         GameState,
         GameState.soundManager
     )
+    
+    -- Check mystery box collisions
+    local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
+    if MysteryBoxSystem then
+        MysteryBoxSystem:checkCollision(GameState.player)
+    end
     
     -- Check ring completion
     -- RingSystem is already loaded at the top
@@ -634,6 +661,13 @@ function GameState.handleMouseRelease(x, y, button)
             -- Notify tutorial system of jump action
             -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("jump")
+            EnhancedTutorialSystem.onPlayerAction("jump")
+            
+            -- Check for random event trigger
+            local RandomEventsSystem = Utils.require("src.systems.random_events_system")
+            if RandomEventsSystem then
+                RandomEventsSystem:checkForRandomEvent()
+            end
         elseif not GameState.player.onPlanet then
             -- Try dash
             -- PlayerSystem is already loaded at the top
@@ -646,6 +680,7 @@ function GameState.handleMouseRelease(x, y, button)
             -- Notify tutorial system of dash action
             -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("dash")
+            EnhancedTutorialSystem.onPlayerAction("dash")
         end
         
         GameState.data.isCharging = false
@@ -653,6 +688,33 @@ function GameState.handleMouseRelease(x, y, button)
         GameState.data.mouseStartY = nil
         GameState.data.pullPower = 0
     end
+end
+
+-- Spawn a special event ring for random events
+function GameState.spawnEventRing(x, y, rarityType, options)
+    options = options or {}
+    
+    local RingSystem = Utils.require("src.systems.ring_system")
+    local ring = RingSystem.generateRing(x, y, "default")
+    
+    -- Apply rarity
+    local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
+    RingRaritySystem.applyRarityToRing(ring, rarityType)
+    
+    -- Apply event-specific properties
+    if options.velocity_y then
+        ring.vy = options.velocity_y
+    end
+    
+    if options.particle_trail then
+        ring.particle_trail = true
+        ring.particle_color = options.particle_color or {1, 1, 1}
+    end
+    
+    -- Add to game state
+    table.insert(GameState.objects.rings, ring)
+    
+    return ring
 end
 
 return GameState 

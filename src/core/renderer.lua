@@ -199,10 +199,24 @@ function Renderer.drawDashCooldown(player, cooldown, maxCooldown)
 end
 
 function Renderer.drawPlanets(planets)
+    -- Try to use texture atlas for optimized rendering
+    local PerformanceSystem = Utils.require("src.performance.performance_system")
+    local useAtlas = PerformanceSystem and PerformanceSystem.textureAtlas
+    
     for i, planet in ipairs(planets) do
         -- Use planet's own color or default
         local planetColor = planet.color or Utils.colors["planet" .. i] or Utils.colors.planet1
         
+        -- Try to use texture atlas first
+        if useAtlas then
+            local spriteName = "planet_" .. (planet.radius > 60 and "large" or planet.radius > 40 and "medium" or "small")
+            local success = useAtlas.drawSprite(spriteName, planet.x, planet.y, 0, planet.radius / 32, planet.radius / 32, planetColor)
+            if success then
+                goto continue
+            end
+        end
+        
+        -- Fallback to original rendering
         -- Different appearance for discovered vs undiscovered planets
         if planet.discovered then
             Utils.drawCircle(planet.x, planet.y, planet.radius, planetColor)
@@ -216,6 +230,8 @@ function Renderer.drawPlanets(planets)
             love.graphics.circle("line", planet.x, planet.y, planet.radius + 5)
         end
         
+        ::continue::
+        
         -- Draw rotation indicator
         if planet.rotationSpeed then
             Utils.setColor(Utils.colors.white, 0.3)
@@ -226,8 +242,8 @@ function Renderer.drawPlanets(planets)
             love.graphics.line(planet.x, planet.y, ix, iy)
         end
         
-        -- Planet type indicator
-        if planet.type and planet.discovered then
+        -- Planet type indicator (only show for high LOD)
+        if planet.type and planet.discovered and (not planet.lodLevel or planet.lodLevel == "high") then
             love.graphics.setFont((Renderer.fonts and Renderer.fonts.light) or love.graphics.getFont())
             if planet.type == "ice" then
                 Utils.setColor({0.6, 0.8, 1}, 0.8)
@@ -265,6 +281,7 @@ end
 
 function Renderer.drawRings(rings)
     local RingSystem = Utils.require("src.systems.ring_system")
+    local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
     
     for _, ring in ipairs(rings) do
         if not ring.collected and (ring.visible == nil or ring.visible) then
@@ -340,6 +357,11 @@ function Renderer.drawRings(rings)
             if ring.type == "warp" then
                 Utils.setColor({ring.color[1], ring.color[2], ring.color[3]}, alpha * 0.6)
                 love.graphics.circle("fill", ring.x, ring.y, ring.innerRadius * 0.8 * pulse)
+            end
+            
+            -- ADDICTION ENGINE: Draw rarity-specific effects
+            if RingRaritySystem and ring.rarity then
+                RingRaritySystem.drawRing(ring, {worldToScreen = function(x, y) return x, y end})
             end
         end
     end

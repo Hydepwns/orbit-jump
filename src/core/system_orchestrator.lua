@@ -455,6 +455,15 @@ function SystemOrchestrator.registerOrbitJumpSystems()
                     -- Set planets in game state
                     GameState.setPlanets(initialPlanets)
                     Utils.Logger.info("World generated successfully with %d planets", #initialPlanets)
+                    
+                    -- Check for mystery box spawns on initial planets
+                    local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
+                    if MysteryBoxSystem then
+                        for _, planet in ipairs(initialPlanets) do
+                            MysteryBoxSystem:checkForBoxSpawn(planet)
+                        end
+                    end
+                    
                     return true
                 else
                     Utils.Logger.error("Failed to generate initial world")
@@ -587,6 +596,12 @@ function SystemOrchestrator.registerOrbitJumpSystems()
         layer = "meta",
         purpose = "Create emotional resonance through feedback",
         priority = 20
+    })
+    
+    SystemOrchestrator.register("feedbackSystem", Utils.safeRequire("src.systems.feedback_system"), {
+        layer = "meta",
+        purpose = "Collect player analytics and feedback for optimization",
+        priority = 30
     })
     
     -- Add more systems as they are updated to support the orchestrator interface

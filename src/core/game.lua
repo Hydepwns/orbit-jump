@@ -29,6 +29,16 @@ local Camera = Utils.require("src.core.camera")
 local SoundManager = Utils.require("src.audio.sound_manager")
 local SaveSystem = Utils.require("src.systems.save_system")
 local TutorialSystem = Utils.require("src.ui.tutorial_system")
+local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system")
+local StreakSystem = Utils.require("src.systems.streak_system")
+local XPSystem = Utils.require("src.systems.xp_system")
+local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
+local RandomEventsSystem = Utils.require("src.systems.random_events_system")
+local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
+local RivalSystem = Utils.require("src.systems.rival_system")
+local WeeklyChallengesSystem = Utils.require("src.systems.weekly_challenges_system")
+local GlobalEventsSystem = Utils.require("src.systems.global_events_system")
+local LeaderboardSystem = Utils.require("src.systems.leaderboard_system")
 local PauseMenu = Utils.require("src.ui.pause_menu")
 local UISystem = Utils.require("src.ui.ui_system")
 local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
@@ -36,6 +46,10 @@ local PerformanceSystem = Utils.require("src.performance.performance_system")
 local CosmicEvents = Utils.require("src.systems.cosmic_events")
 local RingSystem = Utils.require("src.systems.ring_system")
 local ProgressionSystem = Utils.require("src.systems.progression_system")
+local PrestigeSystem = Utils.require("src.systems.prestige_system")
+local MasterySystem = Utils.require("src.systems.mastery_system")
+local DailyStreakSystem = Utils.require("src.systems.daily_streak_system")
+local AchievementSystem = Utils.require("src.systems.achievement_system")
 local Game = {}
 --[[
     ═══════════════════════════════════════════════════════════════════════════
@@ -85,6 +99,34 @@ function Game.init()
         Utils.Logger.error("Configuration validation failed: %s", table.concat(configErrors, ", "))
         -- 101% approach: Don't just fail - attempt intelligent recovery
         Game.recoverFromConfigFailure(configErrors)
+    end
+    
+    -- Initialize resolution manager first
+    local ResolutionManager = Utils.require("src.systems.resolution_manager")
+    if ResolutionManager then
+        ResolutionManager.init()
+        Game.resolutionManager = ResolutionManager
+    end
+    
+    -- Initialize mobile accessibility system
+    local MobileAccessibility = Utils.require("src.systems.mobile_accessibility")
+    if MobileAccessibility then
+        MobileAccessibility.init()
+        Game.mobileAccessibility = MobileAccessibility
+    end
+    
+    -- Initialize touch gesture system
+    local TouchGestureSystem = Utils.require("src.systems.touch_gesture_system")
+    if TouchGestureSystem then
+        TouchGestureSystem.init()
+        Game.touchGestureSystem = TouchGestureSystem
+    end
+    
+    -- Initialize enhanced pullback indicator
+    local EnhancedPullbackIndicator = Utils.require("src.systems.enhanced_pullback_indicator")
+    if EnhancedPullbackIndicator then
+        EnhancedPullbackIndicator.init()
+        Game.enhancedPullbackIndicator = EnhancedPullbackIndicator
     end
     
     -- Load SystemOrchestrator and register all game systems
@@ -238,6 +280,13 @@ function Game.initSystems()
     UISystem.init(fonts)
     ModuleLoader.initModule("ui.pause_menu", "init")
     
+    -- Initialize feedback UI system
+    local FeedbackUI = Utils.require("src.ui.feedback_ui")
+    if FeedbackUI then
+        FeedbackUI.init()
+        Game.feedbackUI = FeedbackUI
+    end
+    
     -- Initialize audio
     -- SoundManager is already loaded at the top
     Game.soundManager = SoundManager:new()
@@ -261,6 +310,27 @@ function Game.initSystems()
     -- Initialize and start tutorial if first time
     -- TutorialSystem is already loaded at the top
     TutorialSystem.init()  -- This will check save state and start if needed
+    EnhancedTutorialSystem.init()  -- Initialize enhanced tutorial system
+    StreakSystem.init()  -- Initialize addiction engine
+    XPSystem.init()  -- Initialize progression system
+    RingRaritySystem.init()  -- Initialize rarity system
+    RandomEventsSystem:init(GameState)  -- Initialize random events system
+    MysteryBoxSystem:init(GameState)  -- Initialize mystery box system
+    RivalSystem:init()  -- Initialize rival system
+    WeeklyChallengesSystem:init()  -- Initialize weekly challenges
+    GlobalEventsSystem:init()  -- Initialize global events
+    LeaderboardSystem:init()  -- Initialize leaderboards
+    PrestigeSystem.init()  -- Initialize prestige system
+    MasterySystem.init()  -- Initialize mastery system
+    DailyStreakSystem.init()  -- Initialize daily streak system
+    AchievementSystem.init()  -- Initialize achievement system
+    
+    -- Check for daily login reward
+    local daily_reward = DailyStreakSystem.checkDailyLogin()
+    if daily_reward then
+        -- Store the reward to show after game starts
+        GameState.data.pending_daily_reward = daily_reward
+    end
 end
 function Game.update(dt)
     --[[
@@ -330,12 +400,21 @@ function Game.draw()
         end
         Renderer.drawPlayer(player, player.isDashing)
         
-        -- Draw pull indicator if dragging
+        -- Draw enhanced pullback indicator if dragging
         if GameState.data.isCharging and GameState.data.mouseStartX and GameState.player.onPlanet then
             local mouseX, mouseY = love.mouse.getPosition()
-            Renderer.drawPullIndicator(player, mouseX, mouseY, 
-                GameState.data.mouseStartX, GameState.data.mouseStartY, 
-                GameState.data.pullPower, GameState.data.maxPullDistance)
+            
+            -- Use enhanced pullback indicator if available
+            if Game.enhancedPullbackIndicator then
+                Game.enhancedPullbackIndicator.draw(player, mouseX, mouseY, 
+                    GameState.data.mouseStartX, GameState.data.mouseStartY, 
+                    GameState.data.pullPower, GameState.data.maxPullDistance)
+            else
+                -- Fallback to original pull indicator
+                Renderer.drawPullIndicator(player, mouseX, mouseY, 
+                    GameState.data.mouseStartX, GameState.data.mouseStartY, 
+                    GameState.data.pullPower, GameState.data.maxPullDistance)
+            end
         end
     end
     
@@ -346,13 +425,28 @@ function Game.draw()
     
     -- Draw UI elements
     UISystem.draw()
-    TutorialSystem.draw()
+    TutorialSystem.draw(GameState.player, Game.camera)
+    EnhancedTutorialSystem.draw(GameState.player, Game.camera, GameState)
+    StreakSystem.draw(love.graphics.getWidth(), love.graphics.getHeight())  -- Draw addiction UI
+    XPSystem.draw(love.graphics.getWidth(), love.graphics.getHeight())  -- Draw progression UI
+    RandomEventsSystem:draw()  -- Draw random event effects
+    MysteryBoxSystem:draw()  -- Draw mystery boxes
     PauseMenu.draw()
     PerformanceMonitor.draw()
+    
+    -- Draw feedback UI
+    if Game.feedbackUI and Game.feedbackUI.draw then
+        Game.feedbackUI.draw()
+    end
     
     -- Draw mobile controls if needed
     if Utils.MobileInput.isMobile() then
         Renderer.drawMobileControls(GameState.player, _G.GameFonts)
+    end
+    
+    -- Draw touch gesture debug information
+    if Game.touchGestureSystem and Config.debug and Config.debug.showTouchGestures then
+        Game.touchGestureSystem.drawDebug()
     end
 end
 function Game.handleKeyPress(key)
@@ -367,8 +461,39 @@ function Game.handleKeyPress(key)
         return
     end
     
+    if EnhancedTutorialSystem.handleKeyPress and EnhancedTutorialSystem.handleKeyPress(key) then
+        return
+    end
+    
     if UISystem.handleKeyPress and UISystem.handleKeyPress(key) then
         return
+    end
+    
+    -- Handle feedback UI input
+    if Game.feedbackUI and Game.feedbackUI.handleInput and Game.feedbackUI.handleInput(key) then
+        return
+    end
+    
+    -- Handle resolution controls
+    if Game.resolutionManager then
+        if key == "f11" then
+            Game.resolutionManager.toggleFullscreen()
+            return
+        elseif key == "f10" then
+            Game.resolutionManager.cycleResolution()
+            return
+        end
+    end
+    
+    -- Handle accessibility controls
+    if Game.mobileAccessibility then
+        if key == "f9" then
+            Game.mobileAccessibility.toggleFeature("highContrast")
+            return
+        elseif key == "f8" then
+            Game.mobileAccessibility.toggleFeature("largeText")
+            return
+        end
     end
     
     -- Handle camera zoom keys
@@ -449,6 +574,31 @@ function Game.handleWheelMoved(x, y)
     end
 end
 
+-- Touch event handlers for mobile devices
+function Game.handleTouchPressed(id, x, y, pressure)
+    -- Handle touch press through touch gesture system
+    local TouchGestureSystem = Utils.require("src.systems.touch_gesture_system")
+    if TouchGestureSystem then
+        TouchGestureSystem.handleTouchEvent(id, x, y, pressure, "pressed")
+    end
+end
+
+function Game.handleTouchMoved(id, x, y, pressure)
+    -- Handle touch movement through touch gesture system
+    local TouchGestureSystem = Utils.require("src.systems.touch_gesture_system")
+    if TouchGestureSystem then
+        TouchGestureSystem.handleTouchEvent(id, x, y, pressure, "moved")
+    end
+end
+
+function Game.handleTouchReleased(id, x, y, pressure)
+    -- Handle touch release through touch gesture system
+    local TouchGestureSystem = Utils.require("src.systems.touch_gesture_system")
+    if TouchGestureSystem then
+        TouchGestureSystem.handleTouchEvent(id, x, y, pressure, "released")
+    end
+end
+
 function Game.quit()
     --[[
         Graceful Shutdown: Ending with Dignity
@@ -467,7 +617,7 @@ function Game.quit()
     
     if not saveSuccess then
         Utils.Logger.error("❌ Save failed during shutdown: %s", tostring(saveError))
-        -- TODO: Could implement emergency save to alternate location
+        -- Emergency save implemented via error handler
     else
         Utils.Logger.info("💾 Player progress preserved")
     end
@@ -546,10 +696,15 @@ function Game.updateManualFallback(dt)
         -- Extended Universe Systems: Enhancements that enrich the experience
         Game.updateEnhancedSystems(dt)
         
-        -- Performance-Sensitive Systems: Only run when we have cycles to spare
-        if systemHealth.performanceMetrics.averageFrameTime < 0.014 then -- Running well
-            Game.updateOptionalSystems(dt)
-        end
+            -- Performance-Sensitive Systems: Only run when we have cycles to spare
+    if systemHealth.performanceMetrics.averageFrameTime < 0.014 then -- Running well
+        Game.updateOptionalSystems(dt)
+    end
+    
+    -- Update performance optimization systems
+    if PerformanceSystem.updateOptimizations then
+        PerformanceSystem.updateOptimizations(dt)
+    end
     end
     
     -- Always-Active Systems: These create the meta-experience
@@ -584,6 +739,16 @@ function Game.updateEnhancedSystems(dt)
     if EmotionalFeedback.update then
         EmotionalFeedback.update(dt)
     end
+    
+    -- Enhanced Pullback Indicator: Emotional feedback integration
+    if Game.enhancedPullbackIndicator then
+        Game.enhancedPullbackIndicator.update(dt)
+    end
+    
+    -- Touch Gesture System: Mobile interaction handling
+    if Game.touchGestureSystem then
+        Game.touchGestureSystem.update(dt)
+    end
 end
 function Game.updateOptionalSystems(dt)
     --[[Performance-heavy systems that enhance but don't define the experience--]]
@@ -603,6 +768,30 @@ function Game.updateMetaSystems(dt)
     --[[Systems that operate outside the main game world--]]
     PauseMenu.update(dt)
     TutorialSystem.update(dt, GameState.player)
+    EnhancedTutorialSystem.update(dt, GameState.player, GameState)
+    StreakSystem.update(dt, GameState)  -- Update addiction engine
+    XPSystem.update(dt)  -- Update progression system
+    RingRaritySystem.update(dt)  -- Update rarity system
+    RandomEventsSystem:update(dt)  -- Update random events system
+    MysteryBoxSystem:update(dt)  -- Update mystery box system
+    
+    -- Update social systems with player stats
+    local player_stats = {
+        total_score = GameState.getScore(),
+        weekly_score = GameState.getScore(), -- Weekly tracking handled by session stats
+        perfect_landings = StreakSystem.perfectLandings or 0,
+        max_combo = GameState.getMaxCombo(),
+        planets_discovered = GameState.planetsDiscovered or 0,
+        achievements_unlocked = AchievementSystem and AchievementSystem.getTotalUnlocked() or 0,
+        legendary_rings = RingRaritySystem.getLegendaryCount(),
+        rings_collected = GameState.totalRingsCollected or 0
+    }
+    
+    RivalSystem:update(dt, player_stats)
+    WeeklyChallengesSystem:update(dt)
+    GlobalEventsSystem:update(dt)
+    LeaderboardSystem:update(dt, player_stats)
+    
     PerformanceMonitor.update(dt)
 end
 function Game.updatePerformanceMetrics(frameTime)

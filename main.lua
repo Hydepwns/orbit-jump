@@ -33,6 +33,26 @@ function love.wheelmoved(x, y)
   Game.handleWheelMoved(x, y)
 end
 
+-- Touch event handlers for mobile devices
+function love.touchpressed(id, x, y, pressure)
+  Game.handleTouchPressed(id, x, y, pressure)
+end
+
+function love.touchmoved(id, x, y, pressure)
+  Game.handleTouchMoved(id, x, y, pressure)
+end
+
+function love.touchreleased(id, x, y, pressure)
+  Game.handleTouchReleased(id, x, y, pressure)
+end
+
+function love.resize(w, h)
+  -- Handle window resize
+  if Game.resolutionManager then
+    Game.resolutionManager.handleResize(w, h)
+  end
+end
+
 function love.quit()
   Game.quit()
 end

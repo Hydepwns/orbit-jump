@@ -273,7 +273,18 @@ function GameLogic.calculateRingValue(baseValue, combo, progressionSystem)
     local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     local ringValueBoost = UpgradeSystem.getEffect("ring_value")
     
-    return value * ringValueBoost
+    -- Apply prestige shop effects
+    local PrestigeSystem = Utils.require("src.systems.prestige_system")
+    local prestigeEffects = PrestigeSystem.getActiveEffects()
+    local prestigeMultiplier = 1.0
+    
+    for _, effect in ipairs(prestigeEffects) do
+        if effect.type == "ring_multiplier" then
+            prestigeMultiplier = prestigeMultiplier + (effect.value * effect.stacks)
+        end
+    end
+    
+    return value * ringValueBoost * prestigeMultiplier
 end
 
 function GameLogic.calculateGravityResistance(progressionSystem)
