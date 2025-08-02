@@ -51,7 +51,28 @@ PerformanceSystem.spatialGrid = {}
 -- Initialize
 function PerformanceSystem.init()
     PerformanceSystem.clearGrid()
-    Utils.Logger.info("Performance system initialized")
+    
+    -- Initialize performance optimization systems
+    local TextureAtlasSystem = Utils.require("src.performance.texture_atlas_system")
+    local LODSystem = Utils.require("src.performance.lod_system")
+    local AudioStreamingSystem = Utils.require("src.performance.audio_streaming_system")
+    
+    if TextureAtlasSystem then
+        TextureAtlasSystem.init()
+        PerformanceSystem.textureAtlas = TextureAtlasSystem
+    end
+    
+    if LODSystem then
+        LODSystem.init()
+        PerformanceSystem.lodSystem = LODSystem
+    end
+    
+    if AudioStreamingSystem then
+        AudioStreamingSystem.init()
+        PerformanceSystem.audioStreaming = AudioStreamingSystem
+    end
+    
+    Utils.Logger.info("Performance system initialized with optimization subsystems")
     return true
 end
 
@@ -426,6 +447,144 @@ function PerformanceSystem.cullForUpdate(entities, camera, updateDistance)
     PerformanceSystem.metrics.culledEntities = culled
     
     return toUpdate
+end
+
+-- Get basic performance statistics
+function PerformanceSystem.getStats()
+    return {
+        visiblePlanets = PerformanceSystem.metrics.visiblePlanets or 0,
+        visibleRings = PerformanceSystem.metrics.visibleRings or 0,
+        activeParticles = PerformanceSystem.metrics.activeParticles or 0,
+        frameTime = PerformanceSystem.metrics.frameTime or 0,
+        averageFrameTime = PerformanceSystem.metrics.averageFrameTime or 16.67,
+        qualityLevel = PerformanceSystem.metrics.qualityLevel or 1.0
+    }
+end
+
+-- Update performance optimization systems
+function PerformanceSystem.updateOptimizations(dt)
+    -- Update LOD system
+    if PerformanceSystem.lodSystem and PerformanceSystem.lodSystem.update then
+        local success = pcall(PerformanceSystem.lodSystem.update, PerformanceSystem.lodSystem, dt)
+        if not success then
+            Utils.Logger.warn("Failed to update LOD system")
+        end
+    end
+    
+    -- Update audio streaming system
+    if PerformanceSystem.audioStreaming and PerformanceSystem.audioStreaming.update then
+        local success = pcall(PerformanceSystem.audioStreaming.update, PerformanceSystem.audioStreaming, dt)
+        if not success then
+            Utils.Logger.warn("Failed to update audio streaming system")
+        end
+    end
+    
+    -- Dynamic performance adjustment
+    PerformanceSystem.adjustForPerformance(dt)
+end
+
+-- Adjust performance settings based on current performance
+function PerformanceSystem.adjustForPerformance(dt)
+    local frameTime = dt * 1000
+    local targetFrameTime = PerformanceSystem.config.targetFrameTime
+    
+    -- Update frame time history
+    table.insert(PerformanceSystem.metrics.frameHistory, frameTime)
+    if #PerformanceSystem.metrics.frameHistory > 60 then
+        table.remove(PerformanceSystem.metrics.frameHistory, 1)
+    end
+    
+    -- Calculate average frame time
+    local total = 0
+    for _, time in ipairs(PerformanceSystem.metrics.frameHistory) do
+        total = total + time
+    end
+    PerformanceSystem.metrics.averageFrameTime = total / #PerformanceSystem.metrics.frameHistory
+    
+    -- Adjust LOD distances based on performance
+    if PerformanceSystem.lodSystem then
+        PerformanceSystem.lodSystem.adjustForPerformance(frameTime, targetFrameTime)
+    end
+    
+    -- Adjust audio quality based on performance
+    if PerformanceSystem.audioStreaming then
+        -- Audio streaming system handles its own performance adjustment
+    end
+    
+    -- Adjust dynamic quality settings
+    if PerformanceSystem.config.enableDynamicQuality then
+        local performanceRatio = frameTime / targetFrameTime
+        
+        if performanceRatio > 1.5 then
+            -- Performance is poor, reduce quality
+            PerformanceSystem.metrics.qualityLevel = math.max(0.5, PerformanceSystem.metrics.qualityLevel * 0.9)
+        elseif performanceRatio < 0.7 then
+            -- Performance is good, increase quality
+            PerformanceSystem.metrics.qualityLevel = math.min(1.0, PerformanceSystem.metrics.qualityLevel * 1.1)
+        end
+    end
+end
+
+-- Get comprehensive performance statistics
+function PerformanceSystem.getComprehensiveStats()
+    local stats = {
+        basic = PerformanceSystem.getStats(),
+        textureAtlas = {},
+        lod = {},
+        audioStreaming = {}
+    }
+    
+    -- Get texture atlas statistics
+    if PerformanceSystem.textureAtlas and PerformanceSystem.textureAtlas.getStats then
+        local success, atlasStats = pcall(PerformanceSystem.textureAtlas.getStats, PerformanceSystem.textureAtlas)
+        if success then
+            stats.textureAtlas = atlasStats
+        end
+    end
+    
+    -- Get LOD statistics
+    if PerformanceSystem.lodSystem and PerformanceSystem.lodSystem.getStats then
+        local success, lodStats = pcall(PerformanceSystem.lodSystem.getStats, PerformanceSystem.lodSystem)
+        if success then
+            stats.lod = lodStats
+        end
+    end
+    
+    -- Get audio streaming statistics
+    if PerformanceSystem.audioStreaming and PerformanceSystem.audioStreaming.getStats then
+        local success, audioStats = pcall(PerformanceSystem.audioStreaming.getStats, PerformanceSystem.audioStreaming)
+        if success then
+            stats.audioStreaming = audioStats
+        end
+    end
+    
+    return stats
+end
+
+-- Clean up performance systems
+function PerformanceSystem.cleanup()
+    if PerformanceSystem.textureAtlas and PerformanceSystem.textureAtlas.cleanup then
+        local success = pcall(PerformanceSystem.textureAtlas.cleanup)
+        if not success then
+            Utils.Logger.warn("Failed to cleanup texture atlas system")
+        end
+    end
+    
+    if PerformanceSystem.lodSystem and PerformanceSystem.lodSystem.cleanup then
+        local success = pcall(PerformanceSystem.lodSystem.cleanup)
+        if not success then
+            Utils.Logger.warn("Failed to cleanup LOD system")
+        end
+    end
+    
+    if PerformanceSystem.audioStreaming and PerformanceSystem.audioStreaming.cleanup then
+        local success = pcall(PerformanceSystem.audioStreaming.cleanup)
+        if not success then
+            Utils.Logger.warn("Failed to cleanup audio streaming system")
+        end
+    end
+    
+    Utils.Logger.info("Performance systems cleaned up")
 end
 
 return PerformanceSystem
