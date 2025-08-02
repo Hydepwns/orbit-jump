@@ -173,6 +173,20 @@ function WarpDrive.draw(player)
     WarpCore.drawEffects(player)
 end
 
+-- Complete warp (for testing and direct control)
+function WarpDrive.completeWarp(player)
+    if WarpCore.completeWarp then
+        WarpCore.completeWarp(player)
+    end
+end
+
+-- Create warp particles (for testing)
+function WarpDrive.createWarpParticles(player, count)
+    if WarpCore.createWarpParticles then
+        WarpCore.createWarpParticles(player, count)
+    end
+end
+
 -- Draw UI elements
 function WarpDrive.drawUI(player, planets, camera)
     if not WarpCore.isUnlocked then return end

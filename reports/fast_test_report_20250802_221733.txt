@@ -1,0 +1,54 @@
+Test Report: fast
+Generated: Sat Aug  2 10:17:33 PM CEST 2025
+Duration: 0s
+Exit Code: 0
+
+Results:
+  Total Tests: 26
+  Passed: 26
+  Failed: 0
+
+Full Output:
+🚀 Starting Simplified Unified Test Runner
+🔧 Initializing framework...
+[34m🔧 Setting up test statistics...[0m
+[34m🔧 Setting up mocks...[0m
+✅ Framework initialized
+🔍 Discovering tests...
+✅ Loaded game_logic_tests
+📋 Test discovery complete
+📊 Found 1 test suites
+🏃 Running tests...
+📋 Running unit tests...
+  🔍 Suite: tests/unit/game_logic_tests.lua
+    ✅ should calculate orbit position at angle π/2 (0.000s)
+    ✅ should apply progression multiplier to speed boost (0.000s)
+    ✅ should not detect collision in center hole (0.000s)
+    ✅ should detect out of bounds correctly (0.000s)
+    ✅ should calculate combo bonus without progression (0.000s)
+    ✅ should calculate gravity correctly (0.000s)
+    ✅ should calculate distance correctly (0.000s)
+    ✅ should apply speed boost correctly (0.000s)
+    ✅ should normalize vectors correctly (0.000s)
+    ✅ should preserve zero velocity (0.000s)
+    ✅ should not detect planet collision when far (0.000s)
+    ✅ should calculate speed boost without progression (0.000s)
+    ✅ should apply progression multiplier to combo bonus (0.000s)
+    ✅ should handle fractional boosts (0.000s)
+    ✅ should handle negative coordinates (0.000s)
+    ✅ should calculate tangent velocity (0.000s)
+    ✅ should detect ring collision when player passes through (0.000s)
+    ✅ should handle zero vector (0.000s)
+    ✅ should detect planet collision when touching (0.000s)
+    ✅ should calculate jump velocity correctly (0.000s)
+    ✅ should return zero gravity inside planet (0.000s)
+    ✅ should handle nil inputs gracefully (0.000s)
+    ✅ should handle nil inputs (0.000s)
+    ✅ should add tangent velocity to jump (0.000s)
+    ✅ should not detect ring collision when too far (0.000s)
+    ✅ should calculate orbit position at angle 0 (0.000s)
+    📊 26/26 tests passed
+============================================================
+📊 Overall Test Results:
+  Total: 26 | Passed: 26 | Failed: 0 | Time: 0.000s
+🎉 All tests passed!

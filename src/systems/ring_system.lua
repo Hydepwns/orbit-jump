@@ -264,7 +264,7 @@ function RingSystem.collectRing(ring, player)
     -- ADDICTION ENGINE: Apply rarity system bonuses
     local baseValue = ring.value or (RingSystem.types[ring.type] and RingSystem.types[ring.type].value) or 5
     if RingRaritySystem and RingRaritySystem.onRingCollected then
-        return RingRaritySystem.onRingCollected(ring, player, nil) or baseValue
+        RingRaritySystem.onRingCollected(ring, player, nil)
     end
     
     -- Return ring value (with fallback to type value or default)

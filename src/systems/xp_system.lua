@@ -250,7 +250,7 @@ function XPSystem.calculateXPToNextLevel()
         scaling = 1.05 -- 5% increase (prestige preparation)
     end
     
-    XPSystem.xpToNextLevel = math.floor(baseXP * math.pow(scaling, XPSystem.currentLevel - 1))
+    XPSystem.xpToNextLevel = math.floor(baseXP * (scaling ^ (XPSystem.currentLevel - 1)))
 end
 
 -- Unlock reward
@@ -307,7 +307,7 @@ function XPSystem.calculateXPNeededForLevel(targetLevel)
             scaling = 1.05
         end
         
-        xpNeeded = xpNeeded + math.floor(baseXP * math.pow(scaling, level - 1))
+        xpNeeded = xpNeeded + math.floor(baseXP * (scaling ^ (level - 1)))
     end
     
     return xpNeeded

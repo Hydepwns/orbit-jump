@@ -93,8 +93,14 @@ function Camera:follow(target, dt)
     
     -- Apply bounds if set
     if self.bounds then
-        self.x = math.max(self.bounds.minX, math.min(self.bounds.maxX - self.screenWidth / self.scale, self.x))
-        self.y = math.max(self.bounds.minY, math.min(self.bounds.maxY - self.screenHeight / self.scale, self.y))
+        -- Use the effective scale for bounds calculation
+        local effectiveScale = self.scale
+        local maxX = self.bounds.maxX - self.screenWidth / effectiveScale
+        local maxY = self.bounds.maxY - self.screenHeight / effectiveScale
+        
+        -- Ensure we don't exceed bounds
+        self.x = math.max(self.bounds.minX, math.min(maxX, self.x))
+        self.y = math.max(self.bounds.minY, math.min(maxY, self.y))
     end
     
     -- Update smooth zoom
@@ -116,6 +122,9 @@ end
 
 function Camera:apply()
     love.graphics.push()
+    
+    -- Ensure dimensions are initialized
+    self:initDimensions()
     
     -- Apply shake
     local shakeX = 0
@@ -148,11 +157,13 @@ end
 
 function Camera:setScale(scale)
     self.targetScale = math.max(self.minZoom, math.min(self.maxZoom, scale))
+    -- Also set current scale immediately for immediate effect
+    self.scale = self.targetScale
 end
 
 function Camera:zoom(factor)
     -- Positive factor zooms in, negative zooms out
-    local newScale = self.targetScale * (1 + factor)
+    local newScale = self.scale * (1 + factor)
     self:setScale(newScale)
 end
 

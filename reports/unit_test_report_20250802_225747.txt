@@ -1,0 +1,29 @@
+Test Report: unit
+Generated: Sat Aug  2 10:57:47 PM CEST 2025
+Duration: 0s
+Exit Code: 0
+
+Results:
+  Total Tests: 0
+  Passed: 0
+  Failed: 0
+
+Full Output:
+[34m🔧 Setting up test statistics...[0m
+[34m🔧 Setting up mocks...[0m
+Running performance tests...
+
+============================================================
+⏱️  Total Time: 0.000s
+============================================================
+Running unit tests...
+
+============================================================
+⏱️  Total Time: 0.000s
+============================================================
+Running integration tests...
+
+============================================================
+⏱️  Total Time: 0.000s
+============================================================
+✅ All tests passed!

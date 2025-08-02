@@ -35,6 +35,10 @@ function PlayerAnalytics.init()
     PatternAnalyzer.init()
     InsightGenerator.init()
     
+    -- Set data references for testing
+    PlayerAnalytics.data = InsightGenerator.data
+    PlayerAnalytics.session = InsightGenerator.session
+    
     -- Restore from save data
     PlayerAnalytics.restoreFromSave()
     
@@ -293,9 +297,9 @@ PlayerAnalytics.memory = {
     sessionData = PatternAnalyzer.sessionData
 }
 
--- Expose data for testing
-PlayerAnalytics.data = InsightGenerator.data
-PlayerAnalytics.session = InsightGenerator.session
+-- Expose data for testing (will be set after initialization)
+PlayerAnalytics.data = nil
+PlayerAnalytics.session = nil
 
 -- Legacy function mappings
 PlayerAnalytics.initializeMemoryStructures = function()
@@ -320,6 +324,25 @@ PlayerAnalytics.getStatus = function()
         isTracking = PlayerAnalytics.isTracking,
         sessionTime = love.timer.getTime() - PlayerAnalytics.sessionStartTime
     }
+end
+
+-- Update session data
+function PlayerAnalytics.updateSession()
+    if not PlayerAnalytics.isTracking then return end
+    
+    local currentTime = love.timer.getTime()
+    local sessionTime = currentTime - PlayerAnalytics.sessionStartTime
+    
+    -- Update session data in pattern analyzer
+    PatternAnalyzer.updateSession(sessionTime)
+    
+    -- Update behavior tracking
+    BehaviorTracker.updateSession(sessionTime)
+    
+    -- Update insights
+    InsightGenerator.updateSession(sessionTime)
+    
+    PlayerAnalytics.lastActionTime = currentTime
 end
 
 return PlayerAnalytics

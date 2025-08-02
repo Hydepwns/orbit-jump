@@ -505,6 +505,16 @@ function AchievementSystem.trackTieredProgress(achievement_id, value)
     if not achievement or not achievement.tiers then return end
     
     local progress = achievements.progress[achievement_id]
+    if not progress then
+        -- Initialize progress if it doesn't exist
+        progress = {
+            current_value = 0,
+            current_tier = 0,
+            tiers_unlocked = {}
+        }
+        achievements.progress[achievement_id] = progress
+    end
+    
     progress.current_value = progress.current_value + (value or 1)
     
     -- Check tier unlocks

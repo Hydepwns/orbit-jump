@@ -324,4 +324,11 @@ function WarpMemory.getStats(memory)
     }
 end
 
+-- Get memory statistics (alias for compatibility)
+function WarpMemory.getMemoryStats()
+    -- Get the current memory instance
+    local memory = WarpMemory.memory or WarpMemory.init()
+    return WarpMemory.getStats(memory)
+end
+
 return WarpMemory

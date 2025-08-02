@@ -279,6 +279,24 @@ function BehaviorTracker.saveState()
     }
 end
 
+-- Update session data
+function BehaviorTracker.updateSession(sessionTime)
+    -- Update session-based metrics
+    local movement = BehaviorTracker.movementProfile
+    local exploration = BehaviorTracker.explorationProfile
+    
+    -- Update spatial mastery based on session time
+    if sessionTime > 0 then
+        movement.spatialMastery = math.min(1.0, movement.totalJumps / (sessionTime * 10))
+    end
+    
+    -- Update exploration radius based on session time
+    if sessionTime > 0 then
+        exploration.explorationRadius = math.max(exploration.explorationRadius, 
+            movement.totalDistance / sessionTime)
+    end
+end
+
 -- Restore behavior data
 function BehaviorTracker.restoreState(state)
     if state then

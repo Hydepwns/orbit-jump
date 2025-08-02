@@ -367,6 +367,13 @@ function InsightGenerator.saveState()
     }
 end
 
+-- Update session data
+function InsightGenerator.updateSession(sessionTime)
+    if InsightGenerator.session then
+        InsightGenerator.session.duration = sessionTime
+    end
+end
+
 -- Restore insight data
 function InsightGenerator.restoreState(state)
     if state then

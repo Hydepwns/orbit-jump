@@ -316,7 +316,7 @@ function SoundGenerator.generateAddictionSounds(sounds)
         -- Double pulse like heartbeat
         local pulseRate = 2.5 -- Heartbeat-like rhythm
         local pulse = math.sin(2 * math.pi * pulseRate * t)
-        pulse = pulse > 0 and math.pow(pulse, 0.3) or 0 -- Sharp attack, quick decay
+        pulse = pulse > 0 and (pulse ^ 0.3) or 0 -- Sharp attack, quick decay
         
         local freq = 200 + pulse * 400 -- Frequency modulation
         local sample = math.sin(2 * math.pi * freq * t) * pulse * 0.4

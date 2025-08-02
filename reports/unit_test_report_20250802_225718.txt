@@ -1,0 +1,12 @@
+Test Report: unit
+Generated: Sat Aug  2 10:57:18 PM CEST 2025
+Duration: 0s
+Exit Code: 1
+
+Results:
+  Total Tests: 0
+  Passed: 0
+  Failed: 0
+
+Full Output:
+lua: cannot open /home/droo/orbit-jump/tests/run_unified_tests_simple.lua: No such file or directory
