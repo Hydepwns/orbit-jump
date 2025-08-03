@@ -5,3 +5,7 @@
 *.log
 game.log
 test.log
+
+# LuaRocks build artifacts
+*.src.rock
+*.zip.rock
