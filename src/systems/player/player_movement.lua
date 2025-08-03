@@ -13,14 +13,15 @@ local Config = Utils.require("src.utils.config")
 
 local PlayerMovement = {}
 
--- Adaptive Physics: Parameters that learn and evolve
+-- Adaptive physics system for player movement
 local AdaptivePhysics = {
-    baseSpaceDrag = 0.99,        -- Original static value
-    currentSpaceDrag = 0.99,     -- Dynamically adjusted value
-    baseCameraResponse = 2,      -- Original camera speed
-    currentCameraResponse = 2,   -- Adapted camera speed
-    lastAdaptationTime = 0,      -- When we last adjusted parameters
-    adaptationInterval = 10.0    -- How often to recalibrate (seconds)
+    baseSpaceDrag = 0.995,       -- Reduced from 0.99 to 0.995 (less drag)
+    currentSpaceDrag = 0.995,    -- Dynamically adjusted value
+    baseCameraResponse = 2.0,    -- How quickly camera follows player
+    currentCameraResponse = 2.0, -- Dynamically adjusted value
+    adaptationRate = 0.1,        -- How quickly physics adapt to player
+    adaptationInterval = 5.0,    -- How often to adapt physics (seconds)
+    learningEnabled = true       -- Master switch for adaptive features
 }
 
 --[[
@@ -281,6 +282,12 @@ end
 
 function PlayerMovement.updateAdaptivePhysics()
     local currentTime = love.timer.getTime()
+    
+    -- Safety check: ensure lastAdaptationTime is initialized
+    if not AdaptivePhysics.lastAdaptationTime then
+        AdaptivePhysics.lastAdaptationTime = currentTime
+        return
+    end
     
     -- Only recalibrate periodically to avoid constant adjustments
     if currentTime - AdaptivePhysics.lastAdaptationTime < AdaptivePhysics.adaptationInterval then

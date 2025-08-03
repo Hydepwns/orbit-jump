@@ -269,24 +269,43 @@ function EnhancedPullbackIndicator.drawDirectionArrow(player, mouseX, mouseY, mo
     local arrowEndX = player.x + jumpDirectionX * arrowLength
     local arrowEndY = player.y + jumpDirectionY * arrowLength
     
-    -- Draw arrow with emotional color
+    -- Calculate line width and arrowhead size
+    local lineWidth = 4 + emotionalFeedback.intensity * 4
+    local arrowheadSize = 12 + emotionalFeedback.intensity * 8
+    
+    -- Draw arrow shaft with emotional color
     Utils.setColor(emotionalFeedback.color)
-    love.graphics.setLineWidth(4 + emotionalFeedback.intensity * 4)
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setLineJoin("miter")
+    
+    -- Draw the main arrow shaft
     love.graphics.line(player.x, player.y, arrowEndX, arrowEndY)
     
-    -- Draw arrowhead
-    local arrowheadSize = 12 + emotionalFeedback.intensity * 8
+    -- Calculate arrowhead points for a proper triangle
     local perpX = -jumpDirectionY
     local perpY = jumpDirectionX
     
-    love.graphics.line(arrowEndX, arrowEndY, 
-        arrowEndX - jumpDirectionX * arrowheadSize + perpX * arrowheadSize * 0.5,
-        arrowEndY - jumpDirectionY * arrowheadSize + perpY * arrowheadSize * 0.5)
-    love.graphics.line(arrowEndX, arrowEndY, 
-        arrowEndX - jumpDirectionX * arrowheadSize - perpX * arrowheadSize * 0.5,
-        arrowEndY - jumpDirectionY * arrowheadSize - perpY * arrowheadSize * 0.5)
+    -- Arrowhead base (where it connects to the shaft)
+    local arrowheadBaseX = arrowEndX - jumpDirectionX * (arrowheadSize * 0.3)
+    local arrowheadBaseY = arrowEndY - jumpDirectionY * (arrowheadSize * 0.3)
     
+    -- Arrowhead side points
+    local arrowheadLeftX = arrowheadBaseX + perpX * arrowheadSize * 0.6
+    local arrowheadLeftY = arrowheadBaseY + perpY * arrowheadSize * 0.6
+    local arrowheadRightX = arrowheadBaseX - perpX * arrowheadSize * 0.6
+    local arrowheadRightY = arrowheadBaseY - perpY * arrowheadSize * 0.6
+    
+    -- Draw arrowhead as a filled triangle for better visual connection
     love.graphics.setLineWidth(1)
+    love.graphics.polygon("fill", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
+    
+    -- Draw arrowhead outline to match shaft
+    love.graphics.setLineWidth(lineWidth * 0.8)
+    love.graphics.polygon("line", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
+    
+    -- Reset line settings
+    love.graphics.setLineWidth(1)
+    love.graphics.setLineJoin("miter")
 end
 
 -- Draw power meter with emotional feedback

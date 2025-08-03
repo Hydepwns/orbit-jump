@@ -66,6 +66,35 @@ StreakSystem.PERFECT_LANDING_RADIUS = 15 -- pixels from planet center
 StreakSystem.BASE_GRACE_PERIOD = 3.0 -- base seconds to save streak with perfect landing
 StreakSystem.streak_shield_active = false -- One-time protection per session
 
+-- Reset streak system (for game restart)
+function StreakSystem.reset()
+    StreakSystem.perfectLandingStreak = 0
+    StreakSystem.streakBroken = false
+    StreakSystem.streakBreakTimer = 0
+    StreakSystem.streakSavedByGrace = false
+    StreakSystem.graceTimer = 0
+    StreakSystem.lastLandingWasPerfect = false
+    
+    -- Clear all visual effects
+    StreakSystem.streakGlowPhase = 0
+    StreakSystem.bonusEffectTimer = 0
+    StreakSystem.breakEffectTimer = 0
+    StreakSystem.shakeIntensity = 0
+    StreakSystem.shieldGlowPhase = 0
+    StreakSystem.shieldActive = false
+    
+    -- Clear safety timer
+    StreakSystem.streakBrokenResetTimer = nil
+    
+    -- Clear all active bonuses
+    StreakSystem.activeBonuses = {}
+    
+    -- Reset shield state
+    StreakSystem.streak_shield_active = false
+    
+    Utils.Logger.info("Streak system reset - all effects cleared")
+end
+
 -- Get cached font for performance with error handling
 function StreakSystem.getFont(size)
     if not size or size <= 0 then
@@ -105,6 +134,30 @@ function StreakSystem.update(dt, gameState)
     StreakSystem.breakEffectTimer = math.max(0, StreakSystem.breakEffectTimer - dt)
     StreakSystem.shakeIntensity = math.max(0, StreakSystem.shakeIntensity - dt * 3)
     StreakSystem.shieldGlowPhase = StreakSystem.shieldGlowPhase + dt * 6
+    
+    -- Reset streak broken state when effect finishes
+    if StreakSystem.breakEffectTimer <= 0 and StreakSystem.streakBroken then
+        StreakSystem.streakBroken = false
+        StreakSystem.shakeIntensity = 0  -- Clear shake immediately when effect ends
+    end
+    
+    -- Safety check: If streak broken but no timer, reset after a reasonable delay
+    if StreakSystem.streakBroken and StreakSystem.breakEffectTimer <= 0 then
+        -- Add a small delay to prevent immediate reset
+        if not StreakSystem.streakBrokenResetTimer then
+            StreakSystem.streakBrokenResetTimer = 1.0 -- 1 second safety delay
+        else
+            StreakSystem.streakBrokenResetTimer = StreakSystem.streakBrokenResetTimer - dt
+            if StreakSystem.streakBrokenResetTimer <= 0 then
+                StreakSystem.streakBroken = false
+                StreakSystem.streakBrokenResetTimer = nil
+                StreakSystem.shakeIntensity = 0
+                Utils.Logger.warn("Streak broken state reset by safety timer")
+            end
+        end
+    else
+        StreakSystem.streakBrokenResetTimer = nil
+    end
     
     -- Update grace period timer
     if StreakSystem.graceTimer > 0 then
@@ -289,8 +342,27 @@ function StreakSystem.breakStreak(reason, gameState)
     local brokenStreak = StreakSystem.perfectLandingStreak
     StreakSystem.perfectLandingStreak = 0
     StreakSystem.streakBroken = true
-    StreakSystem.breakEffectTimer = 3.0
     StreakSystem.shakeIntensity = 1.0
+    
+    -- Clear all visual effects immediately
+    StreakSystem.streakGlowPhase = 0
+    StreakSystem.bonusEffectTimer = 0
+    StreakSystem.shieldActive = false
+    StreakSystem.shieldGlowPhase = 0
+    StreakSystem.graceTimer = 0
+    StreakSystem.streakSavedByGrace = false
+    
+    -- Use the new UI animation system for streak break effect
+    local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+    if UIAnimationSystem then
+        UIAnimationSystem.createFlashAnimation("STREAK BROKEN!", {
+            duration = 0.3,  -- Quick flash
+            color = {1, 0, 0, 1}  -- Red color
+        })
+    else
+        -- Fallback to old system if animation system not available
+        StreakSystem.breakEffectTimer = 0.3
+    end
     
     -- Play streak break sound
     if gameState and gameState.soundSystem and gameState.soundSystem.playStreakBreak then
@@ -316,9 +388,6 @@ function StreakSystem.breakStreak(reason, gameState)
     
     -- Deactivate shield
     StreakSystem.shieldActive = false
-    
-    -- Create dramatic break effect
-    StreakSystem.createStreakBreakEffect(brokenStreak)
     
     Utils.Logger.info("STREAK BROKEN! Lost streak of %d (%s)", brokenStreak, reason)
 end
@@ -465,7 +534,7 @@ end
 
 function StreakSystem.createStreakSavedEffect()
     -- Dramatic "STREAK SAVED!" effect with particles
-    StreakSystem.bonusEffectTimer = 2.0
+    StreakSystem.bonusEffectTimer = 1.2  -- Reduced from 2.0 to 1.2 seconds
     
     local ParticleSystem = Utils.require("src.systems.particle_system")
     if ParticleSystem then
@@ -476,7 +545,7 @@ end
 
 function StreakSystem.createNewRecordEffect()
     -- "NEW RECORD!" celebration with maximum particles
-    StreakSystem.bonusEffectTimer = 3.0
+    StreakSystem.bonusEffectTimer = 1.8  -- Reduced from 3.0 to 1.8 seconds
     
     local ParticleSystem = Utils.require("src.systems.particle_system")
     if ParticleSystem then
@@ -489,15 +558,9 @@ function StreakSystem.createGracePeriodEffect()
     -- Warning indicators that streak is in danger
 end
 
-function StreakSystem.createStreakBreakEffect(brokenStreak)
-    -- Dramatic screen effect when streak is lost
-    StreakSystem.breakEffectTimer = 3.0
-    StreakSystem.shakeIntensity = 1.0
-end
-
 function StreakSystem.createMilestoneEffect(threshold)
     -- Celebration for reaching streak milestone with themed particles
-    StreakSystem.bonusEffectTimer = 3.0
+    StreakSystem.bonusEffectTimer = 1.5  -- Reduced from 3.0 to 1.5 seconds
     
     local ParticleSystem = Utils.require("src.systems.particle_system")
     if ParticleSystem then
@@ -519,7 +582,7 @@ end
 
 function StreakSystem.createStreakShieldEffect()
     -- Visual effect for streak shield activation
-    StreakSystem.bonusEffectTimer = 2.5
+    StreakSystem.bonusEffectTimer = 1.5  -- Reduced from 2.5 to 1.5 seconds
     StreakSystem.shieldGlowPhase = 0
     StreakSystem.shieldActive = true
 end
@@ -542,9 +605,7 @@ function StreakSystem.draw(screenWidth, screenHeight)
     end
     
     -- Draw streak break effect
-    if StreakSystem.breakEffectTimer > 0 then
-        StreakSystem.drawStreakBreakEffect(screenWidth, screenHeight)
-    end
+    -- Now handled by UIAnimationSystem
     
     -- Draw bonus activation effect
     if StreakSystem.bonusEffectTimer > 0 then
@@ -709,40 +770,44 @@ function StreakSystem.drawGracePeriodWarning(centerX, y)
     love.graphics.print(warningText, centerX - textWidth/2, y + 8)
 end
 
--- Draw streak break effect
-function StreakSystem.drawStreakBreakEffect(screenWidth, screenHeight)
-    local alpha = StreakSystem.breakEffectTimer / 3.0
-    
-    -- Screen flash
-    Utils.setColor({1, 0, 0}, alpha * 0.4)
-    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
-    
-    -- "STREAK BROKEN!" text
-    if alpha > 0.5 then
-        Utils.setColor({1, 1, 1}, alpha)
-        love.graphics.setFont(love.graphics.newFont(48))
-        local breakText = "STREAK BROKEN!"
-        local textWidth = love.graphics.getFont():getWidth(breakText)
-        local textX = screenWidth/2 - textWidth/2
-        local textY = screenHeight/2 - 24
-        
-        -- Text shadow
-        Utils.setColor({0, 0, 0}, alpha * 0.8)
-        love.graphics.print(breakText, textX + 3, textY + 3)
-        
-        -- Main text
-        Utils.setColor({1, 0, 0}, alpha)
-        love.graphics.print(breakText, textX, textY)
-    end
-end
-
 -- Draw bonus activation effect
 function StreakSystem.drawBonusEffect(screenWidth, screenHeight)
-    local alpha = StreakSystem.bonusEffectTimer / 2.0
+    local alpha = StreakSystem.bonusEffectTimer / 1.5  -- Updated to match shorter duration
     
-    -- Bonus activation flash
-    Utils.setColor({1, 1, 0}, alpha * 0.2)
-    love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
+    -- Get player position for localized effects
+    local GameState = require("src.core.game_state")
+    local player = GameState.player
+    if not player then return end
+    
+    -- Bonus activation - create magical particle effect around player
+    if StreakSystem.bonusEffectTimer > 0.7 then
+        local effectRadius = 100 + alpha * 50
+        local particleCount = 12
+        
+        -- Draw magical sparkles around the player
+        for i = 1, particleCount do
+            local angle = (i / particleCount) * 2 * math.pi + (StreakSystem.bonusEffectTimer * 3)
+            local distance = effectRadius * (0.5 + math.sin(StreakSystem.bonusEffectTimer * 4 + i) * 0.3)
+            local x = player.x + math.cos(angle) * distance
+            local y = player.y + math.sin(angle) * distance
+            
+            -- Sparkle colors: gold, cyan, magenta
+            local colors = {
+                {1, 0.8, 0.2, alpha * 0.8},  -- Gold
+                {0.2, 1, 1, alpha * 0.6},    -- Cyan
+                {1, 0.2, 1, alpha * 0.7}     -- Magenta
+            }
+            local color = colors[(i % 3) + 1]
+            
+            Utils.setColor(color)
+            love.graphics.circle("fill", x, y, 3 + alpha * 2)
+        end
+        
+        -- Draw magical aura around player
+        Utils.setColor({1, 0.8, 0.2, alpha * 0.3})  -- Golden aura
+        love.graphics.circle("line", player.x, player.y, effectRadius)
+        love.graphics.circle("line", player.x, player.y, effectRadius * 0.7)
+    end
 end
 
 -- Draw streak shield effect
@@ -816,6 +881,28 @@ end
 
 function StreakSystem.getActiveBonuses()
     return StreakSystem.activeBonuses
+end
+
+-- Debug function to check and fix stuck streak broken state
+function StreakSystem.debugStreakState()
+    local state = {
+        perfectLandingStreak = StreakSystem.perfectLandingStreak,
+        streakBroken = StreakSystem.streakBroken,
+        breakEffectTimer = StreakSystem.breakEffectTimer,
+        streakBrokenResetTimer = StreakSystem.streakBrokenResetTimer,
+        shakeIntensity = StreakSystem.shakeIntensity
+    }
+    
+    -- If streak is broken but timer is 0, force reset
+    if StreakSystem.streakBroken and StreakSystem.breakEffectTimer <= 0 then
+        Utils.Logger.warn("Detected stuck streak broken state, forcing reset")
+        StreakSystem.streakBroken = false
+        StreakSystem.shakeIntensity = 0
+        StreakSystem.streakBrokenResetTimer = nil
+        state.fixed = true
+    end
+    
+    return state
 end
 
 return StreakSystem

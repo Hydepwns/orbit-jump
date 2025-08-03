@@ -81,7 +81,8 @@ function PlayerAbilities.jump(player, pullPower, pullAngle, gameState, soundMana
     
     -- Power Scaling: Transform linear input into satisfying jump force
     local PULL_TO_VELOCITY_RATIO = 3  -- Tuned: How responsive jumps feel to pull distance
-    local jumpPower = math.min(pullPower * PULL_TO_VELOCITY_RATIO, Config.game.maxJumpPower)
+    local MIN_JUMP_POWER = 200  -- Minimum jump power to ensure escape velocity
+    local jumpPower = math.max(MIN_JUMP_POWER, math.min(pullPower * PULL_TO_VELOCITY_RATIO, Config.game.maxJumpPower))
     local jumpVx, jumpVy = GameLogic.calculateJumpVelocityFromAngle(pullAngle, jumpPower)
     
     -- Power-Up Integration: Temporary abilities modify base physics

@@ -97,6 +97,18 @@ function XPSystem.init()
     return true
 end
 
+-- Reset XP system (for game restart)
+function XPSystem.reset()
+    -- Clear all animations
+    XPSystem.xpGainAnimation = {}
+    XPSystem.levelUpAnimation = {}
+    
+    -- Reset visual state
+    XPSystem.barPulsePhase = 0
+    
+    Utils.Logger.info("XP system reset - all animations cleared")
+end
+
 -- Update XP system
 function XPSystem.update(dt)
     -- Update visual effects
@@ -360,13 +372,23 @@ function XPSystem.createLevelUpAnimation()
         return
     end
     
-    table.insert(XPSystem.levelUpAnimation, {
-        level = XPSystem.currentLevel,
-        timer = 0,
-        duration = 3.0,
-        scale = 1.0,
-        alpha = 1.0
-    })
+    -- Use the new UI animation system for level up effect
+    local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+    if UIAnimationSystem then
+        UIAnimationSystem.createFlashAnimation("LEVEL " .. XPSystem.currentLevel .. "!", {
+            duration = 1.0,  -- Quick flash
+            color = {1, 1, 0, 1}  -- Yellow color
+        })
+    else
+        -- Fallback to old system if animation system not available
+        table.insert(XPSystem.levelUpAnimation, {
+            level = XPSystem.currentLevel,
+            timer = 0,
+            duration = 1.0,  -- Reduced from 3.0 to 1.0 second for quick flash
+            scale = 1.0,
+            alpha = 1.0
+        })
+    end
     
     -- Add massive particle celebration for level ups
     local ParticleSystem = Utils.require("src.systems.particle_system")
