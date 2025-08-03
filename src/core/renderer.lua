@@ -604,24 +604,46 @@ function Renderer.drawMobilePullIndicator(player, mouseX, mouseY, mouseStartX, m
             local jumpDirectionX = -swipeX / swipeDistance
             local jumpDirectionY = -swipeY / swipeDistance
             
-            -- Draw arrow from player
-            Utils.setColor(Utils.colors.green, 0.8)
-            love.graphics.setLineWidth(6)
+            -- Calculate arrow properties
             local arrowLength = 40 + powerPercent * 30
             local arrowEndX = player.x + jumpDirectionX * arrowLength
             local arrowEndY = player.y + jumpDirectionY * arrowLength
+            local lineWidth = 6
+            local arrowheadSize = 12
+            
+            -- Draw arrow shaft
+            Utils.setColor(Utils.colors.green, 0.8)
+            love.graphics.setLineWidth(lineWidth)
+            love.graphics.setLineJoin("round")
+            love.graphics.setLineCap("round")
             love.graphics.line(player.x, player.y, arrowEndX, arrowEndY)
             
-            -- Draw arrowhead
-            local arrowheadSize = 12
+            -- Calculate arrowhead points for a proper triangle
             local perpX = -jumpDirectionY
             local perpY = jumpDirectionX
-            love.graphics.line(arrowEndX, arrowEndY, 
-                arrowEndX - jumpDirectionX * arrowheadSize + perpX * arrowheadSize * 0.5,
-                arrowEndY - jumpDirectionY * arrowheadSize + perpY * arrowheadSize * 0.5)
-            love.graphics.line(arrowEndX, arrowEndY, 
-                arrowEndX - jumpDirectionX * arrowheadSize - perpX * arrowheadSize * 0.5,
-                arrowEndY - jumpDirectionY * arrowheadSize - perpY * arrowheadSize * 0.5)
+            
+            -- Arrowhead base (where it connects to the shaft)
+            local arrowheadBaseX = arrowEndX - jumpDirectionX * (arrowheadSize * 0.3)
+            local arrowheadBaseY = arrowEndY - jumpDirectionY * (arrowheadSize * 0.3)
+            
+            -- Arrowhead side points
+            local arrowheadLeftX = arrowheadBaseX + perpX * arrowheadSize * 0.6
+            local arrowheadLeftY = arrowheadBaseY + perpY * arrowheadSize * 0.6
+            local arrowheadRightX = arrowheadBaseX - perpX * arrowheadSize * 0.6
+            local arrowheadRightY = arrowheadBaseY - perpY * arrowheadSize * 0.6
+            
+            -- Draw arrowhead as a filled triangle
+            love.graphics.setLineWidth(1)
+            love.graphics.polygon("fill", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
+            
+            -- Draw arrowhead outline to match shaft
+            love.graphics.setLineWidth(lineWidth * 0.8)
+            love.graphics.polygon("line", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
+            
+            -- Reset line settings
+            love.graphics.setLineWidth(1)
+            love.graphics.setLineJoin("miter")
+            love.graphics.setLineCap("butt")
         end
     end
 end
@@ -698,15 +720,45 @@ function Renderer.drawExplorationIndicator(player, Camera)
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     
-    -- Distance indicator
-    Utils.setColor(Utils.colors.white, 0.7)
-    love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
-    love.graphics.print(string.format("Distance: %.0f", distFromOrigin), screenWidth - 150, 10)
-    
-    -- Zoom indicator
-    love.graphics.setFont(Renderer.fonts.light or love.graphics.getFont())
-    if Renderer.camera then
-        love.graphics.print(string.format("Zoom: %.1fx", Renderer.camera.scale), screenWidth - 150, 35)
+    -- Use the new UI animation system for exploration indicator
+    local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+    if UIAnimationSystem then
+        -- Create or update exploration indicator animation
+        if not Renderer.explorationIndicatorId then
+            Renderer.explorationIndicatorId = UIAnimationSystem.createFloatingUI({
+                position = {x = screenWidth - 160, y = 10},
+                size = {width = 150, height = 50},
+                text = string.format("Distance: %.0f\nZoom: %.1fx", distFromOrigin, Camera and Camera.scale or 1.0),
+                color = {1, 1, 1, 0.7},
+                bounds = {
+                    minX = 10,
+                    minY = 10,
+                    maxX = screenWidth - 10,
+                    maxY = screenHeight - 10
+                }
+            })
+        else
+            -- Update the animation with new text
+            local animation = UIAnimationSystem.animations[Renderer.explorationIndicatorId]
+            if animation then
+                animation.text = string.format("Distance: %.0f\nZoom: %.1fx", distFromOrigin, Camera and Camera.scale or 1.0)
+            end
+        end
+    else
+        -- Fallback to old system if animation system not available
+        local indicatorX = math.max(10, math.min(screenWidth - 160, screenWidth - 160))
+        local indicatorY = 10
+        
+        -- Distance indicator
+        Utils.setColor(Utils.colors.white, 0.7)
+        love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
+        love.graphics.print(string.format("Distance: %.0f", distFromOrigin), indicatorX, indicatorY)
+        
+        -- Zoom indicator
+        love.graphics.setFont(Renderer.fonts.light or love.graphics.getFont())
+        if Renderer.camera then
+            love.graphics.print(string.format("Zoom: %.1fx", Renderer.camera.scale), indicatorX, indicatorY + 25)
+        end
     end
     
     -- Danger warning if too far
@@ -715,6 +767,15 @@ function Renderer.drawExplorationIndicator(player, Camera)
         Utils.setColor({1, 0.3, 0.3}, pulse)
         love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
         love.graphics.printf("WARNING: ENTERING THE VOID", 0, 100, screenWidth, "center")
+    end
+    
+    -- Stuck warning indicator
+    local GameState = Utils.require("src.core.game_state")
+    if GameState.player and GameState.player.stuckWarning then
+        local pulse = math.sin(love.timer.getTime() * 2) * 0.5 + 0.5
+        Utils.setColor({1, 0.8, 0.2}, pulse)
+        love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
+        love.graphics.printf("SLOW MOVEMENT - PRESS R TO RESET", 0, 150, screenWidth, "center")
     end
 end
 

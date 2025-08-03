@@ -15,21 +15,11 @@ local GameLogic = {}
 
 -- Universal Constants: The DNA of Our Virtual Universe
 GameLogic.CONSTANTS = {
-    -- Gravitational constant: Tuned for that perfect "falling into orbit" feeling
-    -- Too high (>20000) feels like being yanked, too low (<10000) feels floaty
-    GRAVITATIONAL_CONSTANT = 15000,
-    
-    -- Surface collision threshold: Prevents infinite forces at planet surface
+    GRAVITATIONAL_CONSTANT = 8000,  -- Reduced from 15000 to make gravity less aggressive
     SURFACE_GRAVITY_CUTOFF = 1.0,
-    
-    -- Out of bounds margin: How far players can drift before reset
-    -- Set to ~10% of screen size for forgiveness without breaking immersion
     BOUNDARY_MARGIN = 100,
-    
-    -- Combo system magic numbers: Reward skillful play without breaking balance
     COMBO_BASE_BONUS = 10,
-    COMBO_INCREMENT = 5,
-    SPEED_BOOST_PER_COMBO = 0.1
+    COMBO_INCREMENT = 5
 }
 
 function GameLogic.normalizeVector(x, y)

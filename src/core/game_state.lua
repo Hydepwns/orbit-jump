@@ -165,6 +165,18 @@ function GameState.reset()
     GameState.data.pullPower = 0
     GameState.data.isCharging = false
     
+    -- Reset streak system to clear all visual effects
+    local StreakSystem = Utils.require("src.systems.streak_system")
+    if StreakSystem and StreakSystem.reset then
+        StreakSystem.reset()
+    end
+    
+    -- Reset XP system to clear all animations
+    local XPSystem = Utils.require("src.systems.xp_system")
+    if XPSystem and XPSystem.reset then
+        XPSystem.reset()
+    end
+    
     -- Reset player (only if planets are available)
     if GameState.objects.planets and #GameState.objects.planets > 0 then
         GameState.player.x = GameState.objects.planets[1].x + GameState.objects.planets[1].radius + 20
@@ -217,15 +229,60 @@ function GameState.update(dt)
         end
     end
     
+    -- FAILURE DETECTION: Check if player is out of bounds and break streak
+    local screenWidth = GameState.data.screenWidth or love.graphics.getWidth()
+    local screenHeight = GameState.data.screenHeight or love.graphics.getHeight()
+    local margin = 100 -- Forgiving margin
+    
+    if GameState.player and not GameState.player.onPlanet then
+        local outOfBounds = GameState.player.x < -margin or 
+                           GameState.player.x > screenWidth + margin or 
+                           GameState.player.y < -margin or 
+                           GameState.player.y > screenHeight + margin
+        
+        if outOfBounds then
+            -- Player went off screen - this is a failure
+            local StreakSystem = Utils.require("src.systems.streak_system")
+            if StreakSystem and StreakSystem.breakStreak then
+                StreakSystem.breakStreak("out_of_bounds", GameState)
+            end
+            
+            -- Reset player to nearest planet
+            GameState.resetPlayerToNearestPlanet()
+        end
+    end
+    
     -- Auto-reset if player is stuck in space for too long
     if GameState.player.onPlanet == nil or GameState.player.onPlanet == false then
         -- Check if player velocity is very low (essentially stuck)
         local speed = math.sqrt(GameState.player.vx^2 + GameState.player.vy^2)
-        if speed < 50 then
+        
+        -- More lenient stuck detection - only consider stuck if very slow AND not near any planet
+        local nearPlanet = false
+        if GameState.objects.planets then
+            for _, planet in ipairs(GameState.objects.planets) do
+                local dist = Utils.distance(GameState.player.x, GameState.player.y, planet.x, planet.y)
+                if dist < planet.radius * 3 then  -- Within 3x planet radius
+                    nearPlanet = true
+                    break
+                end
+            end
+        end
+        
+        if speed < 20 and not nearPlanet then  -- Much lower speed threshold and must not be near planet
             GameState.player.stuckTimer = (GameState.player.stuckTimer or 0) + dt
-            if GameState.player.stuckTimer > 3 then -- Reset after 3 seconds of being stuck
+            
+            -- Show warning when getting close to stuck threshold
+            if GameState.player.stuckTimer > 5 then  -- Warning at 5 seconds
+                GameState.player.stuckWarning = true
+            end
+            
+            if GameState.player.stuckTimer > 8 then -- Much longer reset timer (8 seconds instead of 3)
+                Utils.Logger.info("Player stuck detected - Speed: %.1f, Timer: %.1f, Near planet: %s", 
+                    speed, GameState.player.stuckTimer, tostring(nearPlanet))
                 GameState.resetPlayerToNearestPlanet()
                 GameState.player.stuckTimer = 0
+                GameState.player.stuckWarning = false
                 
                 -- Show hint in tutorial
                 -- TutorialSystem is already loaded at the top
@@ -234,7 +291,11 @@ function GameState.update(dt)
                 end
             end
         else
+            if GameState.player.stuckTimer and GameState.player.stuckTimer > 0 then
+                Utils.Logger.info("Player unstuck - Speed: %.1f, Near planet: %s", speed, tostring(nearPlanet))
+            end
             GameState.player.stuckTimer = 0
+            GameState.player.stuckWarning = false
         end
     else
         GameState.player.stuckTimer = 0

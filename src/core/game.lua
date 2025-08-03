@@ -277,8 +277,15 @@ function Game.initSystems()
     ModuleLoader.initModule("systems.emotional_feedback", "init")
     
     -- Initialize UI systems
-    UISystem.init(fonts)
+    UISystem.init(_G.GameFonts)
     ModuleLoader.initModule("ui.pause_menu", "init")
+    
+    -- Initialize UI animation system
+    local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+    if UIAnimationSystem then
+        UIAnimationSystem.init()
+        Game.uiAnimationSystem = UIAnimationSystem
+    end
     
     -- Initialize feedback UI system
     local FeedbackUI = Utils.require("src.ui.feedback_ui")
@@ -365,6 +372,11 @@ function Game.update(dt)
     -- Frame Performance Analysis: Learn and adapt
     local frameEnd = love.timer.getTime()
     Game.updatePerformanceMetrics(frameEnd - frameStart)
+    
+    -- Update UI animation system
+    if Game.uiAnimationSystem then
+        Game.uiAnimationSystem.update(dt)
+    end
 end
 function Game.draw()
     -- Renderer, GameState, UISystem, TutorialSystem, PauseMenu, PerformanceMonitor, and Config are already loaded at the top
@@ -447,6 +459,11 @@ function Game.draw()
     -- Draw touch gesture debug information
     if Game.touchGestureSystem and Config.debug and Config.debug.showTouchGestures then
         Game.touchGestureSystem.drawDebug()
+    end
+    
+    -- Draw UI animations (on top of everything else)
+    if Game.uiAnimationSystem then
+        Game.uiAnimationSystem.draw()
     end
 end
 function Game.handleKeyPress(key)
