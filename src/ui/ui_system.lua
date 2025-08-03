@@ -132,15 +132,20 @@ function UISystem.updateResponsiveLayout()
 end
 
 function UISystem.init(fonts)
-    UISystem.fonts = fonts
+    UISystem.fonts = fonts or {
+        regular = love.graphics.getFont(),
+        bold = love.graphics.getFont(),
+        light = love.graphics.getFont(),
+        extraBold = love.graphics.getFont()
+    }
+    
+    -- Initialize responsive layout
     UISystem.updateResponsiveLayout()
+    
+    -- Initialize debug system
     UIDebug.init()
     
-    -- Load user configuration
-    local Config = Utils.require("src.utils.config")
-    if Config and Config.load then
-        Config.load()
-    end
+    Utils.Logger.info("UI System initialized")
 end
 
 function UISystem.update(dt, progressionSystem, blockchainIntegration)
@@ -339,33 +344,82 @@ function UISystem.drawLearningIndicator(screenWidth, screenHeight)
     
     -- Draw the indicator if systems are learning
     if isLearning then
-        local indicatorX = screenWidth - 220
-        local indicatorY = screenHeight - 120
-        local indicatorWidth = 200
-        local indicatorHeight = 80
-        
-        -- Background with subtle pulse
-        local pulseAlpha = 0.3 + 0.2 * math.sin(love.timer.getTime() * 2)
-        Utils.setColor({0.1, 0.3, 0.6}, pulseAlpha)
-        love.graphics.rectangle("fill", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
-        
-        -- Border
-        Utils.setColor({0.3, 0.6, 1.0}, 0.8)
-        love.graphics.setLineWidth(2)
-        love.graphics.rectangle("line", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
-        
-        -- Title with brain icon effect
-        Utils.setColor({0.8, 0.9, 1.0}, 1.0)
-        love.graphics.setFont(love.graphics.newFont(12))
-        local brainPulse = 1.0 + 0.1 * math.sin(love.timer.getTime() * 3)
-        love.graphics.print("🧠 Learning...", indicatorX + 8, indicatorY + 8)
-        
-        -- Learning details
-        Utils.setColor({0.7, 0.8, 0.9}, 0.9)
-        love.graphics.setFont(love.graphics.newFont(10))
-        for i, info in ipairs(learningInfo) do
-            if i <= 3 then -- Show max 3 lines to fit
-                love.graphics.print(info, indicatorX + 8, indicatorY + 25 + (i-1) * 15)
+        -- Use the new UI animation system for learning indicator
+        local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+        if UIAnimationSystem then
+            -- Create or update learning indicator animation
+            if not UISystem.learningIndicatorId then
+                UISystem.learningIndicatorId = UIAnimationSystem.createPulseAnimation({
+                    position = {x = screenWidth - 220, y = screenHeight - 120},
+                    size = {width = 200, height = 80},
+                    text = "🧠 Learning...",
+                    color = {0.1, 0.3, 0.6, 1.0},
+                    bounds = {
+                        minX = 10,
+                        minY = 10,
+                        maxX = screenWidth - 10,
+                        maxY = screenHeight - 10
+                    },
+                    pulseFrequency = 1.5,
+                    pulseAmplitude = 0.1
+                })
+            end
+            
+            -- Update learning info
+            local learningText = "🧠 Learning..."
+            for i, info in ipairs(learningInfo) do
+                if i <= 3 then
+                    learningText = learningText .. "\n" .. info
+                end
+            end
+            
+            -- Update the animation with new text
+            if UISystem.learningIndicatorId then
+                local animation = UIAnimationSystem.animations[UISystem.learningIndicatorId]
+                if animation then
+                    animation.text = learningText
+                end
+            end
+        else
+            -- Fallback to old system if animation system not available
+            local indicatorX = math.max(10, math.min(screenWidth - 220, screenWidth - 220))
+            local indicatorY = math.max(10, screenHeight - 120)
+            local indicatorWidth = 200
+            local indicatorHeight = 80
+            
+            -- Background with subtle pulse (reduced intensity)
+            local pulseAlpha = 0.3 + 0.1 * math.sin(love.timer.getTime() * 1.5)
+            Utils.setColor({0.1, 0.3, 0.6}, pulseAlpha)
+            love.graphics.rectangle("fill", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
+            
+            -- Border
+            Utils.setColor({0.3, 0.6, 1.0}, 0.8)
+            love.graphics.setLineWidth(2)
+            love.graphics.rectangle("line", indicatorX, indicatorY, indicatorWidth, indicatorHeight, 5)
+            love.graphics.setLineWidth(1)
+            
+            -- Title with brain icon effect (reduced pulse)
+            Utils.setColor({0.8, 0.9, 1.0}, 1.0)
+            love.graphics.setFont(love.graphics.newFont(12))
+            local brainPulse = 1.0 + 0.05 * math.sin(love.timer.getTime() * 2)
+            love.graphics.print("🧠 Learning...", indicatorX + 8, indicatorY + 8)
+            
+            -- Learning details
+            Utils.setColor({0.7, 0.8, 0.9}, 0.9)
+            love.graphics.setFont(love.graphics.newFont(10))
+            for i, info in ipairs(learningInfo) do
+                if i <= 3 then
+                    love.graphics.print(info, indicatorX + 8, indicatorY + 25 + (i-1) * 15)
+                end
+            end
+        end
+    else
+        -- Remove learning indicator if no longer learning
+        if UISystem.learningIndicatorId then
+            local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
+            if UIAnimationSystem then
+                UIAnimationSystem.remove(UISystem.learningIndicatorId)
+                UISystem.learningIndicatorId = nil
             end
         end
     end
@@ -385,7 +439,8 @@ function UISystem.drawProgressionBar()
     love.graphics.rectangle("line", bar.x, bar.y, bar.width, bar.height)
     
     -- Draw text
-    love.graphics.setFont(UISystem.fonts.regular)
+    local font = UISystem.fonts and UISystem.fonts.regular or love.graphics.getFont()
+    love.graphics.setFont(font)
     love.graphics.print("Progress: " .. math.floor(progress * 100) .. "%", bar.x, bar.y + 2)
 end
 
@@ -424,7 +479,7 @@ function UISystem.drawMenuUI()
             Utils.setColor(Utils.colors.text)
         end
         
-        love.graphics.setFont(UISystem.fonts.bold)
+        love.graphics.setFont(UISystem.fonts and UISystem.fonts.bold or love.graphics.getFont())
         love.graphics.print(option, panel.x + 20, y)
         y = y + 40
     end
@@ -1133,7 +1188,8 @@ function UISystem.drawAchievementUI()
     love.graphics.rectangle("line", panel.x, panel.y, panel.width, panel.height)
     
     -- Draw title
-    love.graphics.setFont(UISystem.fonts.extraBold)
+    local font = UISystem.fonts and UISystem.fonts.extraBold or love.graphics.getFont()
+    love.graphics.setFont(font)
     love.graphics.print("ACHIEVEMENTS", panel.x + 20, panel.y + 20)
     
     -- Draw achievements
@@ -1145,10 +1201,12 @@ function UISystem.drawAchievementUI()
             Utils.setColor(Utils.colors.gray)
         end
         
-        love.graphics.setFont(UISystem.fonts.bold)
+        font = UISystem.fonts and UISystem.fonts.bold or love.graphics.getFont()
+        love.graphics.setFont(font)
         love.graphics.print(achievement.name, panel.x + 20, y)
         
-        love.graphics.setFont(UISystem.fonts.regular)
+        font = UISystem.fonts and UISystem.fonts.regular or love.graphics.getFont()
+        love.graphics.setFont(font)
         love.graphics.print(achievement.description, panel.x + 20, y + 20)
         
         if achievement.unlocked then
@@ -1170,13 +1228,15 @@ function UISystem.drawBlockchainUI()
     love.graphics.rectangle("line", panel.x, panel.y, panel.width, panel.height)
     
     -- Draw title
-    love.graphics.setFont(UISystem.fonts.extraBold)
+    local font = UISystem.fonts and UISystem.fonts.extraBold or love.graphics.getFont()
+    love.graphics.setFont(font)
     love.graphics.print("BLOCKCHAIN", panel.x + 20, panel.y + 20)
     
     if UISystem.blockchainIntegration then
         local status = UISystem.blockchainIntegration.getStatus()
         
-        love.graphics.setFont(UISystem.fonts.bold)
+        font = UISystem.fonts and UISystem.fonts.bold or love.graphics.getFont()
+        love.graphics.setFont(font)
         love.graphics.print("Status: " .. (status.enabled and "ENABLED" or "DISABLED"), panel.x + 20, panel.y + 60)
         love.graphics.print("Network: " .. status.network, panel.x + 20, panel.y + 80)
         love.graphics.print("Queued Events: " .. status.queuedEvents, panel.x + 20, panel.y + 100)
@@ -1187,11 +1247,13 @@ function UISystem.drawBlockchainUI()
         love.graphics.print("NFTs Unlocked: " .. UISystem.countTable(data.nftsUnlocked), panel.x + 20, panel.y + 160)
         
         if data.walletAddress then
-            love.graphics.setFont(UISystem.fonts.regular)
+            font = UISystem.fonts and UISystem.fonts.regular or love.graphics.getFont()
+            love.graphics.setFont(font)
             love.graphics.print("Wallet: " .. string.sub(data.walletAddress, 1, 10) .. "...", panel.x + 20, panel.y + 180)
         end
     else
-        love.graphics.setFont(UISystem.fonts.regular)
+        font = UISystem.fonts and UISystem.fonts.regular or love.graphics.getFont()
+        love.graphics.setFont(font)
         love.graphics.print("Blockchain integration not available", panel.x + 20, panel.y + 60)
     end
 end
