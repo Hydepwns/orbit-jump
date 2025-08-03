@@ -1,0 +1,72 @@
+#!/bin/sh
+# Pre-commit hook for Orbit Jump
+# Runs linting and basic checks before allowing commits
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if luacheck is installed
+if ! command -v luacheck &> /dev/null; then
+    echo "⚠️  Warning: luacheck not installed. Skipping lint checks."
+    echo "   Install with: luarocks install luacheck"
+else
+    echo "📋 Running luacheck..."
+    if luacheck . --config .luacheckrc; then
+        echo "✅ Linting passed"
+    else
+        echo "❌ Linting failed. Please fix errors before committing."
+        exit 1
+    fi
+fi
+
+# Check for large files
+echo "📦 Checking file sizes..."
+LARGE_FILES=$(find src tests -name "*.lua" -size +100k 2>/dev/null || true)
+if [ ! -z "$LARGE_FILES" ]; then
+    echo "⚠️  Warning: Large files detected (>100KB):"
+    echo "$LARGE_FILES"
+    echo "   Consider splitting these files."
+fi
+
+# Check for deprecated file usage
+echo "🚫 Checking for deprecated file usage..."
+DEPRECATED_IMPORTS=$(grep -r "require.*DEPRECATED_" src 2>/dev/null || true)
+if [ ! -z "$DEPRECATED_IMPORTS" ]; then
+    echo "❌ Error: Found imports of deprecated files:"
+    echo "$DEPRECATED_IMPORTS"
+    echo "   Please update to use new module versions."
+    exit 1
+fi
+
+# Check for common issues
+echo "🔎 Checking for common issues..."
+
+# Check for console.log or print statements (excluding debug modules)
+DEBUG_PRINTS=$(grep -r "print(" src --exclude-dir=debug 2>/dev/null | grep -v "Logger\." || true)
+if [ ! -z "$DEBUG_PRINTS" ]; then
+    echo "⚠️  Warning: Found print statements outside debug modules:"
+    echo "$DEBUG_PRINTS" | head -5
+    echo "   Consider using Utils.Logger instead."
+fi
+
+# Check for unhandled pcall usage
+PCALL_USAGE=$(grep -r "pcall(" src 2>/dev/null | grep -v "ErrorHandler" || true)
+if [ ! -z "$PCALL_USAGE" ]; then
+    echo "⚠️  Warning: Found direct pcall usage:"
+    echo "$PCALL_USAGE" | head -5
+    echo "   Consider using Utils.ErrorHandler.safeCall instead."
+fi
+
+# Run quick tests if available
+if [ -f "tests/frameworks/run_unified_tests_simple.lua" ]; then
+    echo "🧪 Running quick tests..."
+    if lua tests/frameworks/run_unified_tests_simple.lua 2>/dev/null | grep -q "All tests passed"; then
+        echo "✅ Quick tests passed"
+    else
+        echo "⚠️  Some tests failed. Run full test suite with: ./run_tests.sh"
+    fi
+fi
+
+echo "✅ Pre-commit checks completed!"
+echo "📝 Remember to update CHANGELOG.md if this is a significant change."
