@@ -1,32 +1,28 @@
 -- Collision System for Orbit Jump
 -- Handles all collision detection and response
-
 local Utils = require("src.utils.utils")
 local GameLogic = Utils.require("src.core.game_logic")
 local WarpDrive = Utils.require("src.systems.warp_drive")
 local EmotionalFeedback = Utils.require("src.systems.emotional_feedback")
-local TutorialSystem = Utils.require("src.ui.tutorial_system")
-local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system")
+-- Use new modular tutorial system instead of deprecated versions
+local TutorialSystem = Utils.require("src.ui.tutorial.tutorial_modules")
+local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system_new")
 local StreakSystem = Utils.require("src.systems.streak_system")
 local XPSystem = Utils.require("src.systems.xp_system")
-
 local CollisionSystem = {}
-
 -- Check collisions with planets
 function CollisionSystem.checkPlanetCollisions(player, planets, spatialGrid, gameState, soundManager)
     if not player or player.onPlanet then
         return
     end
-    
     -- Use spatial grid if available, otherwise brute force
     local nearbyPlanets = planets or {}
     if spatialGrid and spatialGrid.getObjectsInRadius and planets then
         nearbyPlanets = spatialGrid:getObjectsInRadius(
-            player.x, player.y, 
+            player.x, player.y,
             player.radius + 200  -- Check slightly larger radius
         )
     end
-    
     for _, planet in ipairs(nearbyPlanets) do
         if Utils.circleCollision(
             player.x, player.y, player.radius,
@@ -36,63 +32,49 @@ function CollisionSystem.checkPlanetCollisions(player, planets, spatialGrid, gam
             return planet  -- Return the planet we landed on
         end
     end
-    
     return nil
 end
-
 function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundManager)
     --[[
         Planetary Landing: The Moment of Arrival and Accomplishment
-        
         Landing successfully on a planet is a satisfying moment that deserves
         emotional recognition. This function now captures the context of the
         landing (speed, approach angle, timing) to provide appropriate feedback.
     --]]
-    
     if not player or not planet then return end
-    
     -- Capture landing context for emotional feedback
     local landingSpeed = Utils.fastDistance(0, 0, player.vx, player.vy)
     local approachAngle = Utils.atan2(player.vy, player.vx)
-    
     -- Calculate angle to planet center
     local dx = player.x - planet.x
     local dy = player.y - planet.y
     player.angle = Utils.atan2(dy, dx)
-    
     -- Set player state - find planet index
     local planets = {}
     if gameState and gameState.getPlanets then
         planets = gameState.getPlanets()
     end
-    
     for i, p in ipairs(planets) do
         if p == planet then
             player.onPlanet = i  -- Set to planet index, not boolean
             break
         end
     end
-    
     -- If we couldn't find the planet in the list, just set onPlanet to true
     if not player.onPlanet then
         player.onPlanet = true
     end
-    
     -- Adjust position to planet surface
     local orbitRadius = planet.radius + player.radius + 5
     player.x = planet.x + math.cos(player.angle) * orbitRadius
     player.y = planet.y + math.sin(player.angle) * orbitRadius
-    
     -- Emotional Analysis: What kind of landing was this?
     local GENTLE_LANDING_SPEED = 100   -- Graceful approach
     local FAST_LANDING_SPEED = 300     -- Dramatic arrival
-    
     local isGentle = landingSpeed < GENTLE_LANDING_SPEED
     local isDramatic = landingSpeed > FAST_LANDING_SPEED
-    
     -- Emotional Feedback: Celebrate the successful landing
     EmotionalFeedback.onLanding(player, planet, landingSpeed, isGentle)
-    
     -- Notify tutorial systems of landing
     if TutorialSystem and TutorialSystem.onPlayerAction then
         TutorialSystem.onPlayerAction("land")
@@ -100,37 +82,32 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
     if EnhancedTutorialSystem and EnhancedTutorialSystem.onPlayerAction then
         EnhancedTutorialSystem.onPlayerAction("land")
     end
-    
     -- ADDICTION ENGINE: Check for perfect landing streak
     if StreakSystem and StreakSystem.onPlayerLanding then
         StreakSystem.onPlayerLanding(player, planet, gameState)
     end
-    
     -- PROGRESSION ENGINE: Award XP for perfect landings
     local isPerfectLanding = StreakSystem and StreakSystem.isPerfectLanding and StreakSystem.isPerfectLanding(player, planet)
     if XPSystem and isPerfectLanding then
         XPSystem.givePerfectLandingXP(player.x, player.y)
     end
-    
     -- Track for feedback system
     local FeedbackSystem = Utils.require("src.systems.feedback_system")
     if FeedbackSystem and isPerfectLanding then
         local streakLength = StreakSystem.getCurrentStreak and StreakSystem.getCurrentStreak() or 0
         FeedbackSystem.onPerfectLanding(streakLength)
     end
-    
     -- MASTERY SYSTEM: Track planet landing for mastery
     local MasterySystem = Utils.require("src.systems.mastery_system")
     if MasterySystem then
         local isPerfect = StreakSystem and StreakSystem.isPerfectLanding and StreakSystem.isPerfectLanding(player, planet)
         local mastery_level_up = MasterySystem.trackPlanetLanding(
-            planet.type or "normal", 
+            planet.type or "normal",
             isPerfect,
             {x = player.x, y = player.y},
             {x = planet.x, y = planet.y},
             planet.radius
         )
-        
         -- Show mastery notification if leveled up
         if mastery_level_up and gameState and gameState.addNotification then
             gameState.addNotification({
@@ -141,46 +118,37 @@ function CollisionSystem.handlePlanetLanding(player, planet, gameState, soundMan
             })
         end
     end
-    
     -- Reset velocity (this happens after emotional analysis)
     player.vx = 0
     player.vy = 0
-    
     -- Handle special planet types
     if planet.type == "quantum" then
         CollisionSystem.handleQuantumTeleport(player, planet, gameState)
     end
-    
     -- Play landing sound
     if soundManager and soundManager.playLand then
         soundManager:playLand()
     end
-    
     -- Track planet discovery
     CollisionSystem.trackPlanetDiscovery(planet, gameState)
 end
-
 -- Handle quantum planet teleportation
 function CollisionSystem.handleQuantumTeleport(player, planet, gameState)
     local CosmicEvents = Utils.require("src.systems.cosmic_events")
     local WarpDrive = Utils.require("src.systems.warp_drive")
-    
     -- Create quantum effect
     if CosmicEvents then
         CosmicEvents.triggerQuantumTeleport(planet.x, planet.y)
     end
-    
     -- Find random distant planet
     local planets = gameState.getPlanets()
     local targetPlanet = nil
     local maxAttempts = 10
-    
     if planets and #planets > 0 then
         for i = 1, maxAttempts do
             local candidate = planets[math.random(#planets)]
             if candidate then
                 local distance = Utils.distance(planet.x, planet.y, candidate.x, candidate.y)
-                
                 if distance > 1000 and candidate ~= planet then
                     targetPlanet = candidate
                     break
@@ -188,41 +156,34 @@ function CollisionSystem.handleQuantumTeleport(player, planet, gameState)
             end
         end
     end
-    
     if targetPlanet then
         -- Teleport player
         player.x = targetPlanet.x + targetPlanet.radius + player.radius + 10
         player.y = targetPlanet.y
         player.currentPlanet = targetPlanet.id or 1
-        
         -- Create warp effect
         if WarpDrive then
             WarpDrive.createWarpEffect(planet.x, planet.y, targetPlanet.x, targetPlanet.y)
         end
     end
 end
-
 -- Track planet discovery for progression
 function CollisionSystem.trackPlanetDiscovery(planet, gameState)
     local ProgressionSystem = Utils.require("src.systems.progression_system")
     local AchievementSystem = Utils.require("src.systems.achievement_system")
     local MapSystem = Utils.require("src.systems.map_system")
     local PlanetLore = Utils.require("src.systems.planet_lore")
-    
     -- Mark planet as discovered
     if not planet.discovered then
         planet.discovered = true
-        
         -- Update progression
         if ProgressionSystem and ProgressionSystem.onPlanetDiscovered then
             ProgressionSystem.onPlanetDiscovered(planet)
         end
-        
         -- Check achievements
         if AchievementSystem and AchievementSystem.onPlanetDiscovered then
             AchievementSystem.onPlanetDiscovered(planet.type)
         end
-        
         -- Notify social systems
         local WeeklyChallengesSystem = require("src.systems.weekly_challenges_system")
         if WeeklyChallengesSystem then
@@ -231,32 +192,26 @@ function CollisionSystem.trackPlanetDiscovery(planet, gameState)
                 WeeklyChallengesSystem:onVoidPlanetVisited()
             end
         end
-        
         local GlobalEventsSystem = require("src.systems.global_events_system")
         if GlobalEventsSystem then
             GlobalEventsSystem:onPlanetDiscovered()
         end
-        
         -- Map system will automatically track discovered planets in its update
-        
         -- Show lore
         if PlanetLore and planet.lore then
             PlanetLore.showLore(planet)
         end
-        
         -- Add discovery bonus
         if gameState then
             gameState.addScore(100)
         end
     end
 end
-
 -- Check collisions with rings
 function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameState, soundManager)
     if not player or player.onPlanet then
         return {}
     end
-    
     -- Use spatial grid if available
     local nearbyRings = rings or {}
     if spatialGrid and spatialGrid.getObjectsInRadius and rings then
@@ -265,16 +220,13 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
             player.radius + 50
         )
     end
-    
     local RingSystem = Utils.require("src.systems.ring_system")
     local collectedRings = {}
-    
     for _, ring in ipairs(nearbyRings) do
         -- Check if player is within the ring (between inner and outer radius)
         local distance = Utils.distance(player.x, player.y, ring.x, ring.y)
         local innerRadius = ring.innerRadius or 0
         local outerRadius = ring.radius
-        
         -- Player collides if it's within the ring (not in center hole, not outside ring)
         if not ring.collected and distance <= outerRadius and distance >= innerRadius then
             -- Collect ring
@@ -284,7 +236,6 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
             else
                 ring.collected = true
             end
-            
             -- Update score and combo
             if gameState and gameState.addScore then
                 gameState.addScore(value)
@@ -292,10 +243,8 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
                     gameState.addCombo()
                 end
             end
-            
             -- Create visual effect
             CollisionSystem.createRingBurst(ring, player)
-            
             -- Notify tutorial systems of ring collection
             if TutorialSystem and TutorialSystem.onPlayerAction then
                 TutorialSystem.onPlayerAction("collect_ring")
@@ -303,7 +252,6 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
             if EnhancedTutorialSystem and EnhancedTutorialSystem.onPlayerAction then
                 EnhancedTutorialSystem.onPlayerAction("collect_ring")
             end
-            
             -- PROGRESSION ENGINE: Award XP for ring collection
             if XPSystem then
                 local combo = gameState and gameState.getCombo and gameState.getCombo() or 0
@@ -313,13 +261,11 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
                     XPSystem.giveRingXP(ring.x, ring.y)
                 end
             end
-            
             -- ACHIEVEMENT SYSTEM: Track ring collection
             local AchievementSystem = Utils.require("src.systems.achievement_system")
             if AchievementSystem then
                 AchievementSystem.onRingCollected(ring.type)
             end
-            
             -- Play sound
             if soundManager then
                 if soundManager.playRingCollect then
@@ -329,32 +275,26 @@ function CollisionSystem.checkRingCollisions(player, rings, spatialGrid, gameSta
                     soundManager:playCollectRing()
                 end
             end
-            
             table.insert(collectedRings, ring)
         end
     end
-    
     return collectedRings
 end
-
 -- Create particle burst when collecting ring
 function CollisionSystem.createRingBurst(ring, player)
     local ParticleSystem = Utils.require("src.systems.particle_system")
     if not ParticleSystem then return end
-    
     local burstCount = 20
     for i = 1, burstCount do
         local angle = (i / burstCount) * math.pi * 2
         local speed = 100 + math.random() * 200
         local vx = math.cos(angle) * speed
         local vy = math.sin(angle) * speed
-        
         -- Add some player velocity influence
         if player then
             vx = vx + player.vx * 0.2
             vy = vy + player.vy * 0.2
         end
-        
         ParticleSystem.create(
             ring.x, ring.y,
             vx, vy,
@@ -364,25 +304,20 @@ function CollisionSystem.createRingBurst(ring, player)
         )
     end
 end
-
 -- Check if player is inside a ring (for special ring types)
 function CollisionSystem.isPlayerInRing(player, ring)
     local distance = Utils.distance(player.x, player.y, ring.x, ring.y)
     return distance < ring.radius and distance > ring.innerRadius - player.radius
 end
-
 -- Update spatial grid with current positions
 function CollisionSystem.updateSpatialGrid(spatialGrid, planets, rings)
     if not spatialGrid then return end
-    
     -- Clear grid
     spatialGrid:clear()
-    
     -- Add planets
     for _, planet in ipairs(planets) do
         spatialGrid:addObject(planet.x, planet.y, planet)
     end
-    
     -- Add rings
     for _, ring in ipairs(rings) do
         if not ring.collected then
@@ -390,5 +325,4 @@ function CollisionSystem.updateSpatialGrid(spatialGrid, planets, rings)
         end
     end
 end
-
 return CollisionSystem
