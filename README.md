@@ -20,7 +20,27 @@ A gravity-based arcade game with realistic physics and adaptive systems.
 
 ## Installation
 
+### Via LuaRocks (Recommended)
+
 ```bash
+# Install via LuaRocks
+luarocks install orbit-jump
+
+# Or install from local rockspec
+luarocks install orbit-jump-1.0.0-1.rockspec
+
+# Run the game
+love orbit-jump
+```
+
+### Manual Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Hydepwns/orbit-jump.git
+cd orbit-jump
+
+# Install LÖVE2D
 # macOS
 brew install love
 
@@ -31,6 +51,22 @@ nix profile install nixpkgs#love
 sudo apt install love2d  # Ubuntu/Debian
 sudo dnf install love    # Fedora
 sudo pacman -S love      # Arch
+
+# Run the game
+love .
+```
+
+### Using the Installation Script
+
+```bash
+# Show installation options
+lua install.lua --help
+
+# Install via LuaRocks
+lua install.lua --luarocks
+
+# Show manual installation instructions
+lua install.lua --manual
 ```
 
 ## Quick Start
