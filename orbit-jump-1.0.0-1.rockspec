@@ -1,5 +1,5 @@
 package = "orbit-jump"
-version = "1.0.0-1"
+version = "1.0.0-2"
 source = {
    url = "git+https://github.com/Hydepwns/orbit-jump.git",
    tag = "v1.0.0"
@@ -20,14 +20,17 @@ Key Features:
 
 The game is built with LÖVE2D and includes a complete development environment
 with testing frameworks, performance monitoring, and debugging tools.
+
+Requirements:
+- Lua 5.3 or higher
+- LÖVE2D 11.0 or higher (install separately via system package manager)
    ]],
    homepage = "https://github.com/Hydepwns/orbit-jump",
    license = "MIT",
    maintainer = "DROO <drew@axol.io>"
 }
 dependencies = {
-   "lua >= 5.3",
-   "love2d >= 11.0"
+   "lua >= 5.3"
 }
 build = {
    type = "builtin",
