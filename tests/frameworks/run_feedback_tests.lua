@@ -1,11 +1,8 @@
 #!/usr/bin/env lua
-
 -- Test runner for feedback integration systems
 -- This script can be run standalone to validate the feedback systems
-
 -- Set up basic environment
 package.path = package.path .. ";./?.lua;./src/?.lua;./src/systems/?.lua"
-
 -- Mock Love2D environment for testing
 love = {
     timer = {
@@ -21,7 +18,6 @@ love = {
         getInfo = function(filename) return nil end
     }
 }
-
 -- Mock Utils module
 local Utils = {
     Logger = {
@@ -72,7 +68,6 @@ local Utils = {
         return math.sqrt((x2-x1)^2 + (y2-y1)^2)
     end
 }
-
 -- Create mock save system
 local MockSaveSystem = {
     data = {},
@@ -87,7 +82,6 @@ local MockSaveSystem = {
         end
     end
 }
-
 -- Replace package require function
 local originalRequire = require
 _G.require = function(path)
@@ -106,33 +100,25 @@ _G.require = function(path)
         end
     end
 end
-
 -- Set up file system
 local function setupFileSystem()
     -- Ensure src/utils exists in package path
     package.path = package.path .. ";./src/?.lua;./src/utils/?.lua;./src/systems/?.lua;./src/systems/analytics/?.lua"
 end
-
 -- Run the tests
 local function runTests()
     print("🚀 Starting Feedback Integration Tests...")
     print("=" .. string.rep("=", 60))
-    
     setupFileSystem()
-    
     -- Load and run the test suite
     local success, FeedbackIntegrationTests = pcall(require, "tests/phase5/test_feedback_integration")
-    
     if not success then
         print("❌ Failed to load test suite: " .. tostring(FeedbackIntegrationTests))
         return false
     end
-    
     -- Run all tests
     local testSuccess = FeedbackIntegrationTests.runAllTests()
-    
     print("\n" .. "=" .. string.rep("=", 60))
-    
     if testSuccess then
         print("🎉 ALL TESTS PASSED!")
         print("✅ Feedback Integration System is ready for deployment")
@@ -143,7 +129,6 @@ local function runTests()
         return false
     end
 end
-
 -- Main execution
 if not runTests() then
     os.exit(1)

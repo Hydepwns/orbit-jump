@@ -86,11 +86,9 @@ function RingSystem.generateRing(x, y, planetType)
         pulsePhase = math.random() * math.pi * 2,
         collected = false
     }
-    
     -- Determine ring type based on rarity
     local roll = math.random()
     local cumulativeRarity = 0
-    
     for typeName, typeData in pairs(RingSystem.types) do
         if typeData.rarity then
             cumulativeRarity = cumulativeRarity + typeData.rarity
@@ -99,7 +97,6 @@ function RingSystem.generateRing(x, y, planetType)
                 ring.value = typeData.value
                 ring.color = typeData.color
                 ring.effect = typeData.effect
-                
                 -- Special properties
                 if typeName == "ghost" then
                     ring.phaseTimer = 0
@@ -113,17 +110,14 @@ function RingSystem.generateRing(x, y, planetType)
                     ring.chainNumber = #RingSystem.chainSequence + 1
                     table.insert(RingSystem.chainSequence, ring)
                 end
-                
                 return ring
             end
         end
     end
-    
     -- Default to standard ring
     ring.type = "standard"
     ring.value = RingSystem.types.standard.value
     ring.color = RingSystem.types.standard.color
-    
     -- Planet-specific ring modifications
     if planetType == "ice" then
         ring.color = {0.6, 0.8, 1, 0.8}
@@ -138,32 +132,26 @@ function RingSystem.generateRing(x, y, planetType)
         ring.color = {0.5, 0.3, 0.7, 0.6}
         ring.value = ring.value * 4
     end
-    
     -- ADDICTION ENGINE: Apply rarity system to ring
     if RingRaritySystem then
         local rarity = RingRaritySystem.determineRarity()
         RingRaritySystem.applyRarityToRing(ring, rarity)
     end
-    
     return ring
 end
 function RingSystem.updateRing(ring, dt)
     if ring.collected then return end
-    
     -- Apply time scaling for events (time dilation effect)
     local GameState = require("src.core.game_state")
     local scaledDt = dt * (GameState.world_time_scale or 1.0)
-    
     -- Apply velocity if present (for event rings)
     if ring.vx or ring.vy then
         ring.x = ring.x + (ring.vx or 0) * scaledDt
         ring.y = ring.y + (ring.vy or 0) * scaledDt
     end
-    
     -- Standard rotation and pulse
     ring.rotation = ring.rotation + ring.rotationSpeed * scaledDt
     ring.pulsePhase = ring.pulsePhase + scaledDt * 2
-    
     -- Special animations
     if ring.type == "ghost" then
         ring.phaseTimer = ring.phaseTimer + dt * RingSystem.types.ghost.phaseSpeed
@@ -182,15 +170,12 @@ function RingSystem.updateRing(ring, dt)
 end
 function RingSystem.collectRing(ring, player)
     if ring.collected then return 0 end
-    
     ring.collected = true
-    
     -- Track constellation patterns
     local success, RingConstellations  = Utils.ErrorHandler.safeCall(require, "src.systems.ring_constellations")
     if success and RingConstellations.onRingCollected then
         RingConstellations.onRingCollected(ring, player)
     end
-    
     -- Notify social systems
     local WeeklyChallengesSystem = Utils.safeRequire("src.systems.weekly_challenges_system")
     if WeeklyChallengesSystem then
@@ -199,7 +184,6 @@ function RingSystem.collectRing(ring, player)
             WeeklyChallengesSystem:onLegendaryRingCollected()
         end
     end
-    
     local GlobalEventsSystem = Utils.safeRequire("src.systems.global_events_system")
     if GlobalEventsSystem then
         GlobalEventsSystem:onRingsCollected(1)
@@ -207,10 +191,8 @@ function RingSystem.collectRing(ring, player)
             GlobalEventsSystem:onLegendaryRingCollected()
         end
     end
-    
     -- Apply ring effects
     local typeData = RingSystem.types[ring.type]
-    
     if ring.effect == "shield" then
         local shieldDuration = typeData and typeData.duration or 5
         -- Try to get upgrade effect, but don't fail if upgrade system doesn't exist
@@ -245,7 +227,6 @@ function RingSystem.collectRing(ring, player)
         -- Check if collected in correct order
         if ring.chainNumber == RingSystem.currentChain then
             RingSystem.currentChain = RingSystem.currentChain + 1
-            
             -- Bonus for completing chain
             if RingSystem.currentChain > #RingSystem.chainSequence then
                 -- Track achievement
@@ -260,13 +241,11 @@ function RingSystem.collectRing(ring, player)
             RingSystem.currentChain = 1
         end
     end
-    
     -- ADDICTION ENGINE: Apply rarity system bonuses
     local baseValue = ring.value or (RingSystem.types[ring.type] and RingSystem.types[ring.type].value) or 5
     if RingRaritySystem and RingRaritySystem.onRingCollected then
         RingRaritySystem.onRingCollected(ring, player, nil)
     end
-    
     -- Return ring value (with fallback to type value or default)
     return baseValue
 end
@@ -278,11 +257,9 @@ function RingSystem.activatePower(power, duration)
 end
 function RingSystem.updatePowers(dt)
     local currentTime = love.timer.getTime()
-    
     for power, data in pairs(RingSystem.activePowers) do
         if currentTime - data.startTime > data.duration then
             RingSystem.activePowers[power] = nil
-            
             -- Deactivate effects
             local GameState = Utils.require("src.core.game_state")
             if power == "shield" and GameState and GameState.player then
@@ -316,7 +293,6 @@ function RingSystem.findWarpPair(ring)
 end
 function RingSystem.applyMagnetEffect(player, rings)
     if not player.magnetRange then return end
-    
     for _, ring in ipairs(rings) do
         if not ring.collected then
             local dist = Utils.distance(player.x, player.y, ring.x, ring.y)
@@ -326,7 +302,6 @@ function RingSystem.applyMagnetEffect(player, rings)
                 local dx = player.x - ring.x
                 local dy = player.y - ring.y
                 local nx, ny = Utils.normalize(dx, dy)
-                
                 ring.x = ring.x + nx * pullStrength * love.timer.getDelta()
                 ring.y = ring.y + ny * pullStrength * love.timer.getDelta()
             end
@@ -338,7 +313,6 @@ function RingSystem.reset()
     RingSystem.warpPairs = {}
     RingSystem.chainSequence = {}
     RingSystem.currentChain = 1
-    
     -- Generate initial rings
     local GameState = Utils.require("src.core.game_state")
     local planets = GameState.getPlanets()
@@ -352,7 +326,6 @@ end
 function RingSystem.generateRings(planets, count)
     local rings = {}
     count = count or 10  -- Default to 10 rings if not specified
-    
     for i = 1, count do
         -- Select a random planet
         local planet = planets[math.random(#planets)]
@@ -362,12 +335,10 @@ function RingSystem.generateRings(planets, count)
             local distance = planet.radius + 50 + math.random(0, 100)
             local x = planet.x + math.cos(angle) * distance
             local y = planet.y + math.sin(angle) * distance
-            
             local ring = RingSystem.generateRing(x, y, planet.type)
             table.insert(rings, ring)
         end
     end
-    
     return rings
 end
 return RingSystem

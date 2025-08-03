@@ -1,43 +1,35 @@
 #!/usr/bin/env lua
-
 --[[
     UI Layout Test Runner
-    
     Comprehensive test runner for UI layout and positioning functionality.
     Combines basic and advanced testing capabilities in a single, unified interface.
-    
     Usage:
         lua tests/ui/layout/run_tests.lua [options] [test_suite]
-        
     Options:
         -v, --verbose       Enable detailed output
         -q, --quiet         Minimal output (errors and summary only)
         --json              JSON output format
         --performance       Include performance tests (default: true)
         --no-performance    Skip performance tests
-        --accessibility     Include accessibility tests (default: true)  
+        --accessibility     Include accessibility tests (default: true)
         --no-accessibility  Skip accessibility tests
         --strict            Enable strict validation mode
         --baseline          Update performance baselines
         -h, --help          Show this help message
-        
     Test Suites:
         quick               Basic validation tests (fastest)
         comprehensive       Full test suite (default)
         performance         Performance tests only
         accessibility       Accessibility tests only
         all                 All available tests
-        
     Examples:
         lua tests/ui/layout/run_tests.lua
         lua tests/ui/layout/run_tests.lua --verbose comprehensive
         lua tests/ui/layout/run_tests.lua --json --no-performance quick
         lua tests/ui/layout/run_tests.lua --strict --baseline performance
 --]]
-
 -- Add project paths
 package.path = package.path .. ";src/?.lua;src/?/init.lua;tests/?.lua;tests/ui/?.lua;tests/ui/layout/?.lua"
-
 -- Parse command line arguments
 local args = {
     verbose = false,
@@ -50,12 +42,10 @@ local args = {
     help = false,
     test_suite = "comprehensive"
 }
-
 -- Simple argument parser
 local i = 1
 while i <= #arg do
     local current_arg = arg[i]
-    
     if current_arg == "--verbose" or current_arg == "-v" then
         args.verbose = true
     elseif current_arg == "--quiet" or current_arg == "-q" then
@@ -79,18 +69,14 @@ while i <= #arg do
     elseif not current_arg:match("^--") then
         args.test_suite = current_arg
     end
-    
     i = i + 1
 end
-
 -- Show help if requested
 if args.help then
     print([[
 🔧 UI Layout Test Runner
-
 USAGE:
     lua tests/ui/layout/run_tests.lua [OPTIONS] [TEST_SUITE]
-
 OPTIONS:
     -v, --verbose           Enable detailed output with debug information
     -q, --quiet             Minimal output (errors and summary only)
@@ -102,24 +88,20 @@ OPTIONS:
     --strict                Enable strict validation mode (treat warnings as errors)
     --baseline              Update performance baselines for regression testing
     -h, --help              Show this help message
-
 TEST_SUITES:
     quick                   Basic element positioning validation (fastest)
     comprehensive           Full test suite with all validations (default)
     performance             Performance and memory usage tests only
     accessibility           Accessibility compliance tests only
     all                     All available tests including experimental ones
-
 EXAMPLES:
     lua tests/ui/layout/run_tests.lua
     lua tests/ui/layout/run_tests.lua --verbose comprehensive
     lua tests/ui/layout/run_tests.lua --json --no-performance quick
     lua tests/ui/layout/run_tests.lua --strict --baseline performance
-
 OUTPUT FORMATS:
     Default: Human-readable colored output with detailed analysis
     JSON:    Structured data suitable for CI/CD integration
-
 The tool will automatically detect and analyze:
     ✓ Element positioning and bounds validation
     ✓ Responsive layout behavior across screen sizes
@@ -127,7 +109,6 @@ The tool will automatically detect and analyze:
     ✓ Accessibility compliance (WCAG 2.1 AA)
     ✓ Edge cases and error handling
     ✓ Regression against previous baselines
-
 INTERACTIVE DEBUGGING:
     After running tests, use these in-game debug controls:
     • F12 - Toggle UI debug visualization
@@ -138,32 +119,26 @@ INTERACTIVE DEBUGGING:
 ]])
     os.exit(0)
 end
-
 -- Configure output
 local function log(level, message, ...)
     if args.json then return end -- Suppress logs in JSON mode
-    
-    if level == "ERROR" or (level == "WARN" and not args.quiet) or 
-       (level == "INFO" and not args.quiet) or 
+    if level == "ERROR" or (level == "WARN" and not args.quiet) or
+       (level == "INFO" and not args.quiet) or
        (level == "DEBUG" and args.verbose) then
-        
         local colors = {
             ERROR = "\27[31m",  -- Red
-            WARN = "\27[33m",   -- Yellow  
+            WARN = "\27[33m",   -- Yellow
             INFO = "\27[36m",   -- Cyan
             DEBUG = "\27[37m",  -- White
             SUCCESS = "\27[32m" -- Green
         }
-        
         local color = colors[level] or ""
         local reset = "\27[0m"
-        
         if message then
             print(string.format("%s[%s]%s %s", color, level, reset, string.format(message, ...)))
         end
     end
 end
-
 -- Enhanced error handling
 local function safe_require(module_name)
     local success, module = pcall(require, module_name)
@@ -174,10 +149,8 @@ local function safe_require(module_name)
         return nil
     end
 end
-
 -- Load required modules with error handling
 log("DEBUG", "Loading test modules...")
-
 -- Try to load enhanced tests first, fall back to basic if needed
 local UILayoutTests = safe_require("ui_layout_tests_enhanced") or safe_require("ui_layout_tests")
 if not UILayoutTests then
@@ -187,14 +160,12 @@ if not UILayoutTests then
     log("ERROR", "  - tests/ui/layout/ui_layout_tests.lua")
     os.exit(1)
 end
-
 local UIDebug = safe_require("src.ui.debug.ui_debug_enhanced") or safe_require("src.ui.debug.ui_debug")
 if UIDebug then
     log("DEBUG", "Debug system loaded")
 else
     log("WARN", "Debug system not available - some features may be limited")
 end
-
 -- Configure test system
 if UILayoutTests.config then
     UILayoutTests.config.logLevel = args.verbose and "DEBUG" or (args.quiet and "ERROR" or "INFO")
@@ -203,7 +174,6 @@ if UILayoutTests.config then
     UILayoutTests.config.strictMode = args.strict
     UILayoutTests.config.generateReports = not args.json
 end
-
 -- Show configuration
 if args.verbose and not args.json then
     log("INFO", "🔧 UI Layout Test Runner")
@@ -218,7 +188,6 @@ if args.verbose and not args.json then
     log("INFO", "  Accessibility Tests: %s", args.accessibility and "Enabled" or "Disabled")
     log("INFO", "")
 end
-
 -- Enhanced test execution with comprehensive error handling
 local function execute_tests()
     local start_time = os.clock()
@@ -232,7 +201,6 @@ local function execute_tests()
         skipped = 0,
         duration = 0
     }
-    
     -- Determine which tests to run
     if args.test_suite == "quick" then
         -- Run basic positioning test
@@ -261,12 +229,10 @@ local function execute_tests()
             if UILayoutTests.testMemoryUsage then
                 table.insert(perf_results, UILayoutTests.runTest(UILayoutTests.testMemoryUsage, "Memory Usage"))
             end
-            
             local passed = 0
             for _, result in ipairs(perf_results) do
                 if result.passed then passed = passed + 1 end
             end
-            
             results = {
                 results = perf_results,
                 summary = {
@@ -308,19 +274,15 @@ local function execute_tests()
             return {summary = {success = false}}, false
         end
     end
-    
     overall_success = results.summary and results.summary.success
     return results, overall_success
 end
-
 -- Main execution with comprehensive error handling
 local function main()
     local overall_success = true
     local results = {}
-    
     -- Execute tests with error handling
     local test_success, test_results, execution_success = pcall(execute_tests)
-    
     if test_success then
         results = test_results
         overall_success = execution_success
@@ -340,7 +302,6 @@ local function main()
             }
         }
     end
-    
     -- Output results
     if args.json then
         -- JSON output for CI/CD integration
@@ -359,12 +320,10 @@ local function main()
                 os = package.config:sub(1,1) == "\\" and "Windows" or "Unix"
             }
         }
-        
         -- Simple JSON serialization
         local function to_json(t, indent)
             indent = indent or 0
             local spacing = string.rep("  ", indent)
-            
             if type(t) == "table" then
                 local result = "{\n"
                 local first = true
@@ -385,7 +344,6 @@ local function main()
                 return "null"
             end
         end
-        
         print(to_json(json_output))
     else
         -- Text output already provided by the test framework
@@ -400,7 +358,6 @@ local function main()
                 log("ERROR", "❌ UI layout tests failed")
                 log("ERROR", "Review the issues above and fix the layout problems")
             end
-            
             log("INFO", "")
             log("INFO", "🎮 Interactive Testing:")
             log("INFO", "  1. Run 'love .' to start the game")
@@ -408,7 +365,6 @@ local function main()
             log("INFO", "  3. Press F11 to validate current layout")
             log("INFO", "  4. Use F9 to switch debug themes")
             log("INFO", "  5. Press F8 to take debug screenshots")
-            
             log("INFO", "")
             log("INFO", "📄 Documentation:")
             log("INFO", "  • src/ui/debug/ - Debug visualization tools")
@@ -416,20 +372,16 @@ local function main()
             log("INFO", "  • scripts/ui_test_runner.sh - CI/CD integration")
         end
     end
-    
     -- Update baselines if requested and tests passed
     if args.baseline and overall_success then
         log("INFO", "📊 Performance baselines would be updated")
         -- Baseline update logic would go here
     end
-    
     -- Exit with appropriate code
     os.exit(overall_success and 0 or 1)
 end
-
 -- Execute main function with comprehensive error handling
 local main_success, main_error = pcall(main)
-
 if not main_success then
     if args.json then
         print('{"success": false, "error": "' .. tostring(main_error):gsub('"', '\\"') .. '"}')

@@ -1,13 +1,10 @@
 --[[
     Insight Generator: Insight Generation and Reporting
-    
     This module generates actionable insights and recommendations based on
     analyzed player behavior and patterns.
 --]]
-
 local Utils = require("src.utils.utils")
 local InsightGenerator = {}
-
 -- Insight categories
 InsightGenerator.insights = {
     movement = {},
@@ -16,7 +13,6 @@ InsightGenerator.insights = {
     emotional = {},
     recommendations = {}
 }
-
 -- Analytics data storage
 InsightGenerator.data = {
     events = {},
@@ -28,7 +24,6 @@ InsightGenerator.data = {
     },
     progression = {}
 }
-
 -- Session tracking
 InsightGenerator.session = {
     id = "",
@@ -36,11 +31,9 @@ InsightGenerator.session = {
     duration = 0,
     active = false
 }
-
 -- Initialize insight generation
 function InsightGenerator.init()
     local currentTime = love and love.timer and love.timer.getTime() or os.time()
-    
     InsightGenerator.data = {
         events = {},
         gameplay = {
@@ -51,14 +44,12 @@ function InsightGenerator.init()
         },
         progression = {}
     }
-    
     InsightGenerator.session = {
         id = tostring(currentTime),
         startTime = currentTime,
         duration = 0,
         active = true
     }
-    
     InsightGenerator.insights = {
         movement = {},
         exploration = {},
@@ -67,7 +58,6 @@ function InsightGenerator.init()
         recommendations = {}
     }
 end
-
 -- Generate insights from behavior data
 function InsightGenerator.generateInsights(behaviorSummary, patternAnalysis)
     InsightGenerator.insights = {
@@ -77,17 +67,13 @@ function InsightGenerator.generateInsights(behaviorSummary, patternAnalysis)
         emotional = InsightGenerator.generateEmotionalInsights(patternAnalysis.emotional),
         recommendations = {}
     }
-    
     -- Generate recommendations based on all insights
     InsightGenerator.generateRecommendations()
-    
     return InsightGenerator.insights
 end
-
 -- Generate movement insights
 function InsightGenerator.generateMovementInsights(movementData)
     local insights = {}
-    
     if movementData.style == "methodical" then
         table.insert(insights, {
             type = "strength",
@@ -101,7 +87,6 @@ function InsightGenerator.generateMovementInsights(movementData)
             confidence = 0.8
         })
     end
-    
     if movementData.mastery < 0.3 then
         table.insert(insights, {
             type = "growth",
@@ -115,14 +100,11 @@ function InsightGenerator.generateMovementInsights(movementData)
             confidence = 0.9
         })
     end
-    
     return insights
 end
-
 -- Generate exploration insights
 function InsightGenerator.generateExplorationInsights(explorationData)
     local insights = {}
-    
     if explorationData.efficiency > 0.8 then
         table.insert(insights, {
             type = "strength",
@@ -136,7 +118,6 @@ function InsightGenerator.generateExplorationInsights(explorationData)
             confidence = 0.6
         })
     end
-    
     if explorationData.style == "methodical" then
         table.insert(insights, {
             type = "pattern",
@@ -144,14 +125,11 @@ function InsightGenerator.generateExplorationInsights(explorationData)
             confidence = 0.8
         })
     end
-    
     return insights
 end
-
 -- Generate skill insights
 function InsightGenerator.generateSkillInsights(skillData)
     local insights = {}
-    
     if skillData.velocity > 0.01 then
         table.insert(insights, {
             type = "progress",
@@ -165,7 +143,6 @@ function InsightGenerator.generateSkillInsights(skillData)
             confidence = 0.7
         })
     end
-    
     if skillData.consistency > 0.8 then
         table.insert(insights, {
             type = "mastery",
@@ -173,14 +150,11 @@ function InsightGenerator.generateSkillInsights(skillData)
             confidence = 0.9
         })
     end
-    
     return insights
 end
-
 -- Generate emotional insights
 function InsightGenerator.generateEmotionalInsights(emotionalData)
     local insights = {}
-    
     if emotionalData.mood == "flow" then
         table.insert(insights, {
             type = "state",
@@ -194,7 +168,6 @@ function InsightGenerator.generateEmotionalInsights(emotionalData)
             confidence = 0.7
         })
     end
-    
     if emotionalData.satisfaction > 0.8 then
         table.insert(insights, {
             type = "positive",
@@ -202,7 +175,6 @@ function InsightGenerator.generateEmotionalInsights(emotionalData)
             confidence = 0.8
         })
     end
-    
     if emotionalData.energy < 0.3 then
         table.insert(insights, {
             type = "wellness",
@@ -210,14 +182,11 @@ function InsightGenerator.generateEmotionalInsights(emotionalData)
             confidence = 0.8
         })
     end
-    
     return insights
 end
-
 -- Generate system recommendations
 function InsightGenerator.generateRecommendations()
     local recommendations = {}
-    
     -- Analyze all insights to generate recommendations
     for category, insights in pairs(InsightGenerator.insights) do
         for _, insight in ipairs(insights) do
@@ -230,13 +199,10 @@ function InsightGenerator.generateRecommendations()
             end
         end
     end
-    
     -- Sort by priority
     table.sort(recommendations, function(a, b) return a.priority > b.priority end)
-    
     InsightGenerator.insights.recommendations = recommendations
 end
-
 -- Track gameplay event
 function InsightGenerator.trackEvent(eventName, params)
     table.insert(InsightGenerator.data.events, {
@@ -244,7 +210,6 @@ function InsightGenerator.trackEvent(eventName, params)
         params = params or {},
         timestamp = love and love.timer and love.timer.getTime() or os.time()
     })
-    
     -- Update specific counters
     if eventName == "jump" then
         InsightGenerator.data.gameplay.jumps = InsightGenerator.data.gameplay.jumps + 1
@@ -254,7 +219,6 @@ function InsightGenerator.trackEvent(eventName, params)
         InsightGenerator.data.gameplay.dashes = InsightGenerator.data.gameplay.dashes + 1
     end
 end
-
 -- Track progression event
 function InsightGenerator.trackProgression(params)
     table.insert(InsightGenerator.data.progression, {
@@ -263,12 +227,10 @@ function InsightGenerator.trackProgression(params)
         timestamp = love and love.timer and love.timer.getTime() or os.time()
     })
 end
-
 -- Get session report
 function InsightGenerator.getSessionReport()
     local currentTime = love and love.timer and love.timer.getTime() or os.time()
     InsightGenerator.session.duration = currentTime - InsightGenerator.session.startTime
-    
     return {
         session = InsightGenerator.session,
         gameplay = InsightGenerator.data.gameplay,
@@ -277,12 +239,10 @@ function InsightGenerator.getSessionReport()
         progressionCount = #InsightGenerator.data.progression
     }
 end
-
 -- Get player profile with insights
 function InsightGenerator.getPlayerProfile(behaviorSummary, patternAnalysis)
     -- Generate fresh insights
     InsightGenerator.generateInsights(behaviorSummary, patternAnalysis)
-    
     return {
         playstyle = {
             movement = behaviorSummary.movement.style,
@@ -299,11 +259,9 @@ function InsightGenerator.getPlayerProfile(behaviorSummary, patternAnalysis)
         recommendations = InsightGenerator.insights.recommendations
     }
 end
-
 -- Get system recommendations for game adaptation
 function InsightGenerator.getSystemRecommendations(behaviorSummary, patternAnalysis)
     local recommendations = {}
-    
     -- Difficulty recommendations
     if patternAnalysis.skill.level > 0.7 and not patternAnalysis.skill.plateau then
         table.insert(recommendations, {
@@ -320,7 +278,6 @@ function InsightGenerator.getSystemRecommendations(behaviorSummary, patternAnaly
             confidence = 0.7
         })
     end
-    
     -- Content recommendations
     if behaviorSummary.exploration.style == "methodical" then
         table.insert(recommendations, {
@@ -337,7 +294,6 @@ function InsightGenerator.getSystemRecommendations(behaviorSummary, patternAnaly
             confidence = 0.8
         })
     end
-    
     -- Emotional support recommendations
     if patternAnalysis.emotional.mood == "frustrated" then
         table.insert(recommendations, {
@@ -354,10 +310,8 @@ function InsightGenerator.getSystemRecommendations(behaviorSummary, patternAnaly
             confidence = 0.8
         })
     end
-    
     return recommendations
 end
-
 -- Save insight data
 function InsightGenerator.saveState()
     return {
@@ -366,14 +320,12 @@ function InsightGenerator.saveState()
         insights = InsightGenerator.insights
     }
 end
-
 -- Update session data
 function InsightGenerator.updateSession(sessionTime)
     if InsightGenerator.session then
         InsightGenerator.session.duration = sessionTime
     end
 end
-
 -- Restore insight data
 function InsightGenerator.restoreState(state)
     if state then
@@ -388,5 +340,4 @@ function InsightGenerator.restoreState(state)
         end
     end
 end
-
 return InsightGenerator

@@ -2,16 +2,12 @@
     ═══════════════════════════════════════════════════════════════════════════
     Insight Generator - Automated Insight Creation & Analysis
     ═══════════════════════════════════════════════════════════════════════════
-    
     This module generates actionable insights from analysis results, combining
     multiple data sources to create comprehensive recommendations for game optimization.
 --]]
-
 local Utils = require("src.utils.utils")
 local StatisticalTools = require("src.systems.feedback.statistics.statistical_tools")
-
 local InsightGenerator = {}
-
 -- Configuration
 InsightGenerator.config = {
     insight_priorities = {
@@ -34,13 +30,11 @@ InsightGenerator.config = {
         low = 0.4
     }
 }
-
 -- Generate comprehensive insights from analysis results
 function InsightGenerator.generateInsights(analysisResults)
     if not analysisResults then
         return {error = "No analysis results provided"}
     end
-    
     local insights = {
         summary = {},
         detailed_insights = {},
@@ -49,25 +43,18 @@ function InsightGenerator.generateInsights(analysisResults)
         trends = {},
         generated_at = os.time()
     }
-    
     -- Generate summary insights
     insights.summary = InsightGenerator.generateSummaryInsights(analysisResults)
-    
     -- Generate detailed insights by category
     insights.detailed_insights = InsightGenerator.generateDetailedInsights(analysisResults)
-    
     -- Generate actionable recommendations
     insights.recommendations = InsightGenerator.generateRecommendations(analysisResults)
-    
     -- Identify priority actions
     insights.priority_actions = InsightGenerator.identifyPriorityActions(insights.recommendations)
-    
     -- Analyze trends
     insights.trends = InsightGenerator.analyzeTrends(analysisResults)
-    
     return insights
 end
-
 -- Generate summary insights
 function InsightGenerator.generateSummaryInsights(analysisResults)
     local summary = {
@@ -77,26 +64,21 @@ function InsightGenerator.generateSummaryInsights(analysisResults)
         improvement_areas = {},
         positive_trends = {}
     }
-    
     -- Calculate overall health score
     local healthScore = 0
     local metricCount = 0
-    
     if analysisResults.engagement and analysisResults.engagement.overall_score then
         healthScore = healthScore + analysisResults.engagement.overall_score
         metricCount = metricCount + 1
     end
-    
     if analysisResults.balance and analysisResults.balance.overall_score then
         healthScore = healthScore + analysisResults.balance.overall_score
         metricCount = metricCount + 1
     end
-    
     if analysisResults.progression and analysisResults.progression.overall_score then
         healthScore = healthScore + analysisResults.progression.overall_score
         metricCount = metricCount + 1
     end
-    
     if metricCount > 0 then
         local avgHealthScore = healthScore / metricCount
         if avgHealthScore >= 80 then
@@ -109,59 +91,45 @@ function InsightGenerator.generateSummaryInsights(analysisResults)
             summary.overall_health = "poor"
         end
     end
-    
     -- Identify key metrics
     summary.key_metrics = InsightGenerator.extractKeyMetrics(analysisResults)
-    
     -- Count critical issues
     summary.critical_issues = InsightGenerator.countCriticalIssues(analysisResults)
-    
     -- Identify improvement areas
     summary.improvement_areas = InsightGenerator.identifyImprovementAreas(analysisResults)
-    
     -- Identify positive trends
     summary.positive_trends = InsightGenerator.identifyPositiveTrends(analysisResults)
-    
     return summary
 end
-
 -- Generate detailed insights by category
 function InsightGenerator.generateDetailedInsights(analysisResults)
     local detailedInsights = {}
-    
     -- Engagement insights
     if analysisResults.engagement then
         detailedInsights.engagement = InsightGenerator.generateEngagementInsights(analysisResults.engagement)
     end
-    
     -- Balance insights
     if analysisResults.balance then
         detailedInsights.balance = InsightGenerator.generateBalanceInsights(analysisResults.balance)
     end
-    
     -- Progression insights
     if analysisResults.progression then
         detailedInsights.progression = InsightGenerator.generateProgressionInsights(analysisResults.progression)
     end
-    
     -- Retention insights
     if analysisResults.retention then
         detailedInsights.retention = InsightGenerator.generateRetentionInsights(analysisResults.retention)
     end
-    
     -- Performance insights
     if analysisResults.performance then
         detailedInsights.performance = InsightGenerator.generatePerformanceInsights(analysisResults.performance)
     end
-    
     -- Satisfaction insights
     if analysisResults.satisfaction then
         detailedInsights.satisfaction = InsightGenerator.generateSatisfactionInsights(analysisResults.satisfaction)
     end
-    
     return detailedInsights
 end
-
 -- Generate engagement insights
 function InsightGenerator.generateEngagementInsights(engagementData)
     local insights = {
@@ -170,7 +138,6 @@ function InsightGenerator.generateEngagementInsights(engagementData)
         engagement_drivers = {},
         risk_factors = {}
     }
-    
     if engagementData.metrics then
         -- Session frequency insights
         if engagementData.metrics.session_frequency then
@@ -183,7 +150,6 @@ function InsightGenerator.generateEngagementInsights(engagementData)
                     impact = "High risk of churn"
                 })
             end
-            
             if freq.frequency_trend == "decreasing" then
                 table.insert(insights.session_patterns, {
                     type = "declining_engagement",
@@ -193,7 +159,6 @@ function InsightGenerator.generateEngagementInsights(engagementData)
                 })
             end
         end
-        
         -- Session duration insights
         if engagementData.metrics.session_duration then
             local duration = engagementData.metrics.session_duration
@@ -206,7 +171,6 @@ function InsightGenerator.generateEngagementInsights(engagementData)
                 })
             end
         end
-        
         -- Progression speed insights
         if engagementData.metrics.progression_speed then
             local progression = engagementData.metrics.progression_speed
@@ -220,10 +184,8 @@ function InsightGenerator.generateEngagementInsights(engagementData)
             end
         end
     end
-    
     return insights
 end
-
 -- Generate balance insights
 function InsightGenerator.generateBalanceInsights(balanceData)
     local insights = {
@@ -232,7 +194,6 @@ function InsightGenerator.generateBalanceInsights(balanceData)
         reward_effectiveness = {},
         satisfaction_metrics = {}
     }
-    
     if balanceData.metrics then
         -- Difficulty insights
         if balanceData.metrics.difficulty and balanceData.metrics.difficulty.difficulty_spikes then
@@ -241,13 +202,12 @@ function InsightGenerator.generateBalanceInsights(balanceData)
                     type = "difficulty_spike",
                     level = spike.level,
                     severity = spike.severity,
-                    description = string.format("Level %s has completion rate of %.1f%%", 
+                    description = string.format("Level %s has completion rate of %.1f%%",
                                               spike.level, spike.completion_rate * 100),
                     recommendation = "Consider reducing difficulty or adding hints"
                 })
             end
         end
-        
         -- Progression insights
         if balanceData.metrics.progression then
             local progression = balanceData.metrics.progression
@@ -269,7 +229,6 @@ function InsightGenerator.generateBalanceInsights(balanceData)
                 end
             end
         end
-        
         -- Reward insights
         if balanceData.metrics.rewards then
             local rewards = balanceData.metrics.rewards
@@ -285,10 +244,8 @@ function InsightGenerator.generateBalanceInsights(balanceData)
             end
         end
     end
-    
     return insights
 end
-
 -- Generate progression insights
 function InsightGenerator.generateProgressionInsights(progressionData)
     local insights = {
@@ -297,13 +254,10 @@ function InsightGenerator.generateProgressionInsights(progressionData)
         progression_satisfaction = {},
         progression_barriers = {}
     }
-    
     -- Add progression-specific insights here
     -- This would analyze progression patterns, level completion rates, etc.
-    
     return insights
 end
-
 -- Generate retention insights
 function InsightGenerator.generateRetentionInsights(retentionData)
     local insights = {
@@ -312,13 +266,10 @@ function InsightGenerator.generateRetentionInsights(retentionData)
         retention_drivers = {},
         cohort_analysis = {}
     }
-    
     -- Add retention-specific insights here
     -- This would analyze retention patterns, churn predictors, etc.
-    
     return insights
 end
-
 -- Generate performance insights
 function InsightGenerator.generatePerformanceInsights(performanceData)
     local insights = {
@@ -327,13 +278,10 @@ function InsightGenerator.generatePerformanceInsights(performanceData)
         optimization_opportunities = {},
         stability_concerns = {}
     }
-    
     -- Add performance-specific insights here
     -- This would analyze technical performance, crashes, etc.
-    
     return insights
 end
-
 -- Generate satisfaction insights
 function InsightGenerator.generateSatisfactionInsights(satisfactionData)
     local insights = {
@@ -342,13 +290,10 @@ function InsightGenerator.generateSatisfactionInsights(satisfactionData)
         satisfaction_trends = {},
         improvement_areas = {}
     }
-    
     -- Add satisfaction-specific insights here
     -- This would analyze player satisfaction, feedback trends, etc.
-    
     return insights
 end
-
 -- Generate actionable recommendations
 function InsightGenerator.generateRecommendations(analysisResults)
     local recommendations = {
@@ -357,7 +302,6 @@ function InsightGenerator.generateRecommendations(analysisResults)
         long_term = {},
         monitoring = {}
     }
-    
     -- Extract recommendations from all analysis results
     if analysisResults.engagement and analysisResults.engagement.recommendations then
         for _, rec in ipairs(analysisResults.engagement.recommendations) do
@@ -370,7 +314,6 @@ function InsightGenerator.generateRecommendations(analysisResults)
             end
         end
     end
-    
     if analysisResults.balance and analysisResults.balance.recommendations then
         for _, rec in ipairs(analysisResults.balance.recommendations) do
             if rec.priority == "critical" then
@@ -382,13 +325,10 @@ function InsightGenerator.generateRecommendations(analysisResults)
             end
         end
     end
-    
     -- Add monitoring recommendations
     recommendations.monitoring = InsightGenerator.generateMonitoringRecommendations(analysisResults)
-    
     return recommendations
 end
-
 -- Identify priority actions
 function InsightGenerator.identifyPriorityActions(recommendations)
     local priorityActions = {
@@ -397,23 +337,18 @@ function InsightGenerator.identifyPriorityActions(recommendations)
         medium = {},
         low = {}
     }
-    
     -- Sort recommendations by priority
     for _, rec in ipairs(recommendations.immediate_actions) do
         table.insert(priorityActions.critical, rec)
     end
-    
     for _, rec in ipairs(recommendations.short_term) do
         table.insert(priorityActions.high, rec)
     end
-    
     for _, rec in ipairs(recommendations.long_term) do
         table.insert(priorityActions.medium, rec)
     end
-    
     return priorityActions
 end
-
 -- Analyze trends
 function InsightGenerator.analyzeTrends(analysisResults)
     local trends = {
@@ -422,17 +357,13 @@ function InsightGenerator.analyzeTrends(analysisResults)
         performance_trends = {},
         satisfaction_trends = {}
     }
-    
     -- Add trend analysis here
     -- This would compare current results with historical data
-    
     return trends
 end
-
 -- Extract key metrics
 function InsightGenerator.extractKeyMetrics(analysisResults)
     local keyMetrics = {}
-    
     if analysisResults.engagement and analysisResults.engagement.overall_score then
         table.insert(keyMetrics, {
             name = "engagement_score",
@@ -441,7 +372,6 @@ function InsightGenerator.extractKeyMetrics(analysisResults)
             trend = "stable"
         })
     end
-    
     if analysisResults.balance and analysisResults.balance.overall_score then
         table.insert(keyMetrics, {
             name = "balance_score",
@@ -450,14 +380,11 @@ function InsightGenerator.extractKeyMetrics(analysisResults)
             trend = "stable"
         })
     end
-    
     return keyMetrics
 end
-
 -- Count critical issues
 function InsightGenerator.countCriticalIssues(analysisResults)
     local criticalCount = 0
-    
     -- Count critical issues from all analysis results
     if analysisResults.engagement and analysisResults.engagement.insights then
         for _, insight in ipairs(analysisResults.engagement.insights) do
@@ -466,7 +393,6 @@ function InsightGenerator.countCriticalIssues(analysisResults)
             end
         end
     end
-    
     if analysisResults.balance and analysisResults.balance.balance_issues then
         for _, issue in ipairs(analysisResults.balance.balance_issues) do
             if issue.priority == "high" then
@@ -474,14 +400,11 @@ function InsightGenerator.countCriticalIssues(analysisResults)
             end
         end
     end
-    
     return criticalCount
 end
-
 -- Identify improvement areas
 function InsightGenerator.identifyImprovementAreas(analysisResults)
     local improvementAreas = {}
-    
     -- Identify areas that need improvement based on analysis results
     if analysisResults.engagement and analysisResults.engagement.overall_score then
         if analysisResults.engagement.overall_score < 60 then
@@ -492,7 +415,6 @@ function InsightGenerator.identifyImprovementAreas(analysisResults)
             })
         end
     end
-    
     if analysisResults.balance and analysisResults.balance.overall_score then
         if analysisResults.balance.overall_score < 60 then
             table.insert(improvementAreas, {
@@ -502,14 +424,11 @@ function InsightGenerator.identifyImprovementAreas(analysisResults)
             })
         end
     end
-    
     return improvementAreas
 end
-
 -- Identify positive trends
 function InsightGenerator.identifyPositiveTrends(analysisResults)
     local positiveTrends = {}
-    
     -- Identify positive trends from analysis results
     if analysisResults.engagement and analysisResults.engagement.overall_score then
         if analysisResults.engagement.overall_score > 80 then
@@ -520,10 +439,8 @@ function InsightGenerator.identifyPositiveTrends(analysisResults)
             })
         end
     end
-    
     return positiveTrends
 end
-
 -- Generate monitoring recommendations
 function InsightGenerator.generateMonitoringRecommendations(analysisResults)
     local monitoring = {
@@ -531,7 +448,6 @@ function InsightGenerator.generateMonitoringRecommendations(analysisResults)
         alerts_to_set = {},
         reports_to_generate = {}
     }
-    
     -- Add monitoring recommendations based on analysis results
     table.insert(monitoring.metrics_to_track, {
         metric = "session_frequency",
@@ -539,21 +455,17 @@ function InsightGenerator.generateMonitoringRecommendations(analysisResults)
         threshold = 1.0,
         description = "Monitor daily session frequency"
     })
-    
     table.insert(monitoring.metrics_to_track, {
         metric = "completion_rates",
         frequency = "weekly",
         threshold = 0.7,
         description = "Monitor level completion rates"
     })
-    
     return monitoring
 end
-
 -- Generate insight report
 function InsightGenerator.generateReport(insights, format)
     format = format or "json"
-    
     if format == "json" then
         return insights
     elseif format == "summary" then
@@ -561,10 +473,8 @@ function InsightGenerator.generateReport(insights, format)
     elseif format == "detailed" then
         return InsightGenerator.generateDetailedReport(insights)
     end
-    
     return insights
 end
-
 -- Generate summary report
 function InsightGenerator.generateSummaryReport(insights)
     local summary = {
@@ -574,21 +484,17 @@ function InsightGenerator.generateSummaryReport(insights)
         critical_issues = insights.summary.critical_issues,
         key_recommendations = {}
     }
-    
     -- Extract top recommendations
     for _, rec in ipairs(insights.recommendations.immediate_actions) do
         table.insert(summary.key_recommendations, rec)
     end
-    
     for _, rec in ipairs(insights.recommendations.short_term) do
         if #summary.key_recommendations < 5 then
             table.insert(summary.key_recommendations, rec)
         end
     end
-    
     return summary
 end
-
 -- Generate detailed report
 function InsightGenerator.generateDetailedReport(insights)
     local detailed = {
@@ -600,8 +506,6 @@ function InsightGenerator.generateDetailedReport(insights)
         priority_actions = insights.priority_actions,
         trends = insights.trends
     }
-    
     return detailed
 end
-
-return InsightGenerator 
+return InsightGenerator

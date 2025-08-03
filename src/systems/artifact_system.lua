@@ -1,9 +1,7 @@
 -- Artifact System for Orbit Jump
 -- Collectible lore items scattered across the galaxy
-
 local Utils = require("src.utils.utils")
 local ArtifactSystem = {}
-
 -- Artifact definitions
 ArtifactSystem.artifacts = {
   {
@@ -98,17 +96,14 @@ ArtifactSystem.artifacts = {
     requiresAll = true
   }
 }
-
 -- Active artifacts in world
 ArtifactSystem.spawnedArtifacts = {}
 ArtifactSystem.collectedCount = 0
 ArtifactSystem.notificationQueue = {}
 ArtifactSystem.notificationTimer = 0
-
 -- Visual settings
 ArtifactSystem.pulsePhase = 0
 ArtifactSystem.particleTimer = 0
-
 -- Initialize
 function ArtifactSystem.init()
   -- Reset all artifacts
@@ -120,20 +115,17 @@ function ArtifactSystem.init()
   ArtifactSystem.notificationQueue = {}
   return true
 end
-
 -- Spawn artifacts based on conditions
 function ArtifactSystem.spawnArtifacts(player, planets)
   -- Don't spawn if all are collected
   if ArtifactSystem.collectedCount >= #ArtifactSystem.artifacts then
     return
   end
-
   -- Check each artifact's spawn conditions
   for i, artifactDef in ipairs(ArtifactSystem.artifacts) do
     if not artifactDef.discovered and not ArtifactSystem.isArtifactSpawned(artifactDef.id) then
       local shouldSpawn = false
       local spawnX, spawnY = 0, 0
-
       -- Special spawn conditions based on hint
       if artifactDef.id == "origin_fragment_1" then
         -- Near center of space
@@ -212,7 +204,6 @@ function ArtifactSystem.spawnArtifacts(player, planets)
           spawnY = -5000           -- Far "above" origin
         end
       end
-
       -- Spawn the artifact
       if shouldSpawn then
         local artifact = {
@@ -224,14 +215,12 @@ function ArtifactSystem.spawnArtifacts(player, planets)
           glowRadius = 50,
           particles = {}
         }
-
         table.insert(ArtifactSystem.spawnedArtifacts, artifact)
         Utils.Logger.info("Artifact spawned: %s at (%.0f, %.0f)", artifactDef.name, spawnX, spawnY)
       end
     end
   end
 end
-
 -- Check if artifact is already spawned
 function ArtifactSystem.isArtifactSpawned(id)
   for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
@@ -241,29 +230,24 @@ function ArtifactSystem.isArtifactSpawned(id)
   end
   return false
 end
-
 -- Update artifacts
 function ArtifactSystem.update(dt, player, planets)
   -- Update visual effects
   ArtifactSystem.pulsePhase = ArtifactSystem.pulsePhase + dt * 2
   ArtifactSystem.particleTimer = ArtifactSystem.particleTimer + dt
-
   -- Spawn new artifacts occasionally
   if math.random() < dt * 0.1 then   -- Check every ~10 seconds
     ArtifactSystem.spawnArtifacts(player, planets)
   end
-
   -- Update spawned artifacts
   for i = #ArtifactSystem.spawnedArtifacts, 1, -1 do
     local artifact = ArtifactSystem.spawnedArtifacts[i]
-
     if not artifact.collected then
       -- Check collection
       local dist = Utils.distance(player.x, player.y, artifact.x, artifact.y)
       if dist < artifact.glowRadius then
         ArtifactSystem.collectArtifact(artifact, i)
       end
-
       -- Update particles
       if ArtifactSystem.particleTimer > 0.1 then
         -- Add new particle
@@ -279,26 +263,22 @@ function ArtifactSystem.update(dt, player, planets)
         }
         table.insert(artifact.particles, particle)
       end
-
       -- Update existing particles
       for j = #artifact.particles, 1, -1 do
         local p = artifact.particles[j]
         p.x = p.x + p.vx * dt
         p.y = p.y + p.vy * dt
         p.life = p.life - dt
-
         if p.life <= 0 then
           table.remove(artifact.particles, j)
         end
       end
     end
   end
-
   -- Reset particle timer
   if ArtifactSystem.particleTimer > 0.1 then
     ArtifactSystem.particleTimer = 0
   end
-
   -- Update notifications
   if #ArtifactSystem.notificationQueue > 0 then
     ArtifactSystem.notificationTimer = ArtifactSystem.notificationTimer - dt
@@ -308,71 +288,58 @@ function ArtifactSystem.update(dt, player, planets)
     end
   end
 end
-
 -- Collect an artifact
 function ArtifactSystem.collectArtifact(artifact, index)
   artifact.collected = true
   artifact.definition.discovered = true
   ArtifactSystem.collectedCount = ArtifactSystem.collectedCount + 1
-
   -- Remove from spawned list
   table.remove(ArtifactSystem.spawnedArtifacts, index)
-
   -- Add to notification queue
   table.insert(ArtifactSystem.notificationQueue, {
     artifact = artifact.definition,
     time = love.timer.getTime()
   })
   ArtifactSystem.notificationTimer = 5
-
   -- Grant points
   local GameState = Utils.require("src.core.game_state")
   local UpgradeSystem = Utils.require("src.systems.upgrade_system")
   GameState.addScore(1000)
   UpgradeSystem.addCurrency(100)
-
   -- Achievement
   local AchievementSystem = Utils.require("src.systems.achievement_system")
   if AchievementSystem.onArtifactCollected then
     AchievementSystem.onArtifactCollected(artifact.id)
   end
-
   -- Play collection sound
   local soundManager = Utils.require("src.audio.sound_manager")
   if soundManager and soundManager.playEventWarning then
     soundManager:playEventWarning()
   end
-
   -- Check if all collected
   if ArtifactSystem.collectedCount >= #ArtifactSystem.artifacts then
     AchievementSystem.onAllArtifactsCollected()
   end
-
   Utils.Logger.info("Artifact collected: %s", artifact.definition.name)
 end
-
 -- Draw artifacts
 function ArtifactSystem.draw()
   for _, artifact in ipairs(ArtifactSystem.spawnedArtifacts) do
     if not artifact.collected then
       local pulse = math.sin(ArtifactSystem.pulsePhase) * 0.2 + 1
-
       -- Draw glow
       Utils.setColor(artifact.definition.color, 0.2)
       love.graphics.circle("fill", artifact.x, artifact.y, artifact.glowRadius * pulse)
-
       -- Draw particles
       for _, p in ipairs(artifact.particles) do
         Utils.setColor(artifact.definition.color, p.life * 0.5)
         love.graphics.circle("fill", p.x, p.y, p.size * p.life)
       end
-
       -- Draw core
       Utils.setColor(artifact.definition.color, 0.8)
       love.graphics.push()
       love.graphics.translate(artifact.x, artifact.y)
       love.graphics.rotate(ArtifactSystem.pulsePhase)
-
       -- Crystal shape
       local size = 15 * pulse
       love.graphics.polygon("line",
@@ -381,7 +348,6 @@ function ArtifactSystem.draw()
         0, size,
         -size * 0.7, 0
       )
-
       -- Inner crystal
       Utils.setColor(artifact.definition.color, 0.4)
       love.graphics.polygon("fill",
@@ -390,21 +356,17 @@ function ArtifactSystem.draw()
         0, size * 0.6,
         -size * 0.4, 0
       )
-
       love.graphics.pop()
     end
   end
 end
-
 -- Draw UI notifications
 function ArtifactSystem.drawUI()
   if #ArtifactSystem.notificationQueue > 0 then
     local notification = ArtifactSystem.notificationQueue[1]
     local artifact = notification.artifact
-
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
-
     -- Fade in/out
     local alpha = 1.0
     if ArtifactSystem.notificationTimer > 4 then
@@ -412,35 +374,28 @@ function ArtifactSystem.drawUI()
     elseif ArtifactSystem.notificationTimer < 1 then
       alpha = ArtifactSystem.notificationTimer
     end
-
     -- Background box
     local boxWidth = 600
     local boxHeight = 200
     local boxX = (screenWidth - boxWidth) / 2
     local boxY = 100
-
     Utils.setColor({ 0, 0, 0 }, 0.8 * alpha)
     love.graphics.rectangle("fill", boxX, boxY, boxWidth, boxHeight, 10)
-
     Utils.setColor(artifact.color, alpha)
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", boxX, boxY, boxWidth, boxHeight, 10)
-
     -- Title
     Utils.setColor({ 1, 1, 1 }, alpha)
     love.graphics.setFont(love.graphics.newFont(18))
     love.graphics.printf("ARTIFACT DISCOVERED", boxX, boxY + 20, boxWidth, "center")
-
     -- Name
     Utils.setColor(artifact.color, alpha)
     love.graphics.setFont(love.graphics.newFont(24))
     love.graphics.printf(artifact.name, boxX, boxY + 50, boxWidth, "center")
-
     -- Description
     Utils.setColor({ 0.8, 0.8, 0.8 }, alpha)
     love.graphics.setFont(love.graphics.newFont(14))
     love.graphics.printf(artifact.description, boxX + 20, boxY + 90, boxWidth - 40, "center")
-
     -- Progress
     Utils.setColor({ 0.5, 0.5, 0.5 }, alpha * 0.8)
     love.graphics.setFont(love.graphics.newFont(12))
@@ -449,7 +404,6 @@ function ArtifactSystem.drawUI()
       boxX, boxY + boxHeight - 30, boxWidth, "center"
     )
   end
-
   -- Collection progress (always visible)
   local progressY = 50
   Utils.setColor({ 1, 1, 1 }, 0.8)
@@ -459,7 +413,6 @@ function ArtifactSystem.drawUI()
     love.graphics.getWidth() - 150, progressY, 140, "right"
   )
 end
-
 -- Get artifact by ID
 function ArtifactSystem.getArtifact(id)
   for _, artifact in ipairs(ArtifactSystem.artifacts) do
@@ -469,7 +422,6 @@ function ArtifactSystem.getArtifact(id)
   end
   return nil
 end
-
 -- Get all discovered artifacts
 function ArtifactSystem.getDiscoveredArtifacts()
   local discovered = {}
@@ -480,7 +432,6 @@ function ArtifactSystem.getDiscoveredArtifacts()
   end
   return discovered
 end
-
 -- Show artifacts on map
 function ArtifactSystem.drawOnMap(camera, mapCenterX, mapCenterY, scale, alpha)
   -- Draw spawned artifacts on map
@@ -488,11 +439,9 @@ function ArtifactSystem.drawOnMap(camera, mapCenterX, mapCenterY, scale, alpha)
     if not artifact.collected then
       local mapX = mapCenterX + (artifact.x - camera.x) * scale
       local mapY = mapCenterY + (artifact.y - camera.y) * scale
-
       -- Pulsing icon
       local pulse = math.sin(love.timer.getTime() * 3) * 0.2 + 1
       Utils.setColor(artifact.definition.color, 0.8 * alpha)
-
       -- Draw artifact marker
       love.graphics.push()
       love.graphics.translate(mapX, mapY)
@@ -507,5 +456,4 @@ function ArtifactSystem.drawOnMap(camera, mapCenterX, mapCenterY, scale, alpha)
     end
   end
 end
-
 return ArtifactSystem

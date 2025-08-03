@@ -21,7 +21,6 @@ SettingsMenu.defaults = {
     masterVolume = 1.0,
     soundVolume = 1.0,
     musicVolume = 0.5,
-    
     -- Controls
     dashKey1 = "lshift",
     dashKey2 = "z",
@@ -30,14 +29,12 @@ SettingsMenu.defaults = {
     upgradeKey = "u",
     loreKey = "l",
     pauseKey = "escape",
-    
     -- Graphics
     particleQuality = 1.0,  -- 0.5 = low, 1.0 = high
     showFPS = false,
     screenShake = true,
     fullscreen = false,
     vsync = true,
-    
     -- Gameplay
     autoSave = true,
     autoSaveInterval = 60,
@@ -53,10 +50,8 @@ SettingsMenu.settingsFile = "settings.dat"
 function SettingsMenu.init()
     -- Load settings from file or use defaults
     SettingsMenu.load()
-    
     -- Apply settings
     SettingsMenu.applySettings()
-    
     Utils.Logger.info("Settings menu initialized")
     return true
 end
@@ -78,7 +73,6 @@ function SettingsMenu.load()
             end
         end
     end
-    
     -- Use defaults
     SettingsMenu.current = {}
     for k, v in pairs(SettingsMenu.defaults) do
@@ -99,23 +93,19 @@ function SettingsMenu.applySettings()
     -- Apply audio settings
     local soundManager = Utils.require("src.audio.sound_manager")
     soundManager:setVolume(SettingsMenu.current.masterVolume * SettingsMenu.current.soundVolume)
-    
     -- Apply graphics settings
     love.window.setFullscreen(SettingsMenu.current.fullscreen)
     love.window.setVSync(SettingsMenu.current.vsync and 1 or 0)
-    
     -- Apply to performance system
     local PerformanceSystem = Utils.require("src.performance.performance_system")
     if PerformanceSystem.config then
         PerformanceSystem.config.showDebug = SettingsMenu.current.showFPS
     end
-    
     -- Apply to camera
     local Camera = Utils.require("src.core.camera")
     if Camera.enableShake ~= nil then
         Camera.enableShake = SettingsMenu.current.screenShake
     end
-    
     -- Apply auto-save settings
     local SaveSystem = Utils.require("src.systems.save_system")
     if SaveSystem then
@@ -145,7 +135,6 @@ end
 -- Get options for current tab
 function SettingsMenu.getCurrentOptions()
     local tab = SettingsMenu.tabs[SettingsMenu.selectedTab]
-    
     if tab.name == "Audio" then
         return {
             {key = "masterVolume", name = "Master Volume", type = "slider", min = 0, max = 1},
@@ -163,7 +152,7 @@ function SettingsMenu.getCurrentOptions()
         }
     elseif tab.name == "Graphics" then
         return {
-            {key = "particleQuality", name = "Particle Quality", type = "choice", 
+            {key = "particleQuality", name = "Particle Quality", type = "choice",
              choices = {{value = 0.5, label = "Low"}, {value = 0.75, label = "Medium"}, {value = 1.0, label = "High"}}},
             {key = "showFPS", name = "Show FPS", type = "toggle"},
             {key = "screenShake", name = "Screen Shake", type = "toggle"},
@@ -180,7 +169,6 @@ function SettingsMenu.getCurrentOptions()
             {key = "cameraZoom", name = "Camera Zoom", type = "slider", min = 0.5, max = 1.5}
         }
     end
-    
     return {}
 end
 -- Handle input
@@ -188,10 +176,8 @@ function SettingsMenu.keypressed(key)
     if not SettingsMenu.isVisible then
         return false
     end
-    
     local options = SettingsMenu.getCurrentOptions()
     local currentOption = options[SettingsMenu.selectedOption]
-    
     if key == "escape" then
         SettingsMenu.toggle()
         return true
@@ -246,7 +232,6 @@ function SettingsMenu.keypressed(key)
                     SettingsMenu.current[currentOption.key] + step)
             end
             SettingsMenu.unsavedChanges = true
-            
             -- Apply audio changes immediately
             if currentOption.key:find("Volume") then
                 SettingsMenu.applySettings()
@@ -267,7 +252,6 @@ function SettingsMenu.keypressed(key)
         SettingsMenu.applySettings()
         return true
     end
-    
     return true -- Consume all input when visible
 end
 -- Handle mouse input
@@ -275,20 +259,17 @@ function SettingsMenu.mousepressed(x, y, button)
     if not SettingsMenu.isVisible or SettingsMenu.fadeAlpha < 0.5 then
         return false
     end
-    
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
     local menuWidth = 700
     local menuHeight = 500
     local menuX = (screenWidth - menuWidth) / 2
     local menuY = (screenHeight - menuHeight) / 2
-    
     -- Check if click is outside menu
     if x < menuX or x > menuX + menuWidth or y < menuY or y > menuY + menuHeight then
         SettingsMenu.toggle()
         return true
     end
-    
     -- Check tab clicks
     local tabWidth = menuWidth / #SettingsMenu.tabs
     for i = 1, #SettingsMenu.tabs do
@@ -299,15 +280,12 @@ function SettingsMenu.mousepressed(x, y, button)
             return true
         end
     end
-    
     -- Check option clicks
     local options = SettingsMenu.getCurrentOptions()
     local optionY = menuY + 100
-    
     for i, option in ipairs(options) do
         if y >= optionY and y <= optionY + 40 then
             SettingsMenu.selectedOption = i
-            
             -- Handle clicks on options
             if option.type == "toggle" then
                 SettingsMenu.current[option.key] = not SettingsMenu.current[option.key]
@@ -321,81 +299,65 @@ function SettingsMenu.mousepressed(x, y, button)
                     local range = option.max - option.min
                     SettingsMenu.current[option.key] = option.min + range * percent
                     SettingsMenu.unsavedChanges = true
-                    
                     -- Apply audio changes immediately
                     if option.key:find("Volume") then
                         SettingsMenu.applySettings()
                     end
                 end
             end
-            
             return true
         end
         optionY = optionY + 50
     end
-    
     return true
 end
 -- Draw settings menu
 function SettingsMenu.draw()
     if SettingsMenu.fadeAlpha <= 0 then return end
-    
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
-    
     -- Draw darkened background
     Utils.setColor({0, 0, 0}, 0.7 * SettingsMenu.fadeAlpha)
     love.graphics.rectangle("fill", 0, 0, screenWidth, screenHeight)
-    
     -- Menu dimensions
     local menuWidth = 700
     local menuHeight = 500
     local menuX = (screenWidth - menuWidth) / 2
     local menuY = (screenHeight - menuHeight) / 2
-    
     -- Draw menu background
     Utils.setColor({0.1, 0.1, 0.2}, 0.95 * SettingsMenu.fadeAlpha)
     love.graphics.rectangle("fill", menuX, menuY, menuWidth, menuHeight, 10)
-    
     -- Draw menu border
     Utils.setColor({0.5, 0.8, 1}, SettingsMenu.fadeAlpha)
     love.graphics.setLineWidth(3)
     love.graphics.rectangle("line", menuX, menuY, menuWidth, menuHeight, 10)
-    
     -- Draw tabs
     local tabWidth = menuWidth / #SettingsMenu.tabs
     for i, tab in ipairs(SettingsMenu.tabs) do
         local tabX = menuX + (i - 1) * tabWidth
-        
         -- Tab background
         if i == SettingsMenu.selectedTab then
             Utils.setColor({0.2, 0.4, 0.8}, 0.5 * SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", tabX, menuY, tabWidth, 50)
         end
-        
         -- Tab text
         Utils.setColor({1, 1, 1}, SettingsMenu.fadeAlpha)
         love.graphics.setFont(love.graphics.newFont(18))
         love.graphics.printf(tab.icon .. " " .. tab.name, tabX, menuY + 15, tabWidth, "center")
     end
-    
     -- Draw options for current tab
     local options = SettingsMenu.getCurrentOptions()
     local optionY = menuY + 100
-    
     love.graphics.setFont(love.graphics.newFont(16))
-    
     for i, option in ipairs(options) do
         -- Highlight selected option
         if i == SettingsMenu.selectedOption then
             Utils.setColor({0.2, 0.4, 0.8}, 0.3 * SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", menuX + 20, optionY - 5, menuWidth - 40, 40, 5)
         end
-        
         -- Option name
         Utils.setColor({1, 1, 1}, SettingsMenu.fadeAlpha)
         love.graphics.print(option.name, menuX + 40, optionY)
-        
         -- Option value/control
         if option.type == "slider" then
             -- Draw slider
@@ -404,18 +366,14 @@ function SettingsMenu.draw()
             local sliderWidth = 200
             local value = SettingsMenu.current[option.key]
             local percent = (value - option.min) / (option.max - option.min)
-            
             -- Slider track
             Utils.setColor({0.3, 0.3, 0.3}, SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth, 4, 2)
-            
             -- Slider fill
             Utils.setColor({0.5, 0.8, 1}, SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", sliderX, sliderY, sliderWidth * percent, 4, 2)
-            
             -- Slider handle
             love.graphics.circle("fill", sliderX + sliderWidth * percent, sliderY + 2, 8)
-            
             -- Value text
             local valueText = string.format("%.1f", value)
             if option.unit then
@@ -424,72 +382,57 @@ function SettingsMenu.draw()
                 valueText = string.format("%d%%", value * 100)
             end
             love.graphics.print(valueText, sliderX + sliderWidth + 20, optionY)
-            
         elseif option.type == "toggle" then
             -- Draw toggle
             local toggleX = menuX + 250
             local toggleY = optionY
             local isOn = SettingsMenu.current[option.key]
-            
             -- Toggle background
             Utils.setColor(isOn and {0.2, 0.8, 0.2} or {0.5, 0.5, 0.5}, SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", toggleX, toggleY, 60, 24, 12)
-            
             -- Toggle knob
             Utils.setColor({1, 1, 1}, SettingsMenu.fadeAlpha)
             love.graphics.circle("fill", toggleX + (isOn and 48 or 12), toggleY + 12, 10)
-            
             -- State text
             love.graphics.print(isOn and "ON" or "OFF", toggleX + 70, toggleY)
-            
         elseif option.type == "choice" then
             -- Draw choice selector
             local choiceX = menuX + 250
             local currentValue = SettingsMenu.current[option.key]
             local currentLabel = ""
-            
             for _, choice in ipairs(option.choices) do
                 if choice.value == currentValue then
                     currentLabel = choice.label
                     break
                 end
             end
-            
             -- Choice box
             Utils.setColor({0.3, 0.3, 0.3}, SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", choiceX, optionY, 150, 24, 5)
-            
             -- Choice text
             Utils.setColor({1, 1, 1}, SettingsMenu.fadeAlpha)
             love.graphics.printf(currentLabel, choiceX, optionY + 3, 150, "center")
-            
             -- Arrows
             love.graphics.print("◄", choiceX - 20, optionY)
             love.graphics.print("►", choiceX + 160, optionY)
-            
         elseif option.type == "key" then
             -- Draw key binding
             local keyX = menuX + 250
             local keyValue = SettingsMenu.current[option.key]
-            
             -- Key box
             Utils.setColor({0.3, 0.3, 0.3}, SettingsMenu.fadeAlpha)
             love.graphics.rectangle("fill", keyX, optionY, 100, 24, 5)
-            
             -- Key text
             Utils.setColor({1, 1, 1}, SettingsMenu.fadeAlpha)
             love.graphics.printf(keyValue:upper(), keyX, optionY + 3, 100, "center")
         end
-        
         optionY = optionY + 50
     end
-    
     -- Draw help text
     Utils.setColor({0.5, 0.5, 0.5}, SettingsMenu.fadeAlpha)
     love.graphics.setFont(love.graphics.newFont(14))
-    love.graphics.printf("↑/↓: Navigate   ←/→: Change Tab   A/D: Adjust Sliders   F5: Save   F8: Reset   ESC: Close", 
+    love.graphics.printf("↑/↓: Navigate   ←/→: Change Tab   A/D: Adjust Sliders   F5: Save   F8: Reset   ESC: Close",
                         menuX, menuY + menuHeight - 40, menuWidth, "center")
-    
     -- Draw unsaved changes indicator
     if SettingsMenu.unsavedChanges then
         Utils.setColor({1, 0.8, 0}, SettingsMenu.fadeAlpha)

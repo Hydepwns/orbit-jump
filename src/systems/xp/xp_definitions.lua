@@ -1,8 +1,6 @@
 -- XP Definitions Module
 -- Contains all XP-related constants, values, and level rewards
-
 local XPDefinitions = {}
-
 -- XP sources and values (Rebalanced for better progression)
 XPDefinitions.XP_VALUES = {
     ring_collect = 2,
@@ -15,7 +13,6 @@ XPDefinitions.XP_VALUES = {
     precision_landing = 12, -- Increased from 8 - Very accurate landing
     exploration_bonus = 20 -- Increased from 15 - Visiting new areas
 }
-
 -- Level unlock rewards (Extended with new rewards to fill gaps)
 XPDefinitions.LEVEL_REWARDS = {
     [3] = {type = "ability", name = "Double Jump", description = "Jump twice in one sequence"},
@@ -39,7 +36,6 @@ XPDefinitions.LEVEL_REWARDS = {
     [48] = {type = "cosmetic", name = "Legend Icon", description = "Legendary status display"},
     [50] = {type = "ability", name = "Prestige Unlock", description = "Access to Prestige System!"}
 }
-
 -- Level progression curve
 XPDefinitions.LEVEL_CURVE = {
     BASE_XP = 100,
@@ -50,7 +46,6 @@ XPDefinitions.LEVEL_CURVE = {
     TIER_2_END = 30,
     TIER_3_END = 50
 }
-
 -- Animation constants
 XPDefinitions.ANIMATION = {
     XP_GAIN_DURATION = 2.0,
@@ -61,7 +56,6 @@ XPDefinitions.ANIMATION = {
     BOUNCE_AMPLITUDE = 5,
     SCALE_VARIATION = 0.1
 }
-
 -- Visual constants
 XPDefinitions.VISUAL = {
     BAR_HEIGHT = 20,
@@ -70,25 +64,20 @@ XPDefinitions.VISUAL = {
     TEXT_MARGIN = 10,
     ICON_SIZE = 24
 }
-
 -- Get XP value for a source
 function XPDefinitions.getXPValue(source)
     return XPDefinitions.XP_VALUES[source] or 0
 end
-
 -- Get level reward
 function XPDefinitions.getLevelReward(level)
     return XPDefinitions.LEVEL_REWARDS[level]
 end
-
 -- Calculate XP required for next level
 function XPDefinitions.calculateXPForLevel(level)
     if level <= 1 then
         return XPDefinitions.LEVEL_CURVE.BASE_XP
     end
-    
     local xp = XPDefinitions.LEVEL_CURVE.BASE_XP
-    
     for i = 2, level do
         if i <= XPDefinitions.LEVEL_CURVE.TIER_1_END then
             xp = xp * XPDefinitions.LEVEL_CURVE.TIER_1_MULTIPLIER
@@ -100,10 +89,8 @@ function XPDefinitions.calculateXPForLevel(level)
             xp = xp * XPDefinitions.LEVEL_CURVE.TIER_3_MULTIPLIER
         end
     end
-    
     return math.floor(xp)
 end
-
 -- Get XP importance level
 function XPDefinitions.getXPImportance(amount)
     if amount >= 20 then
@@ -114,7 +101,6 @@ function XPDefinitions.getXPImportance(amount)
         return "low"
     end
 end
-
 -- Get all available rewards
 function XPDefinitions.getAvailableRewards()
     local rewards = {}
@@ -127,7 +113,6 @@ function XPDefinitions.getAvailableRewards()
     table.sort(rewards, function(a, b) return a.level < b.level end)
     return rewards
 end
-
 -- Get rewards by type
 function XPDefinitions.getRewardsByType(rewardType)
     local rewards = {}
@@ -142,5 +127,4 @@ function XPDefinitions.getRewardsByType(rewardType)
     table.sort(rewards, function(a, b) return a.level < b.level end)
     return rewards
 end
-
-return XPDefinitions 
+return XPDefinitions

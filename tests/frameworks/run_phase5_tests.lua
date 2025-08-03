@@ -1,22 +1,16 @@
 -- Phase 5 Test Runner for Orbit Jump
 -- Runs all Phase 5 tests: Integration, Mobile Controls, Advanced Gameplay, and Performance Monitoring
-
 package.path = package.path .. ";../?.lua"
-
 local Utils = require("src.utils.utils")
 local TestFramework = Utils.require("tests.modern_test_framework")
 local Mocks = Utils.require("tests.mocks")
-
 -- Setup mocks first
 Mocks.setup()
-
 -- Initialize test framework
 TestFramework.init()
-
 print("=== Orbit Jump Phase 5 Testing ===")
 print("Integration & Advanced Features")
 print()
-
 -- Define test suites directly
 local testSuites = {
     ["Mobile Controls"] = {
@@ -28,7 +22,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Mobile detection should work without errors")
         end,
-        
         ["touch input handling"] = function()
             -- Test touch input handling - use mocks since mobile input doesn't exist
             local success = Utils.ErrorHandler.safeCall(function()
@@ -38,7 +31,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Touch input handling should work")
         end,
-        
         ["gesture recognition"] = function()
             -- Test gesture recognition - use mocks
             local success = Utils.ErrorHandler.safeCall(function()
@@ -48,7 +40,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Gesture recognition should work")
         end,
-        
         ["responsive UI"] = function()
             -- Test responsive UI scaling - use mocks
             local success = Utils.ErrorHandler.safeCall(function()
@@ -60,7 +51,6 @@ local testSuites = {
             TestFramework.assert.isTrue(success, "Responsive UI should work")
         end
     },
-    
     ["Advanced Gameplay"] = {
         ["warp zone system"] = function()
             -- Test warp zone system
@@ -70,7 +60,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Warp zones system should load without errors")
         end,
-        
         ["achievement system"] = function()
             -- Test achievement system
             local success = Utils.ErrorHandler.safeCall(function()
@@ -79,7 +68,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Achievement system should load without errors")
         end,
-        
         ["cosmic events"] = function()
             -- Test cosmic events system
             local success = Utils.ErrorHandler.safeCall(function()
@@ -88,7 +76,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Cosmic events system should load without errors")
         end,
-        
         ["ring constellations"] = function()
             -- Test ring constellation system
             local success = Utils.ErrorHandler.safeCall(function()
@@ -98,7 +85,6 @@ local testSuites = {
             TestFramework.assert.isTrue(success, "Ring constellations system should load without errors")
         end
     },
-    
     ["Performance Monitoring"] = {
         ["performance monitor initialization"] = function()
             -- Test performance monitor initialization
@@ -108,7 +94,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Performance monitor should load without errors")
         end,
-        
         ["performance system"] = function()
             -- Test performance system
             local success = Utils.ErrorHandler.safeCall(function()
@@ -117,7 +102,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Performance system should load without errors")
         end,
-        
         ["optimized functions"] = function()
             -- Test optimized functions
             local success = Utils.ErrorHandler.safeCall(function()
@@ -126,7 +110,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Optimized functions should load without errors")
         end,
-        
         ["performance metrics"] = function()
             -- Test performance metrics calculation
             local success = Utils.ErrorHandler.safeCall(function()
@@ -139,7 +122,6 @@ local testSuites = {
             TestFramework.assert.isTrue(success, "Performance metrics should work")
         end
     },
-    
     ["Integration Tests"] = {
         ["system interactions"] = function()
             -- Test system interactions
@@ -147,14 +129,12 @@ local testSuites = {
                 local GameState = require("src.core.game_state")
                 local PlayerSystem = require("src.systems.player_system")
                 local RingSystem = require("src.systems.ring_system")
-                
                 TestFramework.assert.notNil(GameState, "Game state should be available")
                 TestFramework.assert.notNil(PlayerSystem, "Player system should be available")
                 TestFramework.assert.notNil(RingSystem, "Ring system should be available")
             end)
             TestFramework.assert.isTrue(success, "Core systems should load without errors")
         end,
-        
         ["upgrade system integration"] = function()
             -- Test upgrade system integration
             local success = Utils.ErrorHandler.safeCall(function()
@@ -163,7 +143,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Upgrade system should load without errors")
         end,
-        
         ["sound system integration"] = function()
             -- Test sound system integration
             local success = Utils.ErrorHandler.safeCall(function()
@@ -172,7 +151,6 @@ local testSuites = {
             end)
             TestFramework.assert.isTrue(success, "Sound manager should load without errors")
         end,
-        
         ["particle system integration"] = function()
             -- Test particle system integration
             local success = Utils.ErrorHandler.safeCall(function()
@@ -183,16 +161,13 @@ local testSuites = {
         end
     }
 }
-
 -- Run all test suites
 local allPassed = TestFramework.runAllSuites(testSuites)
-
 -- Print final summary
 print("\n" .. string.rep("=", 60))
 print("🎯 Phase 5 Testing Complete!")
 print(string.format("📊 Overall Results: %s", allPassed and "✅ ALL TESTS PASSED" or "❌ SOME TESTS FAILED"))
 print(string.rep("=", 60))
-
 -- Exit with appropriate code
 if allPassed then
     print("🚀 Phase 5 tests completed successfully!")
@@ -200,4 +175,4 @@ if allPassed then
 else
     print("⚠️  Some Phase 5 tests failed. Please review the errors above.")
     os.exit(1)
-end 
+end

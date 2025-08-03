@@ -1,12 +1,9 @@
 --[[
     Debug Configuration for Orbit Jump
-    
     This module contains debug system configuration, color themes,
     validation rules, and logging levels.
 --]]
-
 local DebugConfig = {}
-
 -- Debug levels
 DebugConfig.LogLevel = {
     ERROR = 1,
@@ -15,7 +12,6 @@ DebugConfig.LogLevel = {
     DEBUG = 4,
     VERBOSE = 5
 }
-
 -- Enhanced debug colors with theme support
 DebugConfig.colorThemes = {
     default = {
@@ -58,7 +54,6 @@ DebugConfig.colorThemes = {
         error = {1, 0, 0, 1}
     }
 }
-
 -- Initialize validation rules
 function DebugConfig.initializeValidationRules()
     DebugConfig.validationRules = {
@@ -76,7 +71,6 @@ function DebugConfig.initializeValidationRules()
             end,
             severity = "error"
         },
-        
         -- Minimum size rules
         {
             name = "minimum_size",
@@ -93,7 +87,6 @@ function DebugConfig.initializeValidationRules()
             end,
             severity = "warning"
         },
-        
         -- Maximum size rules
         {
             name = "maximum_size",
@@ -110,7 +103,6 @@ function DebugConfig.initializeValidationRules()
             end,
             severity = "warning"
         },
-        
         -- Aspect ratio rules
         {
             name = "aspect_ratio",
@@ -127,7 +119,6 @@ function DebugConfig.initializeValidationRules()
             end,
             severity = "warning"
         },
-        
         -- Position validation
         {
             name = "position_validation",
@@ -144,7 +135,6 @@ function DebugConfig.initializeValidationRules()
             end,
             severity = "error"
         },
-        
         -- Required properties
         {
             name = "required_properties",
@@ -163,7 +153,6 @@ function DebugConfig.initializeValidationRules()
         }
     }
 end
-
 -- Get validation rule by name
 function DebugConfig.getValidationRule(ruleName)
     for _, rule in ipairs(DebugConfig.validationRules) do
@@ -173,17 +162,14 @@ function DebugConfig.getValidationRule(ruleName)
     end
     return nil
 end
-
 -- Get all validation rules
 function DebugConfig.getAllValidationRules()
     return DebugConfig.validationRules
 end
-
 -- Get theme by name
 function DebugConfig.getTheme(themeName)
     return DebugConfig.colorThemes[themeName] or DebugConfig.colorThemes.default
 end
-
 -- Get all available themes
 function DebugConfig.getAvailableThemes()
     local themes = {}
@@ -192,19 +178,15 @@ function DebugConfig.getAvailableThemes()
     end
     return themes
 end
-
 -- Get log level name
 function DebugConfig.getLogLevelName(level)
     local levelNames = {"ERROR", "WARN", "INFO", "DEBUG", "VERBOSE"}
     return levelNames[level] or "UNKNOWN"
 end
-
 -- Check if log level should be displayed
 function DebugConfig.shouldLog(currentLevel, messageLevel)
     return messageLevel <= currentLevel
 end
-
 -- Initialize the configuration
 DebugConfig.initializeValidationRules()
-
-return DebugConfig 
+return DebugConfig

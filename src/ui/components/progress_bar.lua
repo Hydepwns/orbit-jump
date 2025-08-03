@@ -1,9 +1,7 @@
 -- Progress Bar Component for Orbit Jump UI
 -- Reusable progress bar with customizable styling and animations
-
 local Utils = require("src.utils.utils")
 local ProgressBar = {}
-
 -- Progress bar types
 ProgressBar.types = {
     XP = "xp",
@@ -11,7 +9,6 @@ ProgressBar.types = {
     COOLDOWN = "cooldown",
     GENERIC = "generic"
 }
-
 -- Default progress bar configuration
 ProgressBar.defaults = {
     width = 200,
@@ -28,11 +25,9 @@ ProgressBar.defaults = {
         text = {1, 1, 1, 1}
     }
 }
-
 -- Create a new progress bar
 function ProgressBar.new(config)
     config = config or {}
-    
     local progressBar = {
         x = config.x or 0,
         y = config.y or 0,
@@ -53,18 +48,14 @@ function ProgressBar.new(config)
         animationTime = 0,
         smoothProgress = 0 -- For smooth animations
     }
-    
     -- Create font for text
     progressBar.font = love.graphics.newFont(12)
-    
     return progressBar
 end
-
 -- Update progress bar (call this every frame for animations)
 function ProgressBar.update(progressBar, dt)
     if progressBar.animate then
         progressBar.animationTime = progressBar.animationTime + dt
-        
         -- Smooth progress animation
         local targetProgress = progressBar.progress
         local diff = targetProgress - progressBar.smoothProgress
@@ -73,47 +64,38 @@ function ProgressBar.update(progressBar, dt)
         progressBar.smoothProgress = progressBar.progress
     end
 end
-
 -- Set progress (0.0 to 1.0)
 function ProgressBar.setProgress(progressBar, progress)
     progressBar.progress = math.max(0, math.min(1, progress))
 end
-
 -- Set values (current and max)
 function ProgressBar.setValues(progressBar, current, max)
     progressBar.currentValue = current
     progressBar.maxValue = max
     progressBar.progress = max > 0 and current / max or 0
 end
-
 -- Set position
 function ProgressBar.setPosition(progressBar, x, y)
     progressBar.x = x
     progressBar.y = y
 end
-
 -- Set size
 function ProgressBar.setSize(progressBar, width, height)
     progressBar.width = width
     progressBar.height = height
 end
-
 -- Set label
 function ProgressBar.setLabel(progressBar, label)
     progressBar.label = label
 end
-
 -- Draw the progress bar
 function ProgressBar.draw(progressBar)
     local progress = progressBar.animate and progressBar.smoothProgress or progressBar.progress
-    
     -- Calculate fill width
     local fillWidth = progressBar.width * progress
-    
     -- Draw background
     Utils.setColor(progressBar.colors.background)
     love.graphics.rectangle("fill", progressBar.x, progressBar.y, progressBar.width, progressBar.height, progressBar.cornerRadius)
-    
     -- Draw fill with pulse effect if animating
     if progressBar.animate and progress > 0 then
         local pulse = math.sin(progressBar.animationTime * progressBar.pulseSpeed) * 0.1 + 1.0
@@ -127,24 +109,19 @@ function ProgressBar.draw(progressBar)
     else
         Utils.setColor(progressBar.colors.fill)
     end
-    
     love.graphics.rectangle("fill", progressBar.x, progressBar.y, fillWidth, progressBar.height, progressBar.cornerRadius)
-    
     -- Draw border
     Utils.setColor(progressBar.colors.border)
     love.graphics.setLineWidth(1)
     love.graphics.rectangle("line", progressBar.x, progressBar.y, progressBar.width, progressBar.height, progressBar.cornerRadius)
-    
     -- Draw text if enabled
     if progressBar.showText then
         Utils.setColor(progressBar.colors.text)
         love.graphics.setFont(progressBar.font)
-        
         local text = ""
         if progressBar.label and progressBar.label ~= "" then
             text = progressBar.label
         end
-        
         if progressBar.showPercentage then
             local percentage = math.floor(progress * 100)
             if text ~= "" then
@@ -153,7 +130,6 @@ function ProgressBar.draw(progressBar)
                 text = percentage .. "%"
             end
         end
-        
         if progressBar.currentValue and progressBar.maxValue then
             local valueText = string.format("%.0f / %.0f", progressBar.currentValue, progressBar.maxValue)
             if text ~= "" then
@@ -162,7 +138,6 @@ function ProgressBar.draw(progressBar)
                 text = valueText
             end
         end
-        
         if text ~= "" then
             local textWidth = progressBar.font:getWidth(text)
             local textX = progressBar.x + (progressBar.width - textWidth) / 2
@@ -171,7 +146,6 @@ function ProgressBar.draw(progressBar)
         end
     end
 end
-
 -- Create an XP progress bar with default styling
 function ProgressBar.createXPBar(x, y, width, height)
     return ProgressBar.new({
@@ -191,7 +165,6 @@ function ProgressBar.createXPBar(x, y, width, height)
         showPercentage = true
     })
 end
-
 -- Create a health bar with default styling
 function ProgressBar.createHealthBar(x, y, width, height)
     return ProgressBar.new({
@@ -211,7 +184,6 @@ function ProgressBar.createHealthBar(x, y, width, height)
         showPercentage = false
     })
 end
-
 -- Create a cooldown bar with default styling
 function ProgressBar.createCooldownBar(x, y, width, height)
     return ProgressBar.new({
@@ -230,5 +202,4 @@ function ProgressBar.createCooldownBar(x, y, width, height)
         showText = false
     })
 end
-
-return ProgressBar 
+return ProgressBar

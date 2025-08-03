@@ -1,6 +1,5 @@
 -- Achievement System for Orbit Jump with Tiered Progression
 -- Provides instant gratification and long-term goals
-
 local Utils = require("src.utils.utils")
 local AchievementSystem = {}
 local achievements = {
@@ -10,7 +9,6 @@ local achievements = {
     notifications = {},
     visited_planets = {}
 }
-
 -- Tiered achievement definitions
 AchievementSystem.achievements = {
   -- Explorer Category with Tiers
@@ -28,7 +26,6 @@ AchievementSystem.achievements = {
       {name = "Diamond", count = 500, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Universe Explorer"}}
     }
   },
-  
   -- Collector Category with Tiers
   {
     id = "ring_baron",
@@ -44,7 +41,6 @@ AchievementSystem.achievements = {
       {name = "Diamond", count = 50000, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Ring Baron"}}
     }
   },
-  
   -- Perfectionist Category with Tiers
   {
     id = "combo_virtuoso",
@@ -60,7 +56,6 @@ AchievementSystem.achievements = {
       {name = "Diamond", count = 250, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Flawless"}}
     }
   },
-  
   -- Legacy single-tier achievements (keeping for compatibility)
   first_planet = {
     id = "first_planet",
@@ -102,7 +97,6 @@ AchievementSystem.achievements = {
     progress = 0,
     target = 5000
   },
-
   -- Ring achievements
   ring_collector = {
     id = "ring_collector",
@@ -135,7 +129,6 @@ AchievementSystem.achievements = {
     progress = 0,
     target = 5
   },
-
   -- Skill achievements
   combo_king = {
     id = "combo_king",
@@ -167,7 +160,6 @@ AchievementSystem.achievements = {
     progress = 0,
     target = 10
   },
-
   -- Planet type achievements
   ice_breaker = {
     id = "ice_breaker",
@@ -240,11 +232,9 @@ AchievementSystem.achievements = {
     target = 1
   }
 }
-
 -- Active notifications
 AchievementSystem.notifications = {}
 AchievementSystem.notificationDuration = 3.0
-
 -- Stats tracking
 AchievementSystem.stats = {
   planetsDiscovered = 0,
@@ -264,32 +254,26 @@ AchievementSystem.stats = {
   gravityPulses = 0,
   chainCompleted = 0
 }
-
 -- Save/Load functionality
 function AchievementSystem.getSaveData()
   local saveData = {
     achievements = {},
     stats = AchievementSystem.stats
   }
-
   for id, achievement in pairs(AchievementSystem.achievements) do
     saveData.achievements[id] = {
       unlocked = achievement.unlocked,
       progress = achievement.progress
     }
   end
-
   return saveData
 end
-
 function AchievementSystem.loadSaveData(data)
   if not data then return end
-
   -- Load stats
   if data.stats then
     AchievementSystem.stats = data.stats
   end
-
   -- Load achievement progress
   if data.achievements then
     for id, savedAchievement in pairs(data.achievements) do
@@ -300,34 +284,27 @@ function AchievementSystem.loadSaveData(data)
     end
   end
 end
-
 -- Progress tracking
 function AchievementSystem.updateProgress(achievementId, progress)
   local achievement = AchievementSystem.achievements[achievementId]
   if not achievement or achievement.unlocked then return end
-
   -- Ensure progress is not negative
   progress = math.max(0, progress)
   achievement.progress = math.min(progress, achievement.target)
-
   -- Check if completed
   if achievement.progress >= achievement.target then
     AchievementSystem.unlock(achievementId)
   end
 end
-
 function AchievementSystem.incrementProgress(achievementId, amount)
   local achievement = AchievementSystem.achievements[achievementId]
   if not achievement or achievement.unlocked then return end
-
   achievement.progress = math.min(achievement.progress + (amount or 1), achievement.target)
-
   -- Check if completed
   if achievement.progress >= achievement.target then
     AchievementSystem.unlock(achievementId)
   end
 end
-
 -- Check progress for dynamic achievements
 function AchievementSystem.checkProgress(achievementData)
   local achievement = AchievementSystem.achievements[achievementData.id]
@@ -336,27 +313,21 @@ function AchievementSystem.checkProgress(achievementData)
     AchievementSystem.achievements[achievementData.id] = achievementData
     achievement = achievementData
   end
-
   if not achievement.unlocked then
     achievement.progress = achievementData.progress or 0
-
     -- Check if completed
     if achievement.progress >= achievement.target then
       return AchievementSystem.unlock(achievementData.id)
     end
   end
-
   return nil
 end
-
 -- Unlock achievement
 function AchievementSystem.unlock(achievementId)
   local achievement = AchievementSystem.achievements[achievementId]
   if not achievement or achievement.unlocked then return end
-
   achievement.unlocked = true
   achievement.progress = achievement.target
-
   -- Create notification
   table.insert(AchievementSystem.notifications, {
     achievement = achievement,
@@ -364,16 +335,13 @@ function AchievementSystem.unlock(achievementId)
     y = -100,     -- Start off-screen
     targetY = 50
   })
-
   -- Play sound effect if available
   local soundManager = Utils.require("src.audio.sound_manager")
   if soundManager and soundManager.playAchievement then
     soundManager:playAchievement()
   end
-
   -- Log the achievement
   Utils.Logger.info("Achievement unlocked: %s", achievement.name)
-
   -- Track for feedback system
   local FeedbackSystem = Utils.require("src.systems.feedback_system")
   if FeedbackSystem then
@@ -384,53 +352,43 @@ function AchievementSystem.unlock(achievementId)
       points_earned = achievement.points
     })
   end
-
   -- Add points to upgrade system
   local UpgradeSystem = Utils.require("src.systems.upgrade_system")
   UpgradeSystem.addCurrency(achievement.points)
-
   -- Return points earned
   return achievement.points
 end
-
 -- Update notifications
 function AchievementSystem.update(dt)
   for i = #AchievementSystem.notifications, 1, -1 do
     local notification = AchievementSystem.notifications[i]
-
     -- Animate slide in
     if notification.y < notification.targetY then
       notification.y = notification.y + (notification.targetY - notification.y) * dt * 10
     end
-
     -- Update timer
     notification.timer = notification.timer - dt
-
     -- Animate slide out
     if notification.timer < 0.5 then
       notification.targetY = -100
     end
-
     -- Remove when done
     if notification.timer <= 0 then
       table.remove(AchievementSystem.notifications, i)
     end
   end
 end
-
 -- Draw notifications
 function AchievementSystem.draw()
   for _, notification in ipairs(AchievementSystem.notifications) do
     local achievement = notification.achievement
     local alpha = math.min(notification.timer, 1)
-
     -- Background
     love.graphics.setColor(0, 0, 0, alpha * 0.8)
     love.graphics.rectangle("fill",
       love.graphics.getWidth() / 2 - 200,
       notification.y,
       400, 80, 10)
-
     -- Border glow
     love.graphics.setColor(1, 0.8, 0.2, alpha * 0.6)
     love.graphics.setLineWidth(2)
@@ -438,29 +396,24 @@ function AchievementSystem.draw()
       love.graphics.getWidth() / 2 - 200,
       notification.y,
       400, 80, 10)
-
     -- Icon background
     love.graphics.setColor(1, 0.8, 0.2, alpha * 0.3)
     love.graphics.circle("fill",
       love.graphics.getWidth() / 2 - 150,
       notification.y + 40, 30)
-
     -- Achievement text
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.setFont(love.graphics.getFont())
     love.graphics.print("ACHIEVEMENT UNLOCKED!",
       love.graphics.getWidth() / 2 - 60,
       notification.y + 10)
-
     love.graphics.print(achievement.name,
       love.graphics.getWidth() / 2 - 60,
       notification.y + 30)
-
     love.graphics.setColor(0.8, 0.8, 0.8, alpha)
     love.graphics.print(achievement.description,
       love.graphics.getWidth() / 2 - 60,
       notification.y + 50)
-
     -- Points
     love.graphics.setColor(1, 0.8, 0.2, alpha)
     love.graphics.print("+" .. achievement.points .. " pts",
@@ -468,7 +421,6 @@ function AchievementSystem.draw()
       notification.y + 30)
   end
 end
-
 -- Initialize the achievement system
 function AchievementSystem.init()
     -- Initialize tiered achievements
@@ -487,11 +439,9 @@ function AchievementSystem.init()
             }
         end
     end
-    
     -- Load saved data
     AchievementSystem.loadSaveData()
 end
-
 -- Track achievement progress
 function AchievementSystem.trackTieredProgress(achievement_id, value)
     local achievement = nil
@@ -501,9 +451,7 @@ function AchievementSystem.trackTieredProgress(achievement_id, value)
             break
         end
     end
-    
     if not achievement or not achievement.tiers then return end
-    
     local progress = achievements.progress[achievement_id]
     if not progress then
         -- Initialize progress if it doesn't exist
@@ -514,18 +462,14 @@ function AchievementSystem.trackTieredProgress(achievement_id, value)
         }
         achievements.progress[achievement_id] = progress
     end
-    
     progress.current_value = progress.current_value + (value or 1)
-    
     -- Check tier unlocks
     for i, tier in ipairs(achievement.tiers) do
         if i > progress.current_tier and progress.current_value >= tier.count then
             progress.current_tier = i
             progress.tiers_unlocked[tier.name] = true
-            
             -- Award points
             achievements.total_points = achievements.total_points + tier.points
-            
             -- Create notification
             table.insert(achievements.notifications, {
                 achievement = achievement,
@@ -534,17 +478,14 @@ function AchievementSystem.trackTieredProgress(achievement_id, value)
                 y = -100,
                 targetY = 50
             })
-            
             -- Apply reward if any
             if tier.reward then
                 AchievementSystem.applyReward(tier.reward)
             end
-            
             Utils.Logger.info("Achievement Tier Unlocked: %s - %s", achievement.name, tier.name)
         end
     end
 end
-
 -- Apply achievement rewards
 function AchievementSystem.applyReward(reward)
     if reward.type == "title" then
@@ -558,11 +499,9 @@ function AchievementSystem.applyReward(reward)
         Utils.Logger.info("Color unlocked: %s", reward.value)
     end
 end
-
 -- Event handlers
 function AchievementSystem.onPlanetDiscovered(planetType)
   AchievementSystem.stats.planetsDiscovered = AchievementSystem.stats.planetsDiscovered + 1
-
   -- Track unique planets for tiered achievement
   if planetType then
     local planet_id = tostring(planetType) .. "_" .. tostring(love.timer.getTime())
@@ -575,17 +514,14 @@ function AchievementSystem.onPlanetDiscovered(planetType)
       AchievementSystem.trackTieredProgress("planet_explorer", unique_count)
     end
   end
-  
   -- Update legacy achievements
   AchievementSystem.updateProgress("first_planet", AchievementSystem.stats.planetsDiscovered)
   AchievementSystem.updateProgress("planet_hopper", AchievementSystem.stats.planetsDiscovered)
   AchievementSystem.updateProgress("space_explorer", AchievementSystem.stats.planetsDiscovered)
-
   -- Planet type specific
   if planetType then
     AchievementSystem.stats.planetTypesVisited[planetType] =
         (AchievementSystem.stats.planetTypesVisited[planetType] or 0) + 1
-
     if planetType == "ice" then
       AchievementSystem.updateProgress("ice_breaker", AchievementSystem.stats.planetTypesVisited.ice)
     elseif planetType == "void" then
@@ -593,16 +529,12 @@ function AchievementSystem.onPlanetDiscovered(planetType)
     end
   end
 end
-
 function AchievementSystem.onRingCollected(ringType)
   AchievementSystem.stats.ringsCollected = AchievementSystem.stats.ringsCollected + 1
-  
   -- Update tiered achievement
   AchievementSystem.trackTieredProgress("ring_baron", 1)
-  
   -- Update legacy achievement
   AchievementSystem.updateProgress("ring_collector", AchievementSystem.stats.ringsCollected)
-
   -- Track power rings
   if ringType and string.find(ringType, "power_") then
     AchievementSystem.stats.powerRingsCollected[ringType] = true
@@ -613,53 +545,44 @@ function AchievementSystem.onRingCollected(ringType)
     AchievementSystem.updateProgress("power_user", count)
   end
 end
-
 function AchievementSystem.onComboReached(combo)
   if combo > AchievementSystem.stats.maxCombo then
     AchievementSystem.stats.maxCombo = combo
     AchievementSystem.updateProgress("combo_king", combo)
   end
 end
-
 function AchievementSystem.onPerfectCombo()
   -- Track perfect combos for tiered achievement
   AchievementSystem.trackTieredProgress("combo_virtuoso", 1)
 end
-
 function AchievementSystem.onDash()
   AchievementSystem.stats.totalDashes = AchievementSystem.stats.totalDashes + 1
   AchievementSystem.updateProgress("speed_demon", AchievementSystem.stats.totalDashes)
 end
-
 function AchievementSystem.onPerfectLanding()
   AchievementSystem.stats.perfectLandings = AchievementSystem.stats.perfectLandings + 1
   AchievementSystem.updateProgress("perfect_landing", AchievementSystem.stats.perfectLandings)
 end
-
 function AchievementSystem.onDistanceReached(distance)
   if distance > AchievementSystem.stats.maxDistance then
     AchievementSystem.stats.maxDistance = distance
     AchievementSystem.updateProgress("void_walker", distance)
   end
 end
-
 function AchievementSystem.onLavaEruption()
   AchievementSystem.stats.lavaEruptions = AchievementSystem.stats.lavaEruptions + 1
   AchievementSystem.updateProgress("lava_surfer", AchievementSystem.stats.lavaEruptions)
 end
-
 function AchievementSystem.onGravityPulse()
   AchievementSystem.stats.gravityPulses = AchievementSystem.stats.gravityPulses + 1
   AchievementSystem.updateProgress("tech_savvy", AchievementSystem.stats.gravityPulses)
 end
-
 function AchievementSystem.onChainCompleted(length)
   if length > AchievementSystem.stats.chainCompleted then
     AchievementSystem.stats.chainCompleted = length
     AchievementSystem.updateProgress("chain_master", length)
   end
 end
-
 function AchievementSystem.onWarpZoneDiscovered()
   AchievementSystem.stats.warpsDiscovered = (AchievementSystem.stats.warpsDiscovered or 0) + 1
   -- Check for secret finder achievement (discover 5 warp zones)
@@ -675,12 +598,10 @@ function AchievementSystem.onWarpZoneDiscovered()
     })
   end
 end
-
 function AchievementSystem.onWarpZoneCompleted(zoneType)
   AchievementSystem.stats.warpsCompleted = (AchievementSystem.stats.warpsCompleted or 0) + 1
   AchievementSystem.stats.warpTypes = AchievementSystem.stats.warpTypes or {}
   AchievementSystem.stats.warpTypes[zoneType] = true
-
   -- Check for warp master achievement (complete 10 warp zones)
   if AchievementSystem.stats.warpsCompleted >= 10 then
     AchievementSystem.checkProgress({
@@ -694,10 +615,8 @@ function AchievementSystem.onWarpZoneCompleted(zoneType)
     })
   end
 end
-
 function AchievementSystem.onArtifactCollected(artifactId)
   AchievementSystem.stats.artifactsCollected = (AchievementSystem.stats.artifactsCollected or 0) + 1
-
   -- Check for artifact collector achievement
   if AchievementSystem.stats.artifactsCollected >= 5 then
     AchievementSystem.checkProgress({
@@ -711,7 +630,6 @@ function AchievementSystem.onArtifactCollected(artifactId)
     })
   end
 end
-
 function AchievementSystem.onAllArtifactsCollected()
   AchievementSystem.checkProgress({
     id = "lore_master",
@@ -723,7 +641,6 @@ function AchievementSystem.onAllArtifactsCollected()
     target = 1
   })
 end
-
 -- Get total points
 function AchievementSystem.getTotalPoints()
   local total = 0
@@ -734,7 +651,6 @@ function AchievementSystem.getTotalPoints()
   end
   return total
 end
-
 -- Get completion percentage
 function AchievementSystem.getCompletionPercentage()
   local unlocked = 0
@@ -747,20 +663,16 @@ function AchievementSystem.getCompletionPercentage()
   end
   return (unlocked / total) * 100
 end
-
 -- Track constellation completion
 function AchievementSystem.onConstellationComplete(patternId)
   -- Track overall constellation completions
   AchievementSystem.incrementProgress("constellation_artist", 1)
-
   -- Track specific patterns
   if patternId == "star" then
     AchievementSystem.incrementProgress("star_maker", 1)
   elseif patternId == "infinity" then
     AchievementSystem.incrementProgress("infinity_master", 1)
   end
-
   Utils.Logger.info("Constellation completed: %s", patternId)
 end
-
 return AchievementSystem

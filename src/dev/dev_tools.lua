@@ -1,9 +1,7 @@
 -- Development Tools for Orbit Jump
 -- Provides utilities for debugging, testing, and development workflow
-
 local Utils = require("src.utils.utils")
 local DevTools = {}
-
 -- Development state
 DevTools.state = {
     debugMode = false,
@@ -14,28 +12,22 @@ DevTools.state = {
     slowMotion = false,
     slowMotionFactor = 0.5
 }
-
 -- Debug drawing functions
 DevTools.debugDraw = {}
-
 function DevTools.debugDraw.hitboxes()
     if not DevTools.state.showHitboxes then return end
-    
     local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
     local planets = GameState.getPlanets()
     local rings = GameState.getRings()
-    
     -- Draw player hitbox
     Utils.setColor(Utils.colors.red, 0.3)
     love.graphics.circle("line", player.x, player.y, player.radius)
-    
     -- Draw planet hitboxes
     for _, planet in ipairs(planets) do
         Utils.setColor(Utils.colors.green, 0.3)
         love.graphics.circle("line", planet.x, planet.y, planet.radius)
     end
-    
     -- Draw ring hitboxes
     for _, ring in ipairs(rings) do
         if not ring.collected then
@@ -45,24 +37,19 @@ function DevTools.debugDraw.hitboxes()
         end
     end
 end
-
 function DevTools.debugDraw.vectors()
     if not DevTools.state.showDebugInfo then return end
-    
     local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
-    
     -- Draw velocity vector
     if player.vx ~= 0 or player.vy ~= 0 then
         Utils.setColor(Utils.colors.yellow, 0.8)
         love.graphics.setLineWidth(2)
         love.graphics.line(player.x, player.y, player.x + player.vx * 0.1, player.y + player.vy * 0.1)
-        
         -- Draw velocity magnitude
         local speed = Utils.vectorLength(player.vx, player.vy)
         love.graphics.print(string.format("Speed: %.1f", speed), player.x + 20, player.y - 20)
     end
-    
     -- Draw gravity vectors
     local planets = GameState.getPlanets()
     for _, planet in ipairs(planets) do
@@ -74,13 +61,10 @@ function DevTools.debugDraw.vectors()
         end
     end
 end
-
 function DevTools.debugDraw.info()
     if not DevTools.state.showDebugInfo then return end
-    
     local GameState = Utils.require("src.core.game_state")
     local player = GameState.player
-    
     local info = {
         string.format("Player: (%.1f, %.1f)", player.x, player.y),
         string.format("Velocity: (%.1f, %.1f)", player.vx, player.vy),
@@ -90,13 +74,11 @@ function DevTools.debugDraw.info()
         string.format("Game Time: %.1fs", GameState.getGameTime()),
         string.format("Particles: %d", #GameState.getParticles())
     }
-    
     Utils.setColor(Utils.colors.white, 0.8)
     for i, line in ipairs(info) do
         love.graphics.print(line, 10, 150 + (i - 1) * 20)
     end
 end
-
 -- Debug controls
 function DevTools.handleInput(key)
     if key == "f1" then
@@ -127,105 +109,85 @@ function DevTools.handleInput(key)
         DevTools.generateDocumentation()
     end
 end
-
 -- Debug functions
 function DevTools.resetGame()
     local GameState = Utils.require("src.core.game_state")
     GameState.reset()
     Utils.Logger.info("Game reset via debug command")
 end
-
 function DevTools.takeScreenshot()
     local timestamp = os.date("%Y%m%d_%H%M%S")
     local filename = string.format("screenshot_%s.png", timestamp)
-    
     local success = love.graphics.captureScreenshot(function(data)
         data:encode("png", filename)
     end)
-    
     if success then
         Utils.Logger.info("Screenshot saved: %s", filename)
     else
         Utils.Logger.error("Failed to take screenshot")
     end
 end
-
 function DevTools.runTests()
     Utils.Logger.info("Running test suite...")
-    
     local success, result  = Utils.ErrorHandler.safeCall(function()
         return Utils.require("tests.run_tests")
     end)
-    
     if success then
         Utils.Logger.info("Tests completed successfully")
     else
         Utils.Logger.error("Tests failed: %s", result)
     end
 end
-
 function DevTools.generateDocumentation()
     Utils.Logger.info("Generating documentation...")
-    
     local success, result  = Utils.ErrorHandler.safeCall(function()
         local DocsGenerator = Utils.require("src.dev.docs_generator")
         DocsGenerator.generateAll()
     end)
-    
     if success then
         Utils.Logger.info("Documentation generated successfully")
     else
         Utils.Logger.error("Documentation generation failed: %s", result)
     end
 end
-
 -- Performance analysis
 function DevTools.analyzePerformance()
     local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
     local report = PerformanceMonitor.getReport()
-    
     Utils.Logger.info("Performance Analysis:")
-    Utils.Logger.info("  FPS: %.1f avg (%.1f min, %.1f max)", 
+    Utils.Logger.info("  FPS: %.1f avg (%.1f min, %.1f max)",
         report.fps.average, report.fps.min, report.fps.max)
     Utils.Logger.info("  Frame Time: %.2fms avg", report.frameTime.average)
     Utils.Logger.info("  Memory: %.1f KB peak", report.memory.peak)
-    Utils.Logger.info("  Collision Checks: %d (%.2fms)", 
+    Utils.Logger.info("  Collision Checks: %d (%.2fms)",
         report.collisions.count, report.collisions.time * 1000)
-    
     -- Performance recommendations
     if report.fps.average < 30 then
         Utils.Logger.warn("Performance Issue: Low FPS detected")
     end
-    
     if report.memory.peak > 10000 then
         Utils.Logger.warn("Performance Issue: High memory usage detected")
     end
-    
     if report.collisions.time > 0.016 then
         Utils.Logger.warn("Performance Issue: Collision detection taking too long")
     end
 end
-
 -- Memory analysis
 function DevTools.analyzeMemory()
     local memUsage = collectgarbage("count")
     local memStats = collectgarbage("count")
-    
     Utils.Logger.info("Memory Analysis:")
     Utils.Logger.info("  Current Usage: %.1f KB", memUsage)
     Utils.Logger.info("  Memory Stats: %s", memStats)
-    
     -- Force garbage collection
     collectgarbage("collect")
     local afterGC = collectgarbage("count")
     Utils.Logger.info("  After GC: %.1f KB", afterGC)
     Utils.Logger.info("  Freed: %.1f KB", memUsage - afterGC)
 end
-
 -- Game state inspection
 function DevTools.inspectGameState()
     local GameState = Utils.require("src.core.game_state")
-    
     Utils.Logger.info("Game State Inspection:")
     Utils.Logger.info("  Current State: %s", GameState.current)
     Utils.Logger.info("  Score: %d", GameState.getScore())
@@ -235,36 +197,29 @@ function DevTools.inspectGameState()
     Utils.Logger.info("  Player Velocity: (%.1f, %.1f)", GameState.player.vx, GameState.player.vy)
     Utils.Logger.info("  On Planet: %s", GameState.player.onPlanet and tostring(GameState.player.onPlanet) or "None")
     Utils.Logger.info("  Particles: %d", #GameState.getParticles())
-    Utils.Logger.info("  Rings Collected: %d/%d", 
+    Utils.Logger.info("  Rings Collected: %d/%d",
         #GameState.getRings() - #GameState.getUncollectedRings(), #GameState.getRings())
 end
-
 -- Update function for debug features
 function DevTools.update(dt)
     if DevTools.state.paused then
         return 0 -- Return 0 delta time to pause the game
     end
-    
     if DevTools.state.slowMotion then
         return dt * DevTools.state.slowMotionFactor
     end
-    
     return dt
 end
-
 -- Draw function for debug features
 function DevTools.draw()
     if not DevTools.state.debugMode then return end
-    
     DevTools.debugDraw.hitboxes()
     DevTools.debugDraw.vectors()
     DevTools.debugDraw.info()
-    
     if DevTools.state.showPerformance then
         local PerformanceMonitor = Utils.require("src.performance.performance_monitor")
         PerformanceMonitor.draw()
     end
-    
     -- Draw debug controls help
     if DevTools.state.showDebugInfo then
         local help = {
@@ -279,14 +234,12 @@ function DevTools.draw()
             "F9: Run Tests",
             "F10: Generate Docs"
         }
-        
         Utils.setColor(Utils.colors.white, 0.8)
         for i, line in ipairs(help) do
             love.graphics.print(line, love.graphics.getWidth() - 200, 10 + (i - 1) * 20)
         end
     end
 end
-
 -- Initialize development tools
 function DevTools.init()
     DevTools.state.debugMode = false
@@ -295,9 +248,7 @@ function DevTools.init()
     DevTools.state.showDebugInfo = false
     DevTools.state.paused = false
     DevTools.state.slowMotion = false
-    
     Utils.Logger.info("Development tools initialized")
     Utils.Logger.info("Press F1 to toggle debug mode")
 end
-
-return DevTools 
+return DevTools

@@ -1,18 +1,14 @@
 -- Object Pool System for Orbit Jump
 -- Reuses objects to reduce garbage collection and improve performance
-
 local ObjectPool = {}
 ObjectPool.__index = ObjectPool
-
 -- Create a new object pool
 function ObjectPool:new(createFunc, sizeOrResetFunc, resetFuncOrNil)
     local self = setmetatable({}, ObjectPool)
-    
     -- Validate createFunc
     if not createFunc then
         error("ObjectPool requires a creation function")
     end
-    
     -- Handle overloaded parameters
     local size, resetFunc
     if type(sizeOrResetFunc) == "number" then
@@ -24,7 +20,6 @@ function ObjectPool:new(createFunc, sizeOrResetFunc, resetFuncOrNil)
         resetFunc = sizeOrResetFunc
         size = resetFuncOrNil or 1000
     end
-    
     self.createFunc = createFunc
     self.resetFunc = resetFunc or function(obj) obj.active = false end
     self.size = size or 1000
@@ -33,7 +28,6 @@ function ObjectPool:new(createFunc, sizeOrResetFunc, resetFuncOrNil)
     self.objects = {}  -- All objects (for test compatibility)
     self.activeObjects = {}
     self.activeCount = 0
-    
     -- Pre-allocate objects
     for i = 1, self.size do
         local obj = self.createFunc()
@@ -43,14 +37,11 @@ function ObjectPool:new(createFunc, sizeOrResetFunc, resetFuncOrNil)
             table.insert(self.objects, obj)
         end
     end
-    
     return self
 end
-
 -- Get an object from the pool
 function ObjectPool:get()
     local obj
-    
     if #self.pool > 0 then
         -- Reuse from pool
         obj = table.remove(self.pool)
@@ -69,39 +60,31 @@ function ObjectPool:get()
             return nil
         end
     end
-    
     if obj then
         -- Mark as active
         obj.active = true
         self.activeObjects[obj] = true
         self.activeCount = self.activeCount + 1
     end
-    
     return obj
 end
-
 -- Return an object to the pool
 function ObjectPool:release(obj)
     if not self.activeObjects[obj] then
         return -- Not from this pool
     end
-    
     -- Mark as inactive
     obj.active = false
-    
     -- Reset the object
     if self.resetFunc then
         self.resetFunc(obj)
     end
-    
     -- Remove from active tracking
     self.activeObjects[obj] = nil
     self.activeCount = self.activeCount - 1
-    
     -- Add back to pool
     table.insert(self.pool, obj)
 end
-
 -- Release all active objects
 function ObjectPool:releaseAll()
     for obj in pairs(self.activeObjects) do
@@ -114,7 +97,6 @@ function ObjectPool:releaseAll()
     self.activeObjects = {}
     self.activeCount = 0
 end
-
 -- Get pool statistics
 function ObjectPool:getStats()
     return {
@@ -125,14 +107,11 @@ function ObjectPool:getStats()
         maxSize = self.maxSize
     }
 end
-
 -- Clear the pool completely
 function ObjectPool:clear()
     -- Release all active objects back to pool
     self:releaseAll()
-    
     -- Keep the pre-allocated objects in the pool
     -- This maintains the 'available' count for tests
 end
-
 return ObjectPool

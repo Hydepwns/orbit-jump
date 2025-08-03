@@ -1,10 +1,8 @@
 -- Cosmic Events System for Orbit Jump
 -- Dynamic events that create challenges and opportunities
-
 local Utils = require("src.utils.utils")
 local ObjectPool = Utils.require("src.utils.object_pool")
 local CosmicEvents = {}
-
 -- Event types
 CosmicEvents.eventTypes = {
     meteor_shower = {
@@ -48,26 +46,21 @@ CosmicEvents.eventTypes = {
         color = {0.5, 0, 0.5}
     }
 }
-
 -- Active events
 CosmicEvents.activeEvents = {}
 CosmicEvents.eventCooldown = 0
 CosmicEvents.minimumCooldown = 20
-
 -- Meteor shower data
 CosmicEvents.meteors = {}
 CosmicEvents.meteorSpawnTimer = 0
-
 -- Ring storm data
 CosmicEvents.stormRings = {}
-
 -- Initialize
 function CosmicEvents.init()
     CosmicEvents.activeEvents = {}
     CosmicEvents.eventCooldown = CosmicEvents.minimumCooldown
     CosmicEvents.meteors = {}
     CosmicEvents.stormRings = {}
-    
     -- Create meteor object pool
     CosmicEvents.meteorPool = ObjectPool:new(
         function()
@@ -96,10 +89,8 @@ function CosmicEvents.init()
         end,
         200  -- Max 200 meteors
     )
-    
     return true
 end
-
 -- Update events
 function CosmicEvents.update(dt, player, camera)
     -- Update cooldown
@@ -109,18 +100,15 @@ function CosmicEvents.update(dt, player, camera)
         -- Check for new events
         CosmicEvents.checkForNewEvent(player)
     end
-    
     -- Update active events
     for i = #CosmicEvents.activeEvents, 1, -1 do
         local event = CosmicEvents.activeEvents[i]
-        
         -- Update timer
         if event.warningTime > 0 then
             event.warningTime = event.warningTime - dt
         else
             event.active = true
             event.timer = event.timer - dt
-            
             -- Update specific event
             if event.type == "meteor_shower" then
                 CosmicEvents.updateMeteorShower(dt, player, camera)
@@ -128,32 +116,26 @@ function CosmicEvents.update(dt, player, camera)
                 CosmicEvents.updateRingStorm(dt, player)
             end
         end
-        
         -- Remove expired events
         if event.timer <= 0 then
             CosmicEvents.endEvent(event)
             table.remove(CosmicEvents.activeEvents, i)
         end
     end
-    
     -- Update meteors
     CosmicEvents.updateMeteors(dt, player, camera)
-    
     -- Update storm rings
     CosmicEvents.updateStormRings(dt, player)
 end
-
 -- Check for new events
 function CosmicEvents.checkForNewEvent(player)
     -- Safety check for player
     if not player or not player.x or not player.y then
         return
     end
-    
     -- Don't spawn events too close to origin
     local distFromOrigin = math.sqrt(player.x^2 + player.y^2)
     if distFromOrigin < 500 then return end
-    
     -- Roll for each event type
     for eventType, eventData in pairs(CosmicEvents.eventTypes) do
         if math.random() < eventData.probability * love.timer.getDelta() then
@@ -163,12 +145,10 @@ function CosmicEvents.checkForNewEvent(player)
         end
     end
 end
-
 -- Start an event
 function CosmicEvents.startEvent(eventType)
     local eventData = CosmicEvents.eventTypes[eventType]
     if not eventData then return end
-    
     local event = {
         type = eventType,
         timer = eventData.duration,
@@ -176,18 +156,14 @@ function CosmicEvents.startEvent(eventType)
         active = false,
         data = eventData
     }
-    
     table.insert(CosmicEvents.activeEvents, event)
-    
     -- Play warning sound
     local soundManager = Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playEventWarning then
         soundManager:playEventWarning()
     end
-    
     Utils.Logger.info("Cosmic event started: %s", eventData.name)
 end
-
 -- End an event
 function CosmicEvents.endEvent(event)
     if event.type == "meteor_shower" then
@@ -204,31 +180,25 @@ function CosmicEvents.endEvent(event)
         CosmicEvents.stormRings = {}
     end
 end
-
 -- Update meteor shower
 function CosmicEvents.updateMeteorShower(dt, player, Camera)
     CosmicEvents.meteorSpawnTimer = CosmicEvents.meteorSpawnTimer - dt
-    
     if CosmicEvents.meteorSpawnTimer <= 0 then
         -- Spawn new meteor
         local screenWidth, screenHeight = love.graphics.getDimensions()
         local x1, y1, x2, y2 = Camera:getVisibleArea()
-        
         -- Get meteor from pool
         local meteor = CosmicEvents.meteorPool:get()
         if not meteor then
             -- Pool exhausted, skip spawning
             return
         end
-        
         -- Setup meteor properties
         meteor.radius = 15 + math.random(10)
         meteor.damage = true
         meteor.active = true
-        
         -- Spawn from edges
         local side = math.random(4)
-        
         if side == 1 then -- Top
             meteor.x = math.random(x1, x2)
             meteor.y = y1 - 50
@@ -250,31 +220,25 @@ function CosmicEvents.updateMeteorShower(dt, player, Camera)
             meteor.vx = math.random(200, 400)
             meteor.vy = math.random(-100, 100)
         end
-        
         -- Add trail effect
         meteor.trail = {}
-        
         table.insert(CosmicEvents.meteors, meteor)
         CosmicEvents.meteorSpawnTimer = 0.5 + math.random() * 0.5
     end
 end
-
 -- Update meteors
 function CosmicEvents.updateMeteors(dt, player, camera)
     for i = #CosmicEvents.meteors, 1, -1 do
         local meteor = CosmicEvents.meteors[i]
-        
         -- Update position
         meteor.x = meteor.x + meteor.vx * dt
         meteor.y = meteor.y + meteor.vy * dt
-        
         -- Update trail
         table.insert(meteor.trail, 1, {
             x = meteor.x,
             y = meteor.y,
             life = 1.0
         })
-        
         -- Update trail life
         for j = #meteor.trail, 1, -1 do
             meteor.trail[j].life = meteor.trail[j].life - dt * 3
@@ -282,7 +246,6 @@ function CosmicEvents.updateMeteors(dt, player, camera)
                 table.remove(meteor.trail, j)
             end
         end
-        
         -- Check collision with player
         if meteor.damage and Utils.circleCollision(
             player.x, player.y, player.radius,
@@ -297,7 +260,6 @@ function CosmicEvents.updateMeteors(dt, player, camera)
                 meteor.damage = false -- Can't damage twice
             end
         end
-        
         -- Remove if too far
         local x1, y1, x2, y2 = camera:getVisibleArea()
         if meteor.x < x1 - 200 or meteor.x > x2 + 200 or
@@ -307,14 +269,12 @@ function CosmicEvents.updateMeteors(dt, player, camera)
         end
     end
 end
-
 -- Update ring storm
 function CosmicEvents.updateRingStorm(dt, player)
     -- Spawn rings around player
     if math.random() < 0.1 then
         local angle = math.random() * math.pi * 2
         local distance = 100 + math.random(300)
-        
         local ring = {
             x = player.x + math.cos(angle) * distance,
             y = player.y + math.sin(angle) * distance,
@@ -329,28 +289,22 @@ function CosmicEvents.updateRingStorm(dt, player)
             type = "storm",
             lifetime = 5
         }
-        
         table.insert(CosmicEvents.stormRings, ring)
     end
 end
-
 -- Update storm rings
 function CosmicEvents.updateStormRings(dt, player)
     local RingSystem = Utils.require("src.systems.ring_system")
-    
     for i = #CosmicEvents.stormRings, 1, -1 do
         local ring = CosmicEvents.stormRings[i]
-        
         -- Update ring
         ring.rotation = ring.rotation + ring.rotationSpeed * dt
         ring.pulsePhase = ring.pulsePhase + dt * 2
         ring.lifetime = ring.lifetime - dt
-        
         -- Fade out
         if ring.lifetime < 1 then
             ring.color[4] = ring.lifetime
         end
-        
         -- Check collection
         if not ring.collected and Utils.ringCollision(
             player.x, player.y, player.radius,
@@ -362,14 +316,12 @@ function CosmicEvents.updateStormRings(dt, player)
             GameState.addScore(ring.value * 2)
             GameState.addCombo()
         end
-        
         -- Remove expired
         if ring.lifetime <= 0 or ring.collected then
             table.remove(CosmicEvents.stormRings, i)
         end
     end
 end
-
 -- Get active event modifiers
 function CosmicEvents.getGravityModifier()
     for _, event in ipairs(CosmicEvents.activeEvents) do
@@ -380,7 +332,6 @@ function CosmicEvents.getGravityModifier()
     end
     return 1
 end
-
 function CosmicEvents.getTimeModifier()
     for _, event in ipairs(CosmicEvents.activeEvents) do
         if event.active and event.type == "time_rift" then
@@ -389,7 +340,6 @@ function CosmicEvents.getTimeModifier()
     end
     return 1
 end
-
 function CosmicEvents.isVoidSurgeActive()
     for _, event in ipairs(CosmicEvents.activeEvents) do
         if event.active and event.type == "void_surge" then
@@ -398,7 +348,6 @@ function CosmicEvents.isVoidSurgeActive()
     end
     return false
 end
-
 -- Draw events
 function CosmicEvents.draw()
     -- Draw meteors
@@ -409,49 +358,41 @@ function CosmicEvents.draw()
             local size = meteor.radius * point.life * 0.8
             love.graphics.circle("fill", point.x, point.y, size)
         end
-        
         -- Draw meteor
         Utils.setColor({1, 0.4, 0.1})
         love.graphics.circle("fill", meteor.x, meteor.y, meteor.radius)
         Utils.setColor({1, 0.6, 0.2})
         love.graphics.circle("line", meteor.x, meteor.y, meteor.radius)
     end
-    
     -- Draw storm rings
     for _, ring in ipairs(CosmicEvents.stormRings) do
         if not ring.collected then
             local pulse = math.sin(ring.pulsePhase) * 0.1 + 1
             Utils.setColor(ring.color)
             love.graphics.setLineWidth(3)
-            
             -- Sparkly effect
             for i = 1, 8 do
                 local angle = (i / 8) * math.pi * 2 + ring.rotation
                 local sparkle = math.sin(ring.pulsePhase * 3 + i) * 0.5 + 0.5
                 Utils.setColor({ring.color[1], ring.color[2], ring.color[3]}, ring.color[4] * sparkle)
-                
                 love.graphics.arc("line", "open", ring.x, ring.y, ring.radius * pulse,
                     angle - 0.2, angle + 0.2)
             end
         end
     end
 end
-
 -- Draw UI warnings
 function CosmicEvents.drawUI()
     local screenWidth = love.graphics.getWidth()
     local y = 150
-    
     for _, event in ipairs(CosmicEvents.activeEvents) do
         if event.warningTime > 0 then
             -- Warning phase
             local flash = math.sin(love.timer.getTime() * 10) * 0.5 + 0.5
             Utils.setColor(event.data.color[1], event.data.color[2], event.data.color[3], flash)
-            
             love.graphics.setFont(love.graphics.getFont())
-            love.graphics.printf("⚠ " .. event.data.name .. " INCOMING! ⚠", 
+            love.graphics.printf("⚠ " .. event.data.name .. " INCOMING! ⚠",
                 0, y, screenWidth, "center")
-            
             Utils.setColor({1, 1, 1}, flash * 0.8)
             love.graphics.printf(event.data.description,
                 0, y + 20, screenWidth, "center")
@@ -460,23 +401,18 @@ function CosmicEvents.drawUI()
             Utils.setColor(event.data.color)
             love.graphics.printf(event.data.name .. " ACTIVE",
                 0, y, screenWidth, "center")
-            
             -- Progress bar
             local barWidth = 200
             local barX = (screenWidth - barWidth) / 2
             local progress = event.timer / event.data.duration
-            
             Utils.setColor({0, 0, 0}, 0.5)
             love.graphics.rectangle("fill", barX, y + 25, barWidth, 6)
-            
             Utils.setColor(event.data.color)
             love.graphics.rectangle("fill", barX, y + 25, barWidth * progress, 6)
         end
-        
         y = y + 50
     end
 end
-
 -- Trigger quantum teleport effect
 function CosmicEvents.triggerQuantumTeleport(x, y)
     -- Create quantum teleport visual effect
@@ -488,7 +424,6 @@ function CosmicEvents.triggerQuantumTeleport(x, y)
             local speed = 200 + math.random() * 300
             local vx = math.cos(angle) * speed
             local vy = math.sin(angle) * speed
-            
             ParticleSystem.create(
                 x, y,
                 vx, vy,
@@ -499,5 +434,4 @@ function CosmicEvents.triggerQuantumTeleport(x, y)
         end
     end
 end
-
 return CosmicEvents

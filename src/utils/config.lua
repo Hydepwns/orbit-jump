@@ -2,15 +2,13 @@
 -- This file is used to configure the game settings and options
 -- It is used to configure the blockchain, progression, game, UI, sound, and development settings
 -- It is also used to configure the achievement definitions, upgrade definitions, NFT definitions, and helper functions
-
 local Utils = require("src.utils.utils")
 local Config = {}
-
 -- Configuration validation
 Config.validators = {
     blockchain = {
         enabled = function(value) return type(value) == "boolean" end,
-        network = function(value) 
+        network = function(value)
             local validNetworks = {"ethereum", "polygon", "bsc", "arbitrum", "optimism"}
             for _, network in ipairs(validNetworks) do
                 if value == network then return true end
@@ -39,7 +37,7 @@ Config.validators = {
         sfxVolume = function(value) return type(value) == "number" and value >= 0 and value <= 1 end
     },
     addiction = {
-        event_frequency = function(value) 
+        event_frequency = function(value)
             local valid = {"high", "normal", "low", "off"}
             for _, v in ipairs(valid) do if value == v then return true end end
             return false
@@ -82,11 +80,9 @@ Config.validators = {
         auto_pause_inactive = function(value) return type(value) == "number" and value >= 0 end
     }
 }
-
 -- Configuration validation function
 function Config.validate()
     local errors = {}
-    
     for section, validators in pairs(Config.validators) do
         if Config[section] then
             for field, validator in pairs(validators) do
@@ -98,16 +94,13 @@ function Config.validate()
             end
         end
     end
-    
     if #errors > 0 then
         Utils.Logger.error("Configuration validation failed: %s", table.concat(errors, ", "))
         return false, errors
     end
-    
     Utils.Logger.info("Configuration validation passed")
     return true
 end
-
 -- Hot-reload configuration from file
 function Config.reload()
     local success, newConfig = Utils.ErrorHandler.safeCall(dofile, "config.lua")
@@ -132,7 +125,6 @@ function Config.reload()
         return false
     end
 end
-
 -- Blockchain Configuration
 Config.blockchain = {
     enabled = false, -- Set to true to enable blockchain features
@@ -144,7 +136,6 @@ Config.blockchain = {
     gasLimit = 300000, -- Gas limit for transactions
     gasPrice = "20000000000" -- Gas price in wei (20 gwei)
 }
-
 -- Progression Configuration
 Config.progression = {
     enabled = true, -- Set to false to disable progression system
@@ -153,7 +144,6 @@ Config.progression = {
     achievementNotifications = true, -- Show achievement popups
     continuousRewards = true -- Enable continuous progression rewards
 }
-
 -- Game Configuration
 Config.game = {
     startingScore = 0,
@@ -167,7 +157,6 @@ Config.game = {
     dashCooldown = 1.0,
     dashDuration = 0.3
 }
-
 -- UI Configuration
 Config.ui = {
     showProgressionBar = true,
@@ -183,7 +172,6 @@ Config.ui = {
         blockchain = {0.8, 0.6, 0.2, 1}
     }
 }
-
 -- Resolution Configuration
 Config.resolution = {
     enabled = true,
@@ -216,7 +204,6 @@ Config.resolution = {
         maxScale = 2.0
     }
 }
-
 -- Sound Configuration
 Config.sound = {
     enabled = true,
@@ -225,45 +212,35 @@ Config.sound = {
     sfxVolume = 0.8,
     proceduralAudio = true
 }
-
 -- Addiction Features Configuration
 Config.addiction = {
     -- Event frequency preferences
     event_frequency = "normal", -- "high", "normal", "low", "off"
-    
     -- Notification settings
     notification_frequency = "important", -- "all", "important", "minimal"
-    
     -- Visual effects intensity
     visual_effects_intensity = "full", -- "full", "reduced", "minimal"
-    
     -- Audio feedback level
     audio_feedback_level = "full", -- "full", "reduced", "essential"
-    
     -- Streak pressure mode
     streak_pressure_mode = "competitive", -- "competitive", "casual", "zen"
-    
     -- Progress visibility
     progress_visibility = "always", -- "always", "contextual", "hidden"
-    
     -- Accessibility features
     colorblind_support = false, -- Alternative visual indicators
     hearing_impaired = false, -- Enhanced visual feedback
     motion_sensitivity = false, -- Reduced screen shake/flash
-    
     -- Advanced customization
     xp_gain_animations = true, -- Show floating XP numbers
     streak_screen_effects = true, -- Full-screen streak effects
     mystery_box_buildup = true, -- Anticipation animations
     level_up_celebrations = true, -- Level up fanfare
     milestone_notifications = true, -- Streak milestone alerts
-    
     -- Session management
     session_break_reminders = false, -- Remind to take breaks
     session_limit_warnings = false, -- Warn about long sessions
     auto_pause_inactive = 300, -- Auto-pause after N seconds (0 = disabled)
 }
-
 -- Development Configuration
 Config.dev = {
     debugMode = false, -- Enable debug information
@@ -273,7 +250,6 @@ Config.dev = {
     logLevel = "info", -- debug, info, warn, error
     autoSave = true -- Auto-save progression data
 }
-
 -- Mobile Configuration
 Config.mobile = {
     enabled = false, -- Auto-detect mobile devices
@@ -285,7 +261,6 @@ Config.mobile = {
     hapticFeedback = true, -- Enable vibration feedback
     autoPause = true, -- Pause when app goes to background
     orientation = "landscape", -- Preferred orientation
-    
     -- Touch Gesture Settings
     gestures = {
         enabled = true, -- Enable touch gesture system
@@ -296,7 +271,6 @@ Config.mobile = {
         longPressMenu = true, -- Enable long press for context menu
         hapticFeedback = true -- Enable haptic feedback for gestures
     },
-    
     -- Gesture sensitivity settings
     sensitivity = {
         zoom = 0.01, -- Pinch-to-zoom sensitivity
@@ -305,7 +279,6 @@ Config.mobile = {
         tap = 1.0 -- Tap sensitivity multiplier
     }
 }
-
 -- Responsive UI Configuration
 Config.responsive = {
     enabled = true,
@@ -325,7 +298,6 @@ Config.responsive = {
         desktop = { regular = 16, bold = 16, light = 16, extraBold = 24 }
     }
 }
-
 -- Blockchain Event Types
 Config.blockchainEvents = {
     ACHIEVEMENT_UNLOCKED = "achievement_unlocked",
@@ -337,7 +309,6 @@ Config.blockchainEvents = {
     RING_COLLECTION_MILESTONE = "ring_collection_milestone",
     GAME_COMPLETED = "game_completed"
 }
-
 -- Achievement Definitions
 Config.achievements = {
     firstRing = { name = "First Ring", description = "Collect your first ring", score = 10, tokens = 5 },
@@ -349,53 +320,51 @@ Config.achievements = {
     highScorer = { name = "High Scorer", description = "Score 1000 points in one game", score = 300, tokens = 150 },
     dashMaster = { name = "Dash Master", description = "Use dash 50 times", score = 125, tokens = 60 }
 }
-
 -- Upgrade Definitions
 Config.upgrades = {
-    jumpPower = { 
-        name = "Jump Power", 
+    jumpPower = {
+        name = "Jump Power",
         description = "Increase jump strength",
-        baseCost = 100, 
+        baseCost = 100,
         costMultiplier = 1.5,
         effectMultiplier = 1.2
     },
-    dashPower = { 
-        name = "Dash Power", 
+    dashPower = {
+        name = "Dash Power",
         description = "Increase dash strength",
-        baseCost = 150, 
+        baseCost = 150,
         costMultiplier = 1.8,
         effectMultiplier = 1.25
     },
-    speedBoost = { 
-        name = "Speed Boost", 
+    speedBoost = {
+        name = "Speed Boost",
         description = "Increase speed multiplier",
-        baseCost = 200, 
+        baseCost = 200,
         costMultiplier = 2.0,
         effectMultiplier = 1.15
     },
-    ringValue = { 
-        name = "Ring Value", 
+    ringValue = {
+        name = "Ring Value",
         description = "Increase ring point value",
-        baseCost = 50, 
+        baseCost = 50,
         costMultiplier = 1.3,
         effectMultiplier = 1.1
     },
-    comboMultiplier = { 
-        name = "Combo Multiplier", 
+    comboMultiplier = {
+        name = "Combo Multiplier",
         description = "Increase combo bonus",
-        baseCost = 300, 
+        baseCost = 300,
         costMultiplier = 2.5,
         effectMultiplier = 1.3
     },
-    gravityResistance = { 
-        name = "Gravity Resistance", 
+    gravityResistance = {
+        name = "Gravity Resistance",
         description = "Reduce gravity effects",
-        baseCost = 250, 
+        baseCost = 250,
         costMultiplier = 1.7,
         effectMultiplier = 0.9
     }
 }
-
 -- NFT Definitions
 Config.nfts = {
     firstAchievement = {
@@ -427,48 +396,37 @@ Config.nfts = {
         imageUrl = "https://example.com/nft4.png"
     }
 }
-
 -- Helper functions
 function Config.getBlockchainConfig()
     return Config.blockchain
 end
-
 function Config.getProgressionConfig()
     return Config.progression
 end
-
 function Config.getGameConfig()
     return Config.game
 end
-
 function Config.getUIConfig()
     return Config.ui
 end
-
 function Config.getSoundConfig()
     return Config.sound
 end
-
 function Config.getDevConfig()
     return Config.dev
 end
-
 function Config.isBlockchainEnabled()
     return Config.blockchain.enabled
 end
-
 function Config.isProgressionEnabled()
     return Config.progression.enabled
 end
-
 function Config.isDebugMode()
     return Config.dev.debugMode
 end
-
 function Config.getAddictionConfig()
     return Config.addiction
 end
-
 -- Apply event frequency multipliers
 function Config.getEventFrequencyMultiplier()
     local mode = Config.addiction.event_frequency
@@ -479,7 +437,6 @@ function Config.getEventFrequencyMultiplier()
     end
     return 0.67 -- Default to normal
 end
-
 -- Get visual effects scaling
 function Config.getVisualEffectsScale()
     local intensity = Config.addiction.visual_effects_intensity
@@ -489,7 +446,6 @@ function Config.getVisualEffectsScale()
     end
     return 1.0 -- Default to full
 end
-
 -- Get audio feedback scaling
 function Config.getAudioFeedbackScale()
     local level = Config.addiction.audio_feedback_level
@@ -499,7 +455,6 @@ function Config.getAudioFeedbackScale()
     end
     return 1.0 -- Default to full
 end
-
 -- Get streak grace period modifier
 function Config.getStreakGracePeriodModifier()
     local mode = Config.addiction.streak_pressure_mode
@@ -509,7 +464,6 @@ function Config.getStreakGracePeriodModifier()
     end
     return 1.0 -- Default to competitive
 end
-
 -- Save configuration to file
 function Config.save()
     local saveData = {
@@ -521,18 +475,15 @@ function Config.save()
         mobile = Config.mobile,
         resolution = Config.resolution
     }
-    
     local serialized = Utils.serialize(saveData)
     love.filesystem.write("user_config.dat", serialized)
     Utils.Logger.info("Configuration saved to user_config.dat")
 end
-
 -- Load configuration from file
 function Config.load()
     if love.filesystem.getInfo("user_config.dat") then
         local data = love.filesystem.read("user_config.dat")
         local loadedData = Utils.deserialize(data)
-        
         if loadedData then
             -- Merge loaded config with defaults
             for section, values in pairs(loadedData) do
@@ -546,5 +497,4 @@ function Config.load()
         end
     end
 end
-
-return Config 
+return Config

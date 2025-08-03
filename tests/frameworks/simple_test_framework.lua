@@ -1,8 +1,6 @@
 -- Simple Test Framework for Phase 4 Optimization Demo
 -- Compatible with existing test files
-
 local SimpleTestFramework = {}
-
 -- Test statistics
 local stats = {
     total = 0,
@@ -10,7 +8,6 @@ local stats = {
     failed = 0,
     errors = {}
 }
-
 -- ANSI color codes
 local colors = {
     green = "\27[32m",
@@ -19,7 +16,6 @@ local colors = {
     blue = "\27[34m",
     reset = "\27[0m"
 }
-
 -- Helper to print colored text
 local function print_colored(color, text)
     if colors[color] then
@@ -28,7 +24,6 @@ local function print_colored(color, text)
         io.write(text)
     end
 end
-
 -- Initialize the test framework
 function SimpleTestFramework.init()
     stats = {
@@ -39,7 +34,6 @@ function SimpleTestFramework.init()
     }
     print_colored("blue", "Simple Test Framework Initialized\n")
 end
-
 -- Assertion functions
 SimpleTestFramework.assert = {
     equal = function(expected, actual, message)
@@ -54,7 +48,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     notEqual = function(expected, actual, message)
         stats.total = stats.total + 1
         if expected ~= actual then
@@ -67,7 +60,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     isTrue = function(value, message)
         stats.total = stats.total + 1
         if value == true then
@@ -80,7 +72,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     isFalse = function(value, message)
         stats.total = stats.total + 1
         if value == false then
@@ -93,7 +84,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     isNil = function(value, message)
         stats.total = stats.total + 1
         if value == nil then
@@ -106,7 +96,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     notNil = function(value, message)
         stats.total = stats.total + 1
         if value ~= nil then
@@ -119,7 +108,6 @@ SimpleTestFramework.assert = {
             return false
         end
     end,
-    
     approx = function(expected, actual, tolerance, message)
         stats.total = stats.total + 1
         tolerance = tolerance or 0.001
@@ -134,7 +122,6 @@ SimpleTestFramework.assert = {
         end
     end
 }
-
 -- Test suite function
 function SimpleTestFramework.describe(name, test_function)
     print_colored("blue", "Running test suite: " .. name .. "\n")
@@ -144,7 +131,6 @@ function SimpleTestFramework.describe(name, test_function)
         table.insert(stats.errors, "Test suite error: " .. tostring(error))
     end
 end
-
 -- Individual test function
 function SimpleTestFramework.it(name, test_function)
     local success, error = pcall(test_function)
@@ -156,7 +142,6 @@ function SimpleTestFramework.it(name, test_function)
         table.insert(stats.errors, name .. ": " .. tostring(error))
     end
 end
-
 -- Get test results
 function SimpleTestFramework.get_results()
     return {
@@ -166,21 +151,18 @@ function SimpleTestFramework.get_results()
         errors = stats.errors
     }
 end
-
 -- Print summary
 function SimpleTestFramework.print_summary()
     print_colored("cyan", "\n=== Test Summary ===\n")
     print_colored("blue", string.format("Total assertions: %d\n", stats.total))
     print_colored("green", string.format("Passed: %d\n", stats.passed))
     print_colored("red", string.format("Failed: %d\n", stats.failed))
-    
     if #stats.errors > 0 then
         print_colored("red", "\nErrors:\n")
         for i, error in ipairs(stats.errors) do
             print_colored("red", string.format("  %d. %s\n", i, error))
         end
     end
-    
     if stats.failed > 0 then
         print_colored("red", "\n❌ Some tests failed!\n")
         return false
@@ -189,7 +171,6 @@ function SimpleTestFramework.print_summary()
         return true
     end
 end
-
 -- Setup function for compatibility
 function SimpleTestFramework.setup()
     -- Mock setup for compatibility with existing tests
@@ -197,7 +178,6 @@ function SimpleTestFramework.setup()
     if not love.graphics then love.graphics = {} end
     if not love.audio then love.audio = {} end
     if not love.window then love.window = {} end
-    
     -- Mock common love functions
     love.graphics.setColor = function() end
     love.graphics.circle = function() end
@@ -207,5 +187,4 @@ function SimpleTestFramework.setup()
     love.audio.newSource = function() return { play = function() end } end
     love.window.getMode = function() return 800, 600 end
 end
-
-return SimpleTestFramework 
+return SimpleTestFramework

@@ -1,10 +1,8 @@
 -- Interactive Test Runner for Orbit Jump
 -- Phase 5: Enhanced Developer Experience
 -- Provides interactive CLI with filtering and improved error reporting
-
 local Utils = require("src.utils.utils")
 local UnifiedTestFramework = Utils.require("tests.frameworks.unified_test_framework")
-
 -- ANSI color codes for rich output
 local colors = {
     green = "\27[32m",
@@ -17,7 +15,6 @@ local colors = {
     bold = "\27[1m",
     reset = "\27[0m"
 }
-
 -- Interactive runner configuration
 local config = {
     testTypes = {
@@ -33,43 +30,36 @@ local config = {
     watch = false,
     interactive = true
 }
-
 -- Test discovery and management
 local testRegistry = {
     suites = {},
     totalTests = 0,
     discoveredTests = {}
 }
-
 -- Enhanced error reporting
 local errorReporter = {
     errors = {},
     warnings = {},
     suggestions = {}
 }
-
 -- Helper functions
 local function printColored(color, text)
     local colorCode = colors[color] or colors.reset
     Utils.Logger.output(colorCode .. text .. colors.reset)
 end
-
 local function printBold(text)
     Utils.Logger.output(colors.bold .. text .. colors.reset)
 end
-
 local function printHeader(text)
     printColored("cyan", "\n" .. string.rep("=", 60))
     printColored("cyan", " " .. text)
     printColored("cyan", string.rep("=", 60))
 end
-
 local function printSubHeader(text)
     printColored("blue", "\n" .. string.rep("-", 40))
     printColored("blue", " " .. text)
     printColored("blue", string.rep("-", 40))
 end
-
 -- Enhanced error reporting functions
 local function addError(category, message, details, suggestion)
     table.insert(errorReporter.errors, {
@@ -80,7 +70,6 @@ local function addError(category, message, details, suggestion)
         timestamp = os.time()
     })
 end
-
 local function addWarning(category, message, details)
     table.insert(errorReporter.warnings, {
         category = category,
@@ -89,7 +78,6 @@ local function addWarning(category, message, details)
         timestamp = os.time()
     })
 end
-
 local function addSuggestion(category, message, details)
     table.insert(errorReporter.suggestions, {
         category = category,
@@ -98,22 +86,18 @@ local function addSuggestion(category, message, details)
         timestamp = os.time()
     })
 end
-
 -- Test discovery
 local function discoverTests()
     printSubHeader("🔍 Discovering Tests")
-    
     local discovered = 0
     for testType, config in pairs(config.testTypes) do
         if config.enabled then
             printColored("blue", "  Scanning " .. testType .. " tests...")
-            
             -- Scan directory for test files
             local testFiles = {}
             local success, files = pcall(function()
                 return Utils.FileUtils.listFiles(config.path, "*.lua")
             end)
-            
             if success and files then
                 for _, file in ipairs(files) do
                     if string.match(file, "test.*%.lua$") or string.match(file, ".*_test%.lua$") then
@@ -121,7 +105,6 @@ local function discoverTests()
                         discovered = discovered + 1
                     end
                 end
-                
                 testRegistry.discoveredTests[testType] = testFiles
                 printColored("green", "    Found " .. #testFiles .. " test files")
             else
@@ -130,12 +113,10 @@ local function discoverTests()
             end
         end
     end
-    
     testRegistry.totalTests = discovered
     printColored("green", "\n✅ Discovered " .. discovered .. " total test files")
     return discovered
 end
-
 -- Interactive menu system
 local function showMainMenu()
     printHeader("🎮 Interactive Test Runner")
@@ -150,25 +131,20 @@ local function showMainMenu()
     printColored("cyan", "  8. Exit")
     printColored("white", "\nEnter your choice (1-8): ")
 end
-
 local function showTestTypeMenu()
     printSubHeader("📋 Select Test Type")
     local options = {}
     local index = 1
-    
     for testType, config in pairs(config.testTypes) do
         local status = config.enabled and "✅" or "❌"
         printColored("white", "  " .. index .. ". " .. testType .. " tests " .. status)
         options[index] = testType
         index = index + 1
     end
-    
     printColored("white", "  " .. index .. ". Back to main menu")
     printColored("white", "\nEnter your choice (1-" .. index .. "): ")
-    
     return options
 end
-
 local function showFilterMenu()
     printSubHeader("🔍 Test Filtering")
     printColored("white", "Enter a pattern to filter tests:")
@@ -178,7 +154,6 @@ local function showFilterMenu()
     printColored("yellow", "  - 'test_physics' (exact test file)")
     printColored("white", "\nFilter pattern (or 'none' to clear): ")
 end
-
 local function showConfigurationMenu()
     printSubHeader("⚙️  Configuration")
     printColored("white", "Current settings:")
@@ -186,7 +161,6 @@ local function showConfigurationMenu()
     printColored("cyan", "  Verbose output: " .. (config.verbose and "✅" or "❌"))
     printColored("cyan", "  Test timeout: " .. config.timeout .. " seconds")
     printColored("cyan", "  Watch mode: " .. (config.watch and "✅" or "❌"))
-    
     printColored("white", "\nOptions:")
     printColored("cyan", "  1. Toggle parallel execution")
     printColored("cyan", "  2. Toggle verbose output")
@@ -195,16 +169,13 @@ local function showConfigurationMenu()
     printColored("cyan", "  5. Back to main menu")
     printColored("white", "\nEnter your choice (1-5): ")
 end
-
 -- Enhanced error reporting display
 local function showErrorReport()
     printHeader("📊 Error Report")
-    
     if #errorReporter.errors == 0 and #errorReporter.warnings == 0 and #errorReporter.suggestions == 0 then
         printColored("green", "✅ No errors, warnings, or suggestions to report!")
         return
     end
-    
     -- Display errors
     if #errorReporter.errors > 0 then
         printSubHeader("❌ Errors (" .. #errorReporter.errors .. ")")
@@ -219,7 +190,6 @@ local function showErrorReport()
             print()
         end
     end
-    
     -- Display warnings
     if #errorReporter.warnings > 0 then
         printSubHeader("⚠️  Warnings (" .. #errorReporter.warnings .. ")")
@@ -231,7 +201,6 @@ local function showErrorReport()
             print()
         end
     end
-    
     -- Display suggestions
     if #errorReporter.suggestions > 0 then
         printSubHeader("💡 Suggestions (" .. #errorReporter.suggestions .. ")")
@@ -244,19 +213,15 @@ local function showErrorReport()
         end
     end
 end
-
 -- Test execution with enhanced error handling
 local function runTests(testType, filter)
     printHeader("🚀 Running Tests")
-    
     if testType then
         printColored("blue", "Test type: " .. testType)
     end
-    
     if filter then
         printColored("blue", "Filter: " .. filter)
     end
-    
     -- Initialize framework
     local success, error = pcall(UnifiedTestFramework.init)
     if not success then
@@ -264,12 +229,10 @@ local function runTests(testType, filter)
         printColored("red", "❌ Failed to initialize test framework: " .. tostring(error))
         return false
     end
-    
     -- Discover tests if not already done
     if testRegistry.totalTests == 0 then
         discoverTests()
     end
-    
     -- Execute tests
     local startTime = os.clock()
     local results = {
@@ -278,20 +241,16 @@ local function runTests(testType, filter)
         failed = 0,
         errors = {}
     }
-    
     -- Run tests based on type and filter
     for type, typeConfig in pairs(config.testTypes) do
         if typeConfig.enabled and (not testType or type == testType) then
             local testFiles = testRegistry.discoveredTests[type] or {}
-            
             for _, testFile in ipairs(testFiles) do
                 if not filter or string.match(testFile, filter) then
                     printColored("blue", "  Running: " .. testFile)
-                    
                     local fileSuccess, fileError = pcall(function()
                         return UnifiedTestFramework.runTestFile(testFile)
                     end)
-                    
                     if fileSuccess then
                         results.total = results.total + 1
                         results.passed = results.passed + 1
@@ -304,7 +263,6 @@ local function runTests(testType, filter)
                             error = fileError
                         })
                         printColored("red", "    ❌ Failed: " .. tostring(fileError))
-                        
                         -- Add detailed error information
                         addError("test_execution", "Test file failed: " .. testFile, fileError, "Check test file syntax and dependencies")
                     end
@@ -312,60 +270,49 @@ local function runTests(testType, filter)
             end
         end
     end
-    
     local endTime = os.clock()
     local duration = endTime - startTime
-    
     -- Display results
     printSubHeader("📊 Test Results")
     printColored("white", "Total tests: " .. results.total)
     printColored("green", "Passed: " .. results.passed)
     printColored("red", "Failed: " .. results.failed)
     printColored("blue", "Duration: " .. string.format("%.2f", duration) .. " seconds")
-    
     if results.failed > 0 then
         printSubHeader("❌ Failed Tests")
         for _, error in ipairs(results.errors) do
             printColored("red", "  " .. error.file .. ": " .. tostring(error.error))
         end
     end
-    
     return results.failed == 0
 end
-
 -- Watch mode implementation
 local function startWatchMode()
     printHeader("👀 Watch Mode")
     printColored("yellow", "Watching for file changes... (Press Ctrl+C to stop)")
-    
     -- This is a simplified watch mode - in a real implementation,
     -- you would use file system events or polling
     while true do
         -- Check for file changes (simplified)
         local hasChanges = false
-        
         -- Run tests if changes detected
         if hasChanges then
             printColored("blue", "\n🔄 Changes detected, re-running tests...")
             runTests()
         end
-        
         -- Sleep for a short interval
         os.execute("sleep 1")
     end
 end
-
 -- Main interactive loop
 local function runInteractive()
     while true do
         showMainMenu()
-        
         local choice = io.read("*n")
         if not choice then
             printColored("red", "Invalid input. Please enter a number.")
             goto continue
         end
-        
         if choice == 1 then
             -- Run all tests
             runTests()
@@ -420,21 +367,17 @@ local function runInteractive()
         else
             printColored("red", "Invalid choice. Please enter a number between 1 and 8.")
         end
-        
         ::continue::
         printColored("white", "\nPress Enter to continue...")
         io.read("*l")
     end
 end
-
 -- Command line interface
 local function parseArgs(...)
     local args = {...}
     local i = 1
-    
     while i <= #args do
         local arg = args[i]
-        
         if arg == "--interactive" or arg == "-i" then
             config.interactive = true
         elseif arg == "--non-interactive" then
@@ -473,22 +416,17 @@ local function parseArgs(...)
             print("  --help, -h           Show this help message")
             os.exit(0)
         end
-        
         i = i + 1
     end
 end
-
 -- Main entry point
 local function main(...)
     printColored("blue", "🎮 Interactive Test Runner v1.0")
     printColored("blue", "Phase 5: Enhanced Developer Experience")
-    
     -- Parse command line arguments
     parseArgs(...)
-    
     -- Discover tests
     discoverTests()
-    
     if config.interactive then
         runInteractive()
     else
@@ -496,7 +434,6 @@ local function main(...)
         runTests()
     end
 end
-
 -- Export the module
 return {
     main = main,
@@ -504,4 +441,4 @@ return {
     showErrorReport = showErrorReport,
     discoverTests = discoverTests,
     config = config
-} 
+}

@@ -1,9 +1,7 @@
 -- Blockchain Integration for Orbit Jump
 -- Handles Web3 events, smart contracts, and token/NFT management
-
 local Utils = require("src.utils.utils")
 local BlockchainIntegration = {}
-
 -- Configuration
 BlockchainIntegration.config = {
     network = "ethereum", -- or "polygon", "bsc", etc.
@@ -12,7 +10,6 @@ BlockchainIntegration.config = {
     webhookUrl = nil, -- For server-side blockchain events
     enabled = false -- Set to true to enable blockchain features
 }
-
 -- Event types that can trigger blockchain interactions
 BlockchainIntegration.eventTypes = {
     ACHIEVEMENT_UNLOCKED = "achievement_unlocked",
@@ -23,12 +20,10 @@ BlockchainIntegration.eventTypes = {
     COMBO_MASTERED = "combo_mastered",
     RING_COLLECTION_MILESTONE = "ring_collection_milestone"
 }
-
 -- Local event queue for batching blockchain transactions
 BlockchainIntegration.eventQueue = {}
 BlockchainIntegration.lastBatchTime = 0
 BlockchainIntegration.batchInterval = 30 -- seconds
-
 -- Smart contract ABI (simplified for game events)
 BlockchainIntegration.contractABI = {
     -- Achievement unlocked event
@@ -40,7 +35,6 @@ BlockchainIntegration.contractABI = {
             {name = "score", type = "uint256"}
         }
     },
-    
     -- Token earned event
     tokensEarned = {
         name = "TokensEarned",
@@ -50,7 +44,6 @@ BlockchainIntegration.contractABI = {
             {name = "reason", type = "string"}
         }
     },
-    
     -- NFT minted event
     nftMinted = {
         name = "NFTMinted",
@@ -61,68 +54,54 @@ BlockchainIntegration.contractABI = {
         }
     }
 }
-
 function BlockchainIntegration.init(config)
     if config then
         for k, v in pairs(config) do
             BlockchainIntegration.config[k] = v
         end
     end
-    
     -- Initialize event queue
     BlockchainIntegration.eventQueue = {}
     BlockchainIntegration.lastBatchTime = love.timer.getTime()
-    
     Utils.Logger.info("Blockchain Integration initialized: %s", BlockchainIntegration.config.enabled and "ENABLED" or "DISABLED")
 end
-
 function BlockchainIntegration.enable()
     BlockchainIntegration.config.enabled = true
     Utils.Logger.info("Blockchain integration enabled")
 end
-
 function BlockchainIntegration.disable()
     BlockchainIntegration.config.enabled = false
     Utils.Logger.info("Blockchain integration disabled")
 end
-
 function BlockchainIntegration.queueEvent(eventType, data)
     if not BlockchainIntegration.config.enabled then
         return
     end
-    
     local event = {
         type = eventType,
         data = data,
         timestamp = love.timer.getTime(),
         id = BlockchainIntegration.generateEventId()
     }
-    
     table.insert(BlockchainIntegration.eventQueue, event)
     Utils.Logger.info("Queued blockchain event: %s %s", eventType, BlockchainIntegration.serialize(data))
-    
     -- Check if we should batch process
     BlockchainIntegration.checkBatchProcessing()
 end
-
 function BlockchainIntegration.generateEventId()
     return "event_" .. math.floor(love.timer.getTime() * 1000) .. "_" .. math.random(1000, 9999)
 end
-
 function BlockchainIntegration.checkBatchProcessing()
     local currentTime = love.timer.getTime()
     if currentTime - BlockchainIntegration.lastBatchTime >= BlockchainIntegration.batchInterval then
         BlockchainIntegration.processBatch()
     end
 end
-
 function BlockchainIntegration.processBatch()
     if #BlockchainIntegration.eventQueue == 0 then
         return
     end
-    
     Utils.Logger.info("Processing blockchain batch with %d events", #BlockchainIntegration.eventQueue)
-    
     -- Group events by type for efficient processing
     local groupedEvents = {}
     for _, event in ipairs(BlockchainIntegration.eventQueue) do
@@ -131,17 +110,14 @@ function BlockchainIntegration.processBatch()
         end
         table.insert(groupedEvents[event.type], event)
     end
-    
     -- Process each group
     for eventType, events in pairs(groupedEvents) do
         BlockchainIntegration.processEventGroup(eventType, events)
     end
-    
     -- Clear the queue
     BlockchainIntegration.eventQueue = {}
     BlockchainIntegration.lastBatchTime = love.timer.getTime()
 end
-
 function BlockchainIntegration.processEventGroup(eventType, events)
     if eventType == BlockchainIntegration.eventTypes.ACHIEVEMENT_UNLOCKED then
         BlockchainIntegration.processAchievementEvents(events)
@@ -153,17 +129,14 @@ function BlockchainIntegration.processEventGroup(eventType, events)
         BlockchainIntegration.processUpgradeEvents(events)
     end
 end
-
 function BlockchainIntegration.processAchievementEvents(events)
     -- Batch process achievement unlocks
     local totalScore = 0
     local achievements = {}
-    
     for _, event in ipairs(events) do
         totalScore = totalScore + (event.data.score or 0)
         table.insert(achievements, event.data.achievement)
     end
-    
     -- Send to blockchain/webhook
     BlockchainIntegration.sendToBlockchain("achievement_batch", {
         achievements = achievements,
@@ -171,17 +144,14 @@ function BlockchainIntegration.processAchievementEvents(events)
         count = #events
     })
 end
-
 function BlockchainIntegration.processTokenEvents(events)
     -- Batch process token earnings
     local totalTokens = 0
     local reasons = {}
-    
     for _, event in ipairs(events) do
         totalTokens = totalTokens + (event.data.amount or 0)
         table.insert(reasons, event.data.reason or "gameplay")
     end
-    
     -- Send to blockchain/webhook
     BlockchainIntegration.sendToBlockchain("token_batch", {
         totalTokens = totalTokens,
@@ -189,7 +159,6 @@ function BlockchainIntegration.processTokenEvents(events)
         count = #events
     })
 end
-
 function BlockchainIntegration.processNFTEvents(events)
     -- Process NFT unlocks
     for _, event in ipairs(events) do
@@ -199,11 +168,9 @@ function BlockchainIntegration.processNFTEvents(events)
         })
     end
 end
-
 function BlockchainIntegration.processUpgradeEvents(events)
     -- Process upgrade purchases
     local upgrades = {}
-    
     for _, event in ipairs(events) do
         table.insert(upgrades, {
             type = event.data.upgrade,
@@ -211,39 +178,32 @@ function BlockchainIntegration.processUpgradeEvents(events)
             cost = event.data.cost
         })
     end
-    
     BlockchainIntegration.sendToBlockchain("upgrade_batch", {
         upgrades = upgrades,
         count = #events
     })
 end
-
 function BlockchainIntegration.sendToBlockchain(action, data)
     if not BlockchainIntegration.config.enabled then
         return
     end
-    
     -- Add common data
     data.action = action
     data.timestamp = love.timer.getTime()
     data.gameVersion = "1.0.0"
-    
     -- Send via webhook if configured
     if BlockchainIntegration.config.webhookUrl then
         BlockchainIntegration.sendWebhook(data)
     end
-    
     -- Log the event (in a real implementation, this would send to blockchain)
     Utils.Logger.info("Blockchain Event: %s %s", action, BlockchainIntegration.serialize(data))
 end
-
 function BlockchainIntegration.sendWebhook(data)
     -- This would use LÖVE's HTTP library or a Lua HTTP client
     -- For now, we'll just simulate the webhook call
     Utils.Logger.info("Webhook sent to: %s", BlockchainIntegration.config.webhookUrl)
     Utils.Logger.info("Data: %s", BlockchainIntegration.serialize(data))
 end
-
 function BlockchainIntegration.serialize(obj)
     if type(obj) == "table" then
         local result = "{"
@@ -262,7 +222,6 @@ function BlockchainIntegration.serialize(obj)
         return tostring(obj)
     end
 end
-
 -- Game-specific blockchain functions
 function BlockchainIntegration.triggerAchievementUnlock(achievementId, score)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.ACHIEVEMENT_UNLOCKED, {
@@ -270,21 +229,18 @@ function BlockchainIntegration.triggerAchievementUnlock(achievementId, score)
         score = score
     })
 end
-
 function BlockchainIntegration.triggerTokenEarned(amount, reason)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.TOKENS_EARNED, {
         amount = amount,
         reason = reason or "gameplay"
     })
 end
-
 function BlockchainIntegration.triggerNFTUnlock(nftId, metadata)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.NFT_UNLOCKED, {
         nftId = nftId,
         metadata = metadata
     })
 end
-
 function BlockchainIntegration.triggerUpgradePurchase(upgradeType, cost, newLevel)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.UPGRADE_PURCHASED, {
         upgrade = upgradeType,
@@ -292,7 +248,6 @@ function BlockchainIntegration.triggerUpgradePurchase(upgradeType, cost, newLeve
         newLevel = newLevel
     })
 end
-
 function BlockchainIntegration.triggerHighScore(score, combo, ringsCollected)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.HIGH_SCORE_SET, {
         score = score,
@@ -300,27 +255,23 @@ function BlockchainIntegration.triggerHighScore(score, combo, ringsCollected)
         ringsCollected = ringsCollected
     })
 end
-
 function BlockchainIntegration.triggerComboMastered(combo, duration)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.COMBO_MASTERED, {
         combo = combo,
         duration = duration
     })
 end
-
 function BlockchainIntegration.triggerRingMilestone(totalRings, milestone)
     BlockchainIntegration.queueEvent(BlockchainIntegration.eventTypes.RING_COLLECTION_MILESTONE, {
         totalRings = totalRings,
         milestone = milestone
     })
 end
-
 -- Utility functions for game integration
 function BlockchainIntegration.update(dt)
     -- Process any pending batches
     BlockchainIntegration.checkBatchProcessing()
 end
-
 function BlockchainIntegration.getStatus()
     return {
         enabled = BlockchainIntegration.config.enabled,
@@ -329,5 +280,4 @@ function BlockchainIntegration.getStatus()
         network = BlockchainIntegration.config.network
     }
 end
-
-return BlockchainIntegration 
+return BlockchainIntegration

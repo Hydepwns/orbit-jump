@@ -20,7 +20,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.2) -- +20% per level
         end
     },
-    
     jump_control = {
         id = "jump_control",
         name = "Jump Control",
@@ -34,7 +33,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.15) -- +15% per level
         end
     },
-    
     -- Dash upgrades
     dash_power = {
         id = "dash_power",
@@ -49,7 +47,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.25) -- +25% per level
         end
     },
-    
     dash_cooldown = {
         id = "dash_cooldown",
         name = "Dash Recharge",
@@ -63,7 +60,6 @@ UpgradeSystem.upgrades = {
             return 1 - (level * 0.15) -- -15% cooldown per level
         end
     },
-    
     -- Ring upgrades
     ring_magnet = {
         id = "ring_magnet",
@@ -78,7 +74,6 @@ UpgradeSystem.upgrades = {
             return level * 50 -- 50 unit range per level
         end
     },
-    
     ring_value = {
         id = "ring_value",
         name = "Ring Value",
@@ -92,7 +87,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.1) -- +10% per level
         end
     },
-    
     -- Combo upgrades
     combo_timer = {
         id = "combo_timer",
@@ -107,7 +101,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.25) -- +25% duration per level
         end
     },
-    
     combo_multiplier = {
         id = "combo_multiplier",
         name = "Combo Power",
@@ -121,7 +114,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.2) -- +20% multiplier per level
         end
     },
-    
     -- Gravity resistance upgrade
     gravity_resist = {
         id = "gravity_resist",
@@ -136,7 +128,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.2) -- +20% resistance per level
         end
     },
-    
     -- Special upgrades
     shield_duration = {
         id = "shield_duration",
@@ -151,7 +142,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.3) -- +30% duration per level
         end
     },
-    
     exploration_bonus = {
         id = "exploration_bonus",
         name = "Explorer's Luck",
@@ -165,7 +155,6 @@ UpgradeSystem.upgrades = {
             return 1 + (level * 0.15) -- +15% discovery bonus per level
         end
     },
-    
     warp_drive = {
         id = "warp_drive",
         name = "Warp Drive",
@@ -187,7 +176,6 @@ UpgradeSystem.upgrades = {
 }
 -- Currency (uses achievement points)
 UpgradeSystem.currency = 500 -- Start with some points for testing
-
 -- Add currency from achievements
 function UpgradeSystem.addCurrency(amount)
     UpgradeSystem.currency = UpgradeSystem.currency + amount
@@ -197,17 +185,14 @@ end
 function UpgradeSystem.getUpgradeCost(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
     if not upgrade then return 0 end
-    
     -- Get the current level (check playerUpgrades first for backward compatibility)
     local level = upgrade.currentLevel
     if UpgradeSystem.playerUpgrades and UpgradeSystem.playerUpgrades[upgradeId] then
         level = UpgradeSystem.playerUpgrades[upgradeId]
     end
-    
     if level >= upgrade.maxLevel then
         return 0 -- Max level
     end
-    
     -- For level 0, return base cost. For higher levels, apply multiplier
     if level == 0 then
         return upgrade.baseCost
@@ -223,12 +208,10 @@ end
 function UpgradeSystem.getLevel(upgradeId)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
     if not upgrade then return 0 end
-    
     -- Check playerUpgrades first (for backward compatibility with tests)
     if UpgradeSystem.playerUpgrades and UpgradeSystem.playerUpgrades[upgradeId] then
         return UpgradeSystem.playerUpgrades[upgradeId]
     end
-    
     return upgrade.currentLevel
 end
 -- Initialize upgrade system
@@ -237,7 +220,6 @@ function UpgradeSystem.init()
     if not UpgradeSystem.currency then
         UpgradeSystem.currency = 0
     end
-    
     -- Initialize player upgrades tracking (for backward compatibility)
     if not UpgradeSystem.playerUpgrades then
         UpgradeSystem.playerUpgrades = {}
@@ -246,7 +228,6 @@ function UpgradeSystem.init()
             UpgradeSystem.playerUpgrades[id] = upgrade.currentLevel
         end
     end
-    
     return true
 end
 -- Check if can afford upgrade
@@ -259,50 +240,40 @@ end
 function UpgradeSystem.purchase(upgradeId, availableCurrency)
     local upgrade = UpgradeSystem.upgrades[upgradeId]
     if not upgrade then return false end
-    
     -- Get the current level (check playerUpgrades first for backward compatibility)
     local currentLevel = upgrade.currentLevel
     if UpgradeSystem.playerUpgrades and UpgradeSystem.playerUpgrades[upgradeId] then
         currentLevel = UpgradeSystem.playerUpgrades[upgradeId]
     end
-    
     -- Check if already at max level
     if currentLevel >= upgrade.maxLevel then
         return false
     end
-    
     local cost = UpgradeSystem.getUpgradeCost(upgradeId)
     local currency = availableCurrency or UpgradeSystem.currency
-    
     if cost == 0 or currency < cost then
         return false
     end
-    
     -- Deduct cost and upgrade
     if not availableCurrency then
         UpgradeSystem.currency = UpgradeSystem.currency - cost
     end
     upgrade.currentLevel = upgrade.currentLevel + 1
-    
     -- Update playerUpgrades for backward compatibility
     if UpgradeSystem.playerUpgrades then
         UpgradeSystem.playerUpgrades[upgradeId] = upgrade.currentLevel
     end
-    
     -- Play upgrade sound
     local soundManager = Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playUpgrade then
         soundManager:playUpgrade()
     end
-    
     -- Log upgrade
     Utils.Logger.info("Purchased upgrade: %s level %d", upgrade.name, upgrade.currentLevel)
-    
     -- Call onPurchase callback if it exists
     if upgrade.onPurchase then
         upgrade.onPurchase()
     end
-    
     return true
 end
 -- Get upgrade effect value
@@ -311,17 +282,14 @@ function UpgradeSystem.getEffect(upgradeId)
     if not upgrade then
         return 1 -- Default multiplier
     end
-    
     -- Get the current level (check playerUpgrades first for backward compatibility)
     local level = upgrade.currentLevel
     if UpgradeSystem.playerUpgrades and UpgradeSystem.playerUpgrades[upgradeId] then
         level = UpgradeSystem.playerUpgrades[upgradeId]
     end
-    
     if level == 0 then
         return 1 -- Default multiplier for level 0
     end
-    
     return upgrade.effect(level)
 end
 -- Add currency (from achievements)
@@ -334,7 +302,6 @@ function UpgradeSystem.getSaveData()
         currency = UpgradeSystem.currency,
         upgrades = {}
     }
-    
     -- Use playerUpgrades if available (for backward compatibility with tests)
     if UpgradeSystem.playerUpgrades then
         for id, level in pairs(UpgradeSystem.playerUpgrades) do
@@ -346,14 +313,11 @@ function UpgradeSystem.getSaveData()
             saveData.upgrades[id] = upgrade.currentLevel
         end
     end
-    
     return saveData
 end
 function UpgradeSystem.loadSaveData(data)
     if not data then return end
-    
     UpgradeSystem.currency = data.currency or 0
-    
     if data.upgrades then
         for id, level in pairs(data.upgrades) do
             if UpgradeSystem.upgrades[id] then
@@ -369,7 +333,6 @@ end
 -- Get total upgrades purchased
 function UpgradeSystem.getTotalUpgrades()
     local total = 0
-    
     -- Use playerUpgrades if available (for backward compatibility with tests)
     if UpgradeSystem.playerUpgrades then
         for _, level in pairs(UpgradeSystem.playerUpgrades) do
@@ -381,19 +344,16 @@ function UpgradeSystem.getTotalUpgrades()
             total = total + upgrade.currentLevel
         end
     end
-    
     return total
 end
 -- Get completion percentage
 function UpgradeSystem.getCompletionPercentage()
     local current = 0
     local max = 0
-    
     for _, upgrade in pairs(UpgradeSystem.upgrades) do
         current = current + upgrade.currentLevel
         max = max + upgrade.maxLevel
     end
-    
     return (current / max) * 100
 end
 -- Reset all upgrades to level 0
@@ -412,19 +372,16 @@ end
 -- Apply all upgrade effects to game state
 function UpgradeSystem.applyEffects(gameState)
     if not gameState then return false end
-    
     -- Apply jump power
     local jumpPower = UpgradeSystem.getEffect("jump_power")
     if gameState.jumpPower then
         gameState.jumpPower = gameState.jumpPower * jumpPower
     end
-    
     -- Apply dash cooldown
     local dashCooldown = UpgradeSystem.getEffect("dash_cooldown")
     if gameState.dashCooldown then
         gameState.dashCooldown = gameState.dashCooldown * dashCooldown
     end
-    
     -- Apply gravity resistance (if it exists)
     local gravityResist = UpgradeSystem.getEffect("gravity_resist")
     if gameState.gravityMultiplier then
@@ -432,7 +389,6 @@ function UpgradeSystem.applyEffects(gameState)
         -- gravityResist = 1.6 for level 3, so we reduce gravity by 60% * 0.1 = 6%
         gameState.gravityMultiplier = gameState.gravityMultiplier * (1 - (gravityResist - 1) * 0.1)
     end
-    
     return true
 end
 return UpgradeSystem

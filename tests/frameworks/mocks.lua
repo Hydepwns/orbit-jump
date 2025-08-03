@@ -1,11 +1,8 @@
 -- Mock system for Orbit Jump tests
 -- Provides mock implementations of LÖVE2D and other external dependencies
-
 local Mocks = {}
-
 -- Track function calls for testing
 local callTracker = {}
-
 -- Mock LÖVE2D framework with enhanced graphics state tracking
 Mocks.love = {
   graphics = {
@@ -18,7 +15,6 @@ Mocks.love = {
       transformStack = {},
       currentTransform = {x = 0, y = 0, rotation = 0, scaleX = 1, scaleY = 1}
     },
-    
     getDimensions = function() return 800, 600 end,
     getWidth = function() return 800 end,
     getHeight = function() return 600 end,
@@ -129,7 +125,6 @@ Mocks.love = {
       if callback then callback(mockData) end
       return true
     end,
-    
     -- Additional graphics functions
     polygon = function(mode, ...)
       callTracker.polygon = callTracker.polygon or 0
@@ -185,19 +180,16 @@ Mocks.love = {
     end,
     getCanvas = function() return nil end
   },
-
   event = {
     quit = function(restart)
       callTracker.quit = callTracker.quit or 0
       callTracker.quit = callTracker.quit + 1
     end
   },
-
   timer = {
     -- Internal time state for consistent testing
     _time = 0,
     _delta = 1 / 60,
-    
     getTime = function() return Mocks.love.timer._time end,
     getDelta = function() return Mocks.love.timer._delta end,
     getFPS = function() return 60 end,
@@ -207,26 +199,23 @@ Mocks.love = {
       Mocks.love.timer._time = Mocks.love.timer._time + Mocks.love.timer._delta
       return Mocks.love.timer._delta
     end,
-    
     -- Test helpers
     setTime = function(time) Mocks.love.timer._time = time end,
     setDelta = function(delta) Mocks.love.timer._delta = delta end,
-    advance = function(time) 
-      Mocks.love.timer._time = Mocks.love.timer._time + time 
+    advance = function(time)
+      Mocks.love.timer._time = Mocks.love.timer._time + time
     end,
-    reset = function() 
-      Mocks.love.timer._time = 0 
+    reset = function()
+      Mocks.love.timer._time = 0
       Mocks.love.timer._delta = 1 / 60
     end
   },
-
   mouse = {
     -- Internal state for testing
     _position = { x = 400, y = 300 },
     _buttons = {},
     _pressed = {},
     _released = {},
-    
     getPosition = function() return Mocks.love.mouse._position.x, Mocks.love.mouse._position.y end,
     getX = function() return Mocks.love.mouse._position.x end,
     getY = function() return Mocks.love.mouse._position.y end,
@@ -241,9 +230,8 @@ Mocks.love = {
     getCursor = function() return nil end,
     setCursor = function(cursor) end,
     position = { x = 400, y = 300 },
-    
     -- Test helpers
-    setPosition = function(x, y) 
+    setPosition = function(x, y)
       Mocks.love.mouse._position.x = x
       Mocks.love.mouse._position.y = y
     end,
@@ -260,13 +248,11 @@ Mocks.love = {
       Mocks.love.mouse._released = {}
     end
   },
-
   keyboard = {
     -- Internal state for testing
     _keys = {},
     _pressed = {},
     _released = {},
-    
     isDown = function(key) return Mocks.love.keyboard._keys[key] or false end,
     wasPressed = function(key) return Mocks.love.keyboard._pressed[key] or false end,
     wasReleased = function(key) return Mocks.love.keyboard._released[key] or false end,
@@ -276,7 +262,6 @@ Mocks.love = {
     setTextInput = function(enable) end,
     hasScreenKeyboard = function() return false end,
     isScancodeDown = function(scancode) return false end,
-    
     -- Test helpers
     pressKey = function(key)
       Mocks.love.keyboard._keys[key] = true
@@ -291,19 +276,16 @@ Mocks.love = {
       Mocks.love.keyboard._released = {}
     end
   },
-  
   touch = {
     getTouchCount = function() return 0 end,
     getTouches = function() return {} end,
     getPosition = function(id) return 0, 0 end,
     getPressure = function(id) return 1 end
   },
-  
   joystick = {
     getJoysticks = function() return {} end,
     getJoystickCount = function() return 0 end
   },
-
   filesystem = {
     write = function(filename, data)
       callTracker.filesystemWrite = callTracker.filesystemWrite or 0
@@ -348,7 +330,6 @@ Mocks.love = {
       return true
     end
   },
-
   sound = {
     newSoundData = function(samples, rate, bits, channels)
       callTracker.soundNewSoundData = callTracker.soundNewSoundData or 0
@@ -363,7 +344,6 @@ Mocks.love = {
       }
     end
   },
-  
   audio = {
     newSource = function(path, sourceType)
       callTracker.audioNewSource = callTracker.audioNewSource or 0
@@ -408,7 +388,6 @@ Mocks.love = {
     getDistanceModel = function() return "inverseclamped" end,
     setDistanceModel = function(model) end
   },
-
   window = {
     setFullscreen = function(fullscreen)
       callTracker.setFullscreen = callTracker.setFullscreen or 0
@@ -420,7 +399,6 @@ Mocks.love = {
     end
   }
 }
-
 -- Mock math functions
 Mocks.math = {
   random = function(n, m)
@@ -446,7 +424,6 @@ Mocks.math = {
   abs = math.abs,
   pi = math.pi
 }
-
 -- Mock Utils functions
 Mocks.utils = {
   distance = function(x1, y1, x2, y2)
@@ -468,14 +445,12 @@ Mocks.utils = {
     return tostring(num)
   end
 }
-
 -- Mock os functions
 Mocks.os = {
   clock = function() return 0 end,
   date = function() return "2024-01-01 00:00:00" end,
   time = function() return 1704067200 end   -- 2024-01-01 00:00:00 UTC
 }
-
 -- Mock io functions
 Mocks.io = {
   open = function()
@@ -487,7 +462,6 @@ Mocks.io = {
     }
   end
 }
-
 -- Mock table functions
 Mocks.table = {
   insert = table.insert,
@@ -496,7 +470,6 @@ Mocks.table = {
   sort = table.sort,
   getn = function(t) return #t end   -- Lua 5.0 compatibility
 }
-
 -- Mock string functions
 Mocks.string = {
   format = string.format,
@@ -506,7 +479,6 @@ Mocks.string = {
   len = string.len,
   rep = string.rep
 }
-
 -- Mock missing systems
 Mocks.CosmicEvents = {
   triggerQuantumTeleport = function(x, y) end,
@@ -518,12 +490,10 @@ Mocks.CosmicEvents = {
   update = function(dt) end,
   isEventActive = function(eventType) return false end
 }
-
 Mocks.ring_constellations = {
   getConstellation = function() return "test" end,
   onRingCollected = function(ring, player) end
 }
-
 Mocks.SoundManager = {
   new = function(self)
     local instance = {
@@ -534,7 +504,7 @@ Mocks.SoundManager = {
     setmetatable(instance, {__index = Mocks.SoundManager})
     return instance
   end,
-  load = function(self) 
+  load = function(self)
     -- Mock sounds would be loaded here
   end,
   play = function(self, soundName, volume, pitch) end,
@@ -551,16 +521,16 @@ Mocks.SoundManager = {
   restartAmbient = function(self) end,
   update = function(self, dt) end,
   init = function() end,
-  setVolume = function(self, volume) 
+  setVolume = function(self, volume)
     if type(self) == "table" and self.volume then
       self.volume = volume
     end
   end,
-  getVolume = function(self) 
+  getVolume = function(self)
     if type(self) == "table" and self.volume then
       return self.volume
     end
-    return 1.0 
+    return 1.0
   end,
   setEnabled = function(self, enabled)
     if type(self) == "table" then
@@ -571,7 +541,6 @@ Mocks.SoundManager = {
   mute = function() end,
   unmute = function() end
 }
-
 -- Mock WarpDrive system
 Mocks.WarpDrive = {
   init = function() end,
@@ -582,7 +551,6 @@ Mocks.WarpDrive = {
   canWarp = function(player) return true end,
   getWarpZones = function() return {} end
 }
-
 -- Mock ErrorHandler for better test isolation
 Mocks.ErrorHandler = {
   safeCall = function(func, ...)
@@ -607,7 +575,6 @@ Mocks.ErrorHandler = {
   end,
   init = function() end
 }
-
 -- Mock ArtifactSystem
 Mocks.ArtifactSystem = {
   artifacts = {
@@ -634,13 +601,11 @@ Mocks.ArtifactSystem = {
   pulsePhase = 0,
   particleTimer = 0,
   notificationTimer = 5,
-
   init = function()
     Mocks.ArtifactSystem.collectedCount = 0
     Mocks.ArtifactSystem.spawnedArtifacts = {}
     Mocks.ArtifactSystem.notificationQueue = {}
   end,
-
   spawnArtifacts = function(player, planets) end,
   update = function(dt, player, planets) end,
   collectArtifact = function(artifact, index) end,
@@ -665,7 +630,6 @@ Mocks.ArtifactSystem = {
   end,
   isArtifactSpawned = function(id) return false end
 }
-
 -- Mock GameState with proper getPlanets function
 Mocks.GameState = {
   getPlanets = function()
@@ -707,7 +671,6 @@ Mocks.GameState = {
   getParticles = function() return {} end,
   addMessage = function(message) end
 }
-
 -- Mock RingSystem with collectRing function
 Mocks.RingSystem = {
   collectRing = function(ring, player)
@@ -748,13 +711,11 @@ Mocks.RingSystem = {
     chain = { value = 25, color = { 1, 0.8, 0.2, 0.8 } }
   }
 }
-
 -- Mock ParticleSystem with get method
 Mocks.ParticleSystem = {
   particles = {},
   particlePool = nil,
   maxParticles = 1000,
-
   init = function()
     -- Create mock object pool
     Mocks.ParticleSystem.particlePool = {
@@ -799,7 +760,6 @@ Mocks.ParticleSystem = {
     }
     Mocks.ParticleSystem.particles = {}
   end,
-
   create = function(x, y, vx, vy, color, lifetime, size, type)
     -- Check particle limit
     if #Mocks.ParticleSystem.particles >= Mocks.ParticleSystem.maxParticles then
@@ -808,7 +768,6 @@ Mocks.ParticleSystem = {
         Mocks.ParticleSystem.particlePool:returnObject(oldest)
       end
     end
-
     -- Get particle from pool or create new
     local particle
     if Mocks.ParticleSystem.particlePool then
@@ -816,7 +775,6 @@ Mocks.ParticleSystem = {
     else
       particle = {}
     end
-
     -- Set particle properties
     particle.x = x
     particle.y = y
@@ -827,31 +785,23 @@ Mocks.ParticleSystem = {
     particle.size = size or 2
     particle.color = color or { 1, 1, 1, 1 }
     particle.type = type or "default"
-
     table.insert(Mocks.ParticleSystem.particles, particle)
     return particle
   end,
-
   update = function(dt)
     local gravity = 200
-
     for i = #Mocks.ParticleSystem.particles, 1, -1 do
       local particle = Mocks.ParticleSystem.particles[i]
-
       -- Update position
       particle.x = particle.x + particle.vx * dt
       particle.y = particle.y + particle.vy * dt
-
       -- Apply gravity
       particle.vy = particle.vy + gravity * dt
-
       -- Apply drag
       particle.vx = particle.vx * 0.98
       particle.vy = particle.vy * 0.98
-
       -- Update lifetime
       particle.lifetime = particle.lifetime - dt
-
       -- Remove dead particles
       if particle.lifetime <= 0 then
         table.remove(Mocks.ParticleSystem.particles, i)
@@ -861,15 +811,12 @@ Mocks.ParticleSystem = {
       end
     end
   end,
-
   getParticles = function()
     return Mocks.ParticleSystem.particles
   end,
-
   get = function()
     return Mocks.ParticleSystem.particles
   end,
-
   clear = function()
     if Mocks.ParticleSystem.particlePool then
       for _, particle in ipairs(Mocks.ParticleSystem.particles) do
@@ -878,22 +825,18 @@ Mocks.ParticleSystem = {
     end
     Mocks.ParticleSystem.particles = {}
   end,
-
   getCount = function()
     return #Mocks.ParticleSystem.particles
   end,
-
   burst = function(x, y, count, color, speed, lifetime)
     count = count or 10
     speed = speed or 200
     lifetime = lifetime or 1
-
     for i = 1, count do
       local angle = (i / count) * math.pi * 2 + math.random() * 0.5
       local vel = speed * (0.5 + math.random() * 0.5)
       local vx = math.cos(angle) * vel
       local vy = math.sin(angle) * vel
-
       Mocks.ParticleSystem.create(
         x + math.random(-5, 5),
         y + math.random(-5, 5),
@@ -904,15 +847,12 @@ Mocks.ParticleSystem = {
       )
     end
   end,
-
   trail = function(x, y, vx, vy, color, count)
     count = count or 3
-
     for i = 1, count do
       local spread = 20
       local pvx = vx * -0.5 + math.random(-spread, spread)
       local pvy = vy * -0.5 + math.random(-spread, spread)
-
       Mocks.ParticleSystem.create(
         x + math.random(-5, 5),
         y + math.random(-5, 5),
@@ -923,7 +863,6 @@ Mocks.ParticleSystem = {
       )
     end
   end,
-
   sparkle = function(x, y, color)
     local count = 5
     for i = 1, count do
@@ -931,7 +870,6 @@ Mocks.ParticleSystem = {
       local speed = 50 + math.random() * 100
       local vx = math.cos(angle) * speed
       local vy = math.sin(angle) * speed
-
       Mocks.ParticleSystem.create(
         x, y,
         vx, vy,
@@ -943,7 +881,6 @@ Mocks.ParticleSystem = {
     end
   end
 }
-
 -- Mock Config module
 Mocks.Config = {
   mobile = {
@@ -976,19 +913,16 @@ Mocks.Config = {
     maxUpgradeLevel = 10
   }
 }
-
 -- Setup mock environment
 function Mocks.setup()
   -- Reset call tracker
   callTracker = {}
-  
   -- Load MockBuilder if available and initialize
   local success, MockBuilder = pcall(require, "tests.mock_builder")
   if success then
     MockBuilder.reset()
     _G.MockBuilder = MockBuilder
   end
-
   -- Replace global functions with mocks
   love = Mocks.love
   math.random = Mocks.math.random
@@ -1007,16 +941,13 @@ function Mocks.setup()
   os.date = Mocks.os.date
   os.time = Mocks.os.time
   io.open = Mocks.io.open
-
   -- Create mock love object if it doesn't exist
   if not love then
     love = Mocks.love
   end
-
   -- Set up global mocks
   _G.CosmicEvents = Mocks.CosmicEvents
   _G.ring_constellations = Mocks.ring_constellations
-  
   -- Initialize renderer with mock fonts if it exists
   local Utils = require("src.utils.utils")
   local success, Renderer = pcall(Utils.require, "src.core.renderer")
@@ -1037,7 +968,6 @@ function Mocks.setup()
   _G.WarpDrive = Mocks.WarpDrive
   _G.ErrorHandler = Mocks.ErrorHandler
   _G.mockGameState = Mocks.gameState
-
   -- Mock Utils functions
   local Utils = require("src.utils.utils")
   if Utils then
@@ -1045,19 +975,16 @@ function Mocks.setup()
     Utils.randomFloat = Mocks.utils.randomFloat
     Utils.setColor = Mocks.utils.setColor
     Utils.formatNumber = Mocks.utils.formatNumber
-
     -- Mock ObjectPool for particle system
     if not Utils.ObjectPool then
       Utils.ObjectPool = {}
     end
-
     Utils.ObjectPool.new = function(createFunc, resetFunc)
       local pool = {
         objects = {},
         createFunc = createFunc,
         resetFunc = resetFunc
       }
-
       function pool:get()
         if #self.objects > 0 then
           return table.remove(self.objects)
@@ -1065,35 +992,28 @@ function Mocks.setup()
           return self.createFunc()
         end
       end
-
       function pool:returnObject(obj)
         if self.resetFunc then
           self.resetFunc(obj)
         end
         table.insert(self.objects, obj)
       end
-
       -- Add aliases for backward compatibility
       function pool:acquire()
         return self:get()
       end
-
       function pool:release(obj)
         return self:returnObject(obj)
       end
-
       return pool
     end
-
     -- Mock Logger (force replace existing logger to ensure tracking works)
     Utils.Logger = {
         levels = {DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4},
         currentLevel = 2, -- INFO by default
-        
         -- Track outputs for testing
         outputs = {},
-        
-        init = function(level, filename) 
+        init = function(level, filename)
           callTracker.init = callTracker.init or 0
           callTracker.init = callTracker.init + 1
           Utils.Logger.currentLevel = level or 2
@@ -1102,7 +1022,6 @@ function Mocks.setup()
           end
           return true
         end,
-        
         log = function(level, message, ...)
           local levelName = level
           local levelNum = Utils.Logger.levels[levelName]
@@ -1115,70 +1034,61 @@ function Mocks.setup()
             end
           end
         end,
-        
         output = function(message)
           table.insert(Utils.Logger.outputs, message)
         end,
-        
         info = function(msg, ...)
           callTracker.info = callTracker.info or 0
           callTracker.info = callTracker.info + 1
           Utils.Logger.log("INFO", msg, ...)
         end,
-        
         warn = function(msg, ...)
           callTracker.warn = callTracker.warn or 0
           callTracker.warn = callTracker.warn + 1
           Utils.Logger.log("WARN", msg, ...)
         end,
-        
         error = function(msg, ...)
           callTracker.error = callTracker.error or 0
           callTracker.error = callTracker.error + 1
           Utils.Logger.log("ERROR", msg, ...)
         end,
-        
         debug = function(msg, ...)
           callTracker.debug = callTracker.debug or 0
           callTracker.debug = callTracker.debug + 1
           Utils.Logger.log("DEBUG", msg, ...)
         end,
-        
         close = function()
           callTracker.close = callTracker.close or 0
           callTracker.close = callTracker.close + 1
         end,
-        
         setLevel = function(level)
           callTracker.setLevel = callTracker.setLevel or 0
           callTracker.setLevel = callTracker.setLevel + 1
           Utils.Logger.currentLevel = level
         end
       }
-
     -- Mock ErrorHandler
     if not Utils.ErrorHandler then
       Utils.ErrorHandler = Mocks.ErrorHandler
     end
-    
     -- Mock MobileInput
     if not Utils.MobileInput then
       Utils.MobileInput = {
-        init = function() 
+        init = function()
           Mocks.trackCall("mobile_input_init")
         end,
         isMobile = function() return false end,
-        handleTouch = function(id, x, y, pressure) 
+        handleTouch = function(id, x, y, pressure)
           Mocks.trackCall("mobile_input_touch")
-          return true 
+          return true
         end,
-        handleTouchMove = function(id, x, y, pressure) 
+        handleTouchMove = function(id, x, y, pressure)
           Mocks.trackCall("mobile_input_touch_move")
-          return true 
+          return true
         end,
-        handleTouchRelease = function(id, x, y, pressure) 
+        handleTouchRelease = function(id, x, y, pressure)
           Mocks.trackCall("mobile_input_touch_release")
-          return true 
+          return true
         end,
         isEnabled = function() return false end,
         setEnabled = function(enabled) end
@@ -1186,31 +1096,25 @@ function Mocks.setup()
     end
   end
 end
-
 -- Get call count for a function
 function Mocks.getCallCount(functionName)
   return callTracker[functionName] or 0
 end
-
 -- Reset call tracker
 function Mocks.resetCallTracker()
   callTracker = {}
 end
-
 -- Reset mock state
 function Mocks.reset()
   -- Reset any mock state here
   Mocks.love.timer.getTime = function() return 0 end
   Mocks.love.mouse.getPosition = function() return 400, 300 end
   Mocks.resetCallTracker()
-
   -- Reset particle system
   Mocks.ParticleSystem.init()
-
   -- Reset artifact system
   Mocks.ArtifactSystem.init()
 end
-
 -- Mock game state for testing
 Mocks.gameState = {
   player = {
@@ -1230,7 +1134,6 @@ Mocks.gameState = {
     speedBoost = 1.0,
     hasShield = false
   },
-
   planets = {
     {
       x = 400,
@@ -1242,7 +1145,6 @@ Mocks.gameState = {
       gravityMultiplier = 1.0
     }
   },
-
   rings = {
     {
       x = 500,
@@ -1257,13 +1159,11 @@ Mocks.gameState = {
       type = "standard"
     }
   },
-
   particles = {},
   score = 0,
   combo = 0,
   comboTimer = 0
 }
-
 -- Mock progression data
 Mocks.progressionData = {
   totalScore = 1000,
@@ -1285,7 +1185,6 @@ Mocks.progressionData = {
     gravityResistance = 1
   }
 }
-
 -- Mock achievement data
 Mocks.achievementData = {
   first_planet = {
@@ -1309,7 +1208,6 @@ Mocks.achievementData = {
     target = 10
   }
 }
-
 -- Mock upgrade data
 Mocks.upgradeData = {
   jump_power = {
@@ -1335,7 +1233,6 @@ Mocks.upgradeData = {
     effect = function(level) return 1 + (level * 0.3) end
   }
 }
-
 -- Helper function to create mock objects
 function Mocks.createMock(properties)
   local mock = {}
@@ -1344,14 +1241,12 @@ function Mocks.createMock(properties)
   end
   return mock
 end
-
 -- Helper function to create mock function
 function Mocks.createMockFunction(returnValue)
   return function(...)
     return returnValue
   end
 end
-
 -- Helper function to create mock function with call tracking
 function Mocks.createTrackedMockFunction(returnValue)
   local calls = {}
@@ -1364,13 +1259,12 @@ function Mocks.createTrackedMockFunction(returnValue)
   mock.reset = function() calls = {} end
   return mock
 end
-
 -- Helper function to create a mock font
 function Mocks.mockFont(size)
   size = size or 16
   return {
-    getWidth = function(text) 
-      return string.len(tostring(text)) * (size * 0.6) 
+    getWidth = function(text)
+      return string.len(tostring(text)) * (size * 0.6)
     end,
     getHeight = function() return size end,
     getLineHeight = function() return size * 1.2 end,
@@ -1383,7 +1277,6 @@ function Mocks.mockFont(size)
       for word in string.gmatch(tostring(text), "%S+") do
         table.insert(words, word)
       end
-      
       local line = ""
       for _, word in ipairs(words) do
         local testLine = line == "" and word or (line .. " " .. word)
@@ -1397,7 +1290,6 @@ function Mocks.mockFont(size)
       if line ~= "" then
         table.insert(lines, line)
       end
-      
       return string.len(text) * (size * 0.6), lines
     end,
     hasGlyphs = function(...) return true end,
@@ -1406,7 +1298,6 @@ function Mocks.mockFont(size)
     setFilter = function(min, mag, anisotropy) end
   }
 end
-
 -- Helper function to create a mock audio source
 function Mocks.mockAudioSource()
   local source = {
@@ -1418,71 +1309,55 @@ function Mocks.mockAudioSource()
     _velocity = {0, 0, 0},
     _direction = {0, 0, 0}
   }
-  
   -- Mock the :new() method that some tests expect
   source.new = function(self, ...)
     return Mocks.mockAudioSource()
   end
-  
   source.play = function(self)
     callTracker.sourcePlay = callTracker.sourcePlay or 0
     callTracker.sourcePlay = callTracker.sourcePlay + 1
     self._isPlaying = true
   end
-  
   source.stop = function(self)
     callTracker.sourceStop = callTracker.sourceStop or 0
     callTracker.sourceStop = callTracker.sourceStop + 1
     self._isPlaying = false
   end
-  
   source.pause = function(self)
     callTracker.sourcePause = callTracker.sourcePause or 0
     callTracker.sourcePause = callTracker.sourcePause + 1
     self._isPlaying = false
   end
-  
   source.resume = function(self)
     callTracker.sourceResume = callTracker.sourceResume or 0
     callTracker.sourceResume = callTracker.sourceResume + 1
     self._isPlaying = true
   end
-  
   source.isPlaying = function(self) return self._isPlaying end
   source.isPaused = function(self) return not self._isPlaying end
   source.isStopped = function(self) return not self._isPlaying end
-  
   source.setVolume = function(self, volume) self._volume = volume end
   source.getVolume = function(self) return self._volume end
-  
   source.setPitch = function(self, pitch) self._pitch = pitch end
   source.getPitch = function(self) return self._pitch end
-  
   source.setLooping = function(self, looping) self._looping = looping end
   source.isLooping = function(self) return self._looping end
-  
   source.setPosition = function(self, x, y, z) self._position = {x, y or 0, z or 0} end
   source.getPosition = function(self) return unpack(self._position) end
-  
   source.setVelocity = function(self, x, y, z) self._velocity = {x, y or 0, z or 0} end
   source.getVelocity = function(self) return unpack(self._velocity) end
-  
   source.setDirection = function(self, x, y, z) self._direction = {x, y or 0, z or 0} end
   source.getDirection = function(self) return unpack(self._direction) end
-  
   source.clone = function(self)
     return Mocks.mockAudioSource()
   end
-  
   source.getDuration = function(self, unit) return 1.0 end
   source.getType = function(self) return "static" end
   source.getChannelCount = function(self) return 2 end
   source.getSampleRate = function(self) return 44100 end
   source.getBitDepth = function(self) return 16 end
-  
   return source
 end
-
 -- Helper function to create a mock image
 function Mocks.mockImage()
   return {
@@ -1501,7 +1376,6 @@ function Mocks.mockImage()
     getData = function() return "mock image data" end
   }
 end
-
 -- Helper function to create a mock canvas
 function Mocks.mockCanvas(width, height)
   local canvas = Mocks.mockImage()
@@ -1513,59 +1387,50 @@ function Mocks.mockCanvas(width, height)
   canvas.getMSAA = function() return 0 end
   return canvas
 end
-
 -- Track mock function usage
 function Mocks.trackCall(name, ...)
   callTracker[name] = callTracker[name] or 0
   callTracker[name] = callTracker[name] + 1
 end
-
 -- Reusable Mock Patterns
 Mocks.patterns = {}
-
 -- Pattern: Game System with init/update/reset
 function Mocks.patterns.gameSystem(systemName, customMethods)
   local system = {
-    init = function() 
+    init = function()
       Mocks.trackCall(systemName .. "_init")
     end,
-    update = function(dt) 
+    update = function(dt)
       Mocks.trackCall(systemName .. "_update")
     end,
-    reset = function() 
+    reset = function()
       Mocks.trackCall(systemName .. "_reset")
     end,
     isActive = function() return false end
   }
-  
   -- Add custom methods
   if customMethods then
     for name, func in pairs(customMethods) do
       system[name] = func
     end
   end
-  
   return system
 end
-
 -- Pattern: UI Component with show/hide/toggle
 function Mocks.patterns.uiComponent(componentName, initialVisible)
   return {
     visible = initialVisible or false,
     alpha = initialVisible and 1.0 or 0.0,
-    
     show = function(self)
       Mocks.trackCall(componentName .. "_show")
       self.visible = true
       self.alpha = 1.0
     end,
-    
     hide = function(self)
       Mocks.trackCall(componentName .. "_hide")
       self.visible = false
       self.alpha = 0.0
     end,
-    
     toggle = function(self)
       if self.visible then
         self:hide()
@@ -1573,7 +1438,6 @@ function Mocks.patterns.uiComponent(componentName, initialVisible)
         self:show()
       end
     end,
-    
     update = function(self, dt)
       -- Fade animation mock
       if self.visible and self.alpha < 1.0 then
@@ -1582,13 +1446,11 @@ function Mocks.patterns.uiComponent(componentName, initialVisible)
         self.alpha = math.max(0.0, self.alpha - dt * 2)
       end
     end,
-    
     draw = function(self)
       if self.alpha > 0 then
         Mocks.trackCall(componentName .. "_draw")
       end
     end,
-    
     handleInput = function(self, key)
       if self.visible then
         Mocks.trackCall(componentName .. "_input_" .. tostring(key))
@@ -1598,7 +1460,6 @@ function Mocks.patterns.uiComponent(componentName, initialVisible)
     end
   }
 end
-
 -- Pattern: Entity with position and movement
 function Mocks.patterns.entity(x, y, radius)
   return {
@@ -1608,43 +1469,36 @@ function Mocks.patterns.entity(x, y, radius)
     vy = 0,
     radius = radius or 10,
     active = true,
-    
     update = function(self, dt)
       if self.active then
         self.x = self.x + self.vx * dt
         self.y = self.y + self.vy * dt
       end
     end,
-    
     setPosition = function(self, x, y)
       self.x = x
       self.y = y
     end,
-    
     setVelocity = function(self, vx, vy)
       self.vx = vx
       self.vy = vy
     end,
-    
     distanceTo = function(self, other)
       local dx = other.x - self.x
       local dy = other.y - self.y
       return math.sqrt(dx * dx + dy * dy)
     end,
-    
     collidesWith = function(self, other)
       return self:distanceTo(other) < (self.radius + other.radius)
     end
   }
 end
-
 -- Pattern: Manager with items and CRUD operations
 function Mocks.patterns.manager(itemName)
   local manager = {
     items = {},
     nextId = 1
   }
-  
   manager.add = function(self, item)
     item.id = item.id or self.nextId
     self.nextId = self.nextId + 1
@@ -1652,7 +1506,6 @@ function Mocks.patterns.manager(itemName)
     Mocks.trackCall(itemName .. "_manager_add")
     return item
   end
-  
   manager.remove = function(self, id)
     for i, item in ipairs(self.items) do
       if item.id == id then
@@ -1663,7 +1516,6 @@ function Mocks.patterns.manager(itemName)
     end
     return nil
   end
-  
   manager.get = function(self, id)
     for _, item in ipairs(self.items) do
       if item.id == id then
@@ -1672,21 +1524,17 @@ function Mocks.patterns.manager(itemName)
     end
     return nil
   end
-  
   manager.getAll = function(self)
     return self.items
   end
-  
   manager.clear = function(self)
     self.items = {}
     self.nextId = 1
     Mocks.trackCall(itemName .. "_manager_clear")
   end
-  
   manager.count = function(self)
     return #self.items
   end
-  
   manager.update = function(self, dt)
     for _, item in ipairs(self.items) do
       if item.update then
@@ -1694,37 +1542,30 @@ function Mocks.patterns.manager(itemName)
       end
     end
   end
-  
   return manager
 end
-
 -- Pattern: Resource with loading/saving
 function Mocks.patterns.resource(resourceName)
   return {
     loaded = false,
     data = nil,
-    
     load = function(self, path)
       Mocks.trackCall(resourceName .. "_load")
       self.loaded = true
       self.data = "mock_" .. resourceName .. "_data"
       return true
     end,
-    
     save = function(self, path, data)
       Mocks.trackCall(resourceName .. "_save")
       self.data = data
       return true
     end,
-    
     isLoaded = function(self)
       return self.loaded
     end,
-    
     getData = function(self)
       return self.data
     end,
-    
     unload = function(self)
       Mocks.trackCall(resourceName .. "_unload")
       self.loaded = false
@@ -1732,11 +1573,9 @@ function Mocks.patterns.resource(resourceName)
     end
   }
 end
-
 -- Add mock state reset function
 function Mocks.resetState()
   callTracker = {}
-  
   -- Reset graphics state
   if Mocks.love.graphics._state then
     Mocks.love.graphics._state = {
@@ -1748,13 +1587,11 @@ function Mocks.resetState()
       currentTransform = {x = 0, y = 0, rotation = 0, scaleX = 1, scaleY = 1}
     }
   end
-  
   -- Reset timer state
   if Mocks.love.timer then
     Mocks.love.timer._time = 0
     Mocks.love.timer._delta = 1 / 60
   end
-  
   -- Reset input state
   if Mocks.love.mouse then
     Mocks.love.mouse._pressed = {}
@@ -1764,11 +1601,9 @@ function Mocks.resetState()
     Mocks.love.keyboard._pressed = {}
     Mocks.love.keyboard._released = {}
   end
-  
   -- Reset MockBuilder if available
   if _G.MockBuilder then
     _G.MockBuilder.reset()
   end
 end
-
 return Mocks

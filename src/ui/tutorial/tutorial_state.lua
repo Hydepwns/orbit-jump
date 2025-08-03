@@ -1,11 +1,8 @@
 --[[
     Tutorial State Management for Orbit Jump
-    
     This module handles tutorial state, progression tracking, and skill development.
 --]]
-
 local TutorialState = {}
-
 -- Tutorial state
 TutorialState.isActive = false
 TutorialState.currentModule = nil
@@ -16,7 +13,6 @@ TutorialState.fadeAlpha = 0
 TutorialState.pulsePhase = 0
 TutorialState.contextualHints = {}
 TutorialState.skillProgression = {}
-
 -- Initialize tutorial state
 function TutorialState.init()
     TutorialState.isActive = false
@@ -28,31 +24,25 @@ function TutorialState.init()
     TutorialState.pulsePhase = 0
     TutorialState.contextualHints = {}
     TutorialState.skillProgression = {}
-    
     -- Load saved progress
     TutorialState.loadProgress()
 end
-
 -- Start a tutorial module
 function TutorialState.startModule(moduleId, modules)
     if not modules or not modules[moduleId] then
         return false
     end
-    
     TutorialState.currentModule = modules[moduleId]
     TutorialState.currentStep = 1
     TutorialState.stepTimer = 0
     TutorialState.isActive = true
     TutorialState.fadeAlpha = 0
-    
     return true
 end
-
 -- Check if a module is completed
 function TutorialState.isModuleCompleted(moduleId)
     return TutorialState.completedModules[moduleId] == true
 end
-
 -- Progress a skill
 function TutorialState.progressSkill(skillName, xpGain)
     if not TutorialState.skillProgression[skillName] then
@@ -62,42 +52,34 @@ function TutorialState.progressSkill(skillName, xpGain)
             maxXp = 100
         }
     end
-    
     local skill = TutorialState.skillProgression[skillName]
     skill.xp = skill.xp + xpGain
-    
     -- Level up if enough XP
     while skill.xp >= skill.maxXp do
         skill.xp = skill.xp - skill.maxXp
         skill.level = skill.level + 1
         skill.maxXp = skill.maxXp + 50 -- Increase XP requirement for next level
     end
-    
     return skill.level
 end
-
 -- Update tutorial state
 function TutorialState.update(dt, player, gameState, modules)
     if not TutorialState.isActive or not TutorialState.currentModule then
         return
     end
-    
     -- Update animation timers
     TutorialState.stepTimer = TutorialState.stepTimer + dt
     TutorialState.pulsePhase = TutorialState.pulsePhase + dt * 2
-    
     -- Fade in effect
     if TutorialState.fadeAlpha < 1 then
         TutorialState.fadeAlpha = math.min(1, TutorialState.fadeAlpha + dt * 2)
     end
-    
     -- Get current step
     local step = TutorialState.currentModule.steps[TutorialState.currentStep]
     if not step then
         TutorialState.completeCurrentModule()
         return
     end
-    
     -- Check step condition
     if step.condition then
         local conditionMet = step.condition(player, gameState)
@@ -114,13 +96,11 @@ function TutorialState.update(dt, player, gameState, modules)
         end
     end
 end
-
 -- Check for contextual help
 function TutorialState.checkContextualHelp(dt, gameState, player, contextualHelp)
     if not contextualHelp then
         return
     end
-    
     -- Update existing hints
     for hintId, hint in pairs(TutorialState.contextualHints) do
         hint.timer = hint.timer + dt
@@ -128,7 +108,6 @@ function TutorialState.checkContextualHelp(dt, gameState, player, contextualHelp
             TutorialState.contextualHints[hintId] = nil
         end
     end
-    
     -- Check for new hints
     for hintId, hint in pairs(contextualHelp) do
         if hint.condition and hint.condition(player, gameState) then
@@ -143,7 +122,6 @@ function TutorialState.checkContextualHelp(dt, gameState, player, contextualHelp
         end
     end
 end
-
 -- Show contextual hint
 function TutorialState.showContextualHint(hintId, helpData)
     if helpData then
@@ -155,33 +133,27 @@ function TutorialState.showContextualHint(hintId, helpData)
         }
     end
 end
-
 -- Handle player actions
 function TutorialState.onPlayerAction(action, data, modules)
     if not TutorialState.isActive or not TutorialState.currentModule then
         return false
     end
-    
     local step = TutorialState.currentModule.steps[TutorialState.currentStep]
     if not step then
         return false
     end
-    
     -- Check if this action matches the current step
     if step.action == action then
         -- Award XP for completing the action
         if step.xpReward then
             TutorialState.progressSkill(step.skill or "general", step.xpReward)
         end
-        
         -- Move to next step
         TutorialState.nextStep()
         return true
     end
-    
     return false
 end
-
 -- Handle skill progression
 function TutorialState.handleSkillProgression(action, data)
     local skillGains = {
@@ -190,55 +162,43 @@ function TutorialState.handleSkillProgression(action, data)
         land = { skill = "precision", xp = 20 },
         gravity_assist = { skill = "timing", xp = 25 }
     }
-    
     local gain = skillGains[action]
     if gain then
         return TutorialState.progressSkill(gain.skill, gain.xp)
     end
-    
     return 0
 end
-
 -- Move to next step
 function TutorialState.nextStep()
     if not TutorialState.currentModule then
         return
     end
-    
     TutorialState.currentStep = TutorialState.currentStep + 1
     TutorialState.stepTimer = 0
-    
     -- Check if module is complete
     if TutorialState.currentStep > #TutorialState.currentModule.steps then
         TutorialState.completeCurrentModule()
     end
 end
-
 -- Complete current module
 function TutorialState.completeCurrentModule()
     if not TutorialState.currentModule then
         return
     end
-    
     local moduleId = TutorialState.currentModule.id
     TutorialState.completedModules[moduleId] = true
-    
     -- Award completion XP
     TutorialState.progressSkill("general", 50)
-    
     -- Save progress
     TutorialState.saveProgress()
-    
     -- Check for next available module
     TutorialState.checkForNextModule()
 end
-
 -- Check for next available module
 function TutorialState.checkForNextModule()
     -- This will be implemented by the main tutorial system
     -- to check for available modules and potentially auto-start them
 end
-
 -- Show module available notification
 function TutorialState.showModuleAvailable(moduleId)
     -- This can be used to show notifications when new modules become available
@@ -248,7 +208,6 @@ function TutorialState.showModuleAvailable(moduleId)
         duration = 5
     })
 end
-
 -- Get current state
 function TutorialState.getCurrentState()
     return {
@@ -263,7 +222,6 @@ function TutorialState.getCurrentState()
         skillProgression = TutorialState.skillProgression
     }
 end
-
 -- Set current state
 function TutorialState.setState(state)
     if state then
@@ -278,14 +236,12 @@ function TutorialState.setState(state)
         TutorialState.skillProgression = state.skillProgression or {}
     end
 end
-
 -- Save progress
 function TutorialState.saveProgress()
     local saveData = {
         completedModules = TutorialState.completedModules,
         skillProgression = TutorialState.skillProgression
     }
-    
     -- Use the serialization module if available
     local Serialization = require("src.utils.data.serialization")
     if Serialization then
@@ -293,12 +249,10 @@ function TutorialState.saveProgress()
         love.filesystem.write("enhanced_tutorial_progress.dat", serialized)
     end
 end
-
 -- Load progress
 function TutorialState.loadProgress()
     if love.filesystem.getInfo("enhanced_tutorial_progress.dat") then
         local data = love.filesystem.read("enhanced_tutorial_progress.dat")
-        
         -- Use the serialization module if available
         local Serialization = require("src.utils.data.serialization")
         if Serialization then
@@ -310,7 +264,6 @@ function TutorialState.loadProgress()
         end
     end
 end
-
 -- Handle key press
 function TutorialState.handleKeyPress(key, modules)
     if key == "t" and not TutorialState.isActive then
@@ -324,37 +277,29 @@ function TutorialState.handleKeyPress(key, modules)
             end
         end
     end
-    
     if TutorialState.isActive and key == "escape" then
         TutorialState.isActive = false
         return true
     end
-    
     return false
 end
-
 -- Integration helpers
 function TutorialState.isAnyTutorialActive()
     return TutorialState.isActive
 end
-
 function TutorialState.getAllCompletedModules()
     return TutorialState.completedModules
 end
-
 function TutorialState.getSkillLevel(skillName)
     local skill = TutorialState.skillProgression[skillName]
     return skill and skill.level or 0
 end
-
 function TutorialState.getSkillXP(skillName)
     local skill = TutorialState.skillProgression[skillName]
     return skill and skill.xp or 0
 end
-
 function TutorialState.getSkillMaxXP(skillName)
     local skill = TutorialState.skillProgression[skillName]
     return skill and skill.maxXp or 100
 end
-
-return TutorialState 
+return TutorialState

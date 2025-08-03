@@ -2,58 +2,46 @@
     ═══════════════════════════════════════════════════════════════════════════
     Renderer: Zero-Allocation Visual Excellence
     ═══════════════════════════════════════════════════════════════════════════
-    
     This renderer achieves 101% performance through pre-computation and
     intelligent caching. Instead of calculating star positions every frame,
     we pre-compute entire star fields and use efficient lookup patterns.
-    
     Performance Philosophy:
     • Pre-compute everything possible at initialization
     • Cache frequently accessed calculations
     • Use batch rendering operations
     • Eliminate temporary allocations in draw loops
 --]]
-
 local Utils = require("src.utils.utils")
 local Camera = Utils.require("src.core.camera")
 local Renderer = {}
-
 -- Font cache
 Renderer.fonts = {}
-
 -- Zero-Allocation Star Field System: Pre-computed for smooth scrolling
 local starFieldCache = {
     layer1 = {},  -- Distant stars (175 stars, 0.1x parallax)
-    layer2 = {},  -- Medium stars (50 stars, 0.3x parallax)  
+    layer2 = {},  -- Medium stars (50 stars, 0.3x parallax)
     layer3 = {},  -- Close stars (25 stars, 0.5x parallax)
     initialized = false
 }
-
 -- Pre-allocated temporary variables for drawing calculations
 local temp_camX, temp_camY = 0, 0
 local temp_screenWidth, temp_screenHeight = 800, 600
 local temp_starX, temp_starY = 0, 0
-
 function Renderer.init(fonts)
     Renderer.fonts = fonts
-    
     -- Initialize zero-allocation star field system
     if not starFieldCache.initialized then
         Renderer.initializeStarField()
     end
 end
-
 function Renderer.initializeStarField()
     --[[
         Pre-Compute Star Field: Calculate Once, Draw Forever
-        
         This function runs once during initialization to create all star
         positions. The result is silky smooth star field scrolling with
         zero runtime allocation or redundant calculations.
     --]]
-    
     Utils.Logger.info("🌟 Initializing zero-allocation star field system...")
-    
     -- Layer 1: Distant stars (slowest parallax, most stars)
     for i = 1, 100 do
         starFieldCache.layer1[i] = {
@@ -65,7 +53,6 @@ function Renderer.initializeStarField()
             wrapSize = 2000
         }
     end
-    
     -- Layer 2: Medium stars (medium parallax)
     for i = 1, 50 do
         starFieldCache.layer2[i] = {
@@ -77,7 +64,6 @@ function Renderer.initializeStarField()
             wrapSize = 1500
         }
     end
-    
     -- Layer 3: Close stars (fastest parallax, largest)
     for i = 1, 25 do
         starFieldCache.layer3[i] = {
@@ -89,76 +75,60 @@ function Renderer.initializeStarField()
             wrapSize = 1000
         }
     end
-    
     starFieldCache.initialized = true
     Utils.Logger.info("✨ Star field cache ready: 175 stars pre-computed for zero-allocation rendering")
 end
-
 function Renderer.drawBackground()
     --[[
         Zero-Allocation Star Field Rendering: Infinite Space, Zero Garbage
-        
         This function renders a beautiful parallax star field without allocating
         a single temporary variable. By using pre-computed star data and reusable
         module-level variables, we achieve smooth scrolling at 60fps.
-        
         Performance Breakthrough:
         • 175 stars rendered per frame
         • 0 temporary allocations (was 525+ allocations per frame)
         • Pre-computed star positions (calculated once, used forever)
         • Efficient culling (only draw visible stars)
-        
         The old version: 3 loops × 175 stars × 3 local vars = 1575 allocations/frame
         This version: 0 allocations/frame
     --]]
-    
     -- Reuse pre-allocated temporary variables (zero allocation)
     temp_camX, temp_camY = 0, 0
     if Renderer.camera then
         temp_camX, temp_camY = Renderer.camera.x, Renderer.camera.y
     end
-    
     temp_screenWidth = love.graphics.getWidth()
     temp_screenHeight = love.graphics.getHeight()
     local halfScreenWidth = temp_screenWidth * 0.5
     local halfScreenHeight = temp_screenHeight * 0.5
-    
     -- Render each star layer using pre-computed data
     Renderer.drawStarLayer(starFieldCache.layer1, temp_camX, temp_camY, halfScreenWidth, halfScreenHeight)
     Renderer.drawStarLayer(starFieldCache.layer2, temp_camX, temp_camY, halfScreenWidth, halfScreenHeight)
     Renderer.drawStarLayer(starFieldCache.layer3, temp_camX, temp_camY, halfScreenWidth, halfScreenHeight)
 end
-
 function Renderer.drawStarLayer(starLayer, camX, camY, halfScreenWidth, halfScreenHeight)
     --[[
         Single Star Layer Renderer: Optimized for batch processing
-        
         Renders one layer of the parallax star field with intelligent culling
         and zero temporary allocations. Each star's position is calculated
         using pre-computed base positions and real-time parallax offsets.
     --]]
-    
     for i = 1, #starLayer do
         local star = starLayer[i]
-        
         -- Calculate parallax-adjusted position using pre-allocated variables
         temp_starX = star.baseX - (camX * star.parallaxFactor) % star.wrapSize
         temp_starY = star.baseY - (camY * star.parallaxFactor) % star.wrapSize
-        
         -- Apply screen wrapping
         temp_starX = ((temp_starX + star.wrapSize * 0.5) % star.wrapSize) - star.wrapSize * 0.5 + halfScreenWidth
         temp_starY = ((temp_starY + star.wrapSize * 0.5) % star.wrapSize) - star.wrapSize * 0.5 + halfScreenHeight
-        
         -- Efficient culling: only draw visible stars
         if temp_starX > -10 and temp_starX < temp_screenWidth + 10 and
            temp_starY > -10 and temp_starY < temp_screenHeight + 10 then
-            
             Utils.setColor(Utils.colors.white, star.alpha)
             love.graphics.circle("fill", temp_starX, temp_starY, star.size)
         end
     end
 end
-
 function Renderer.drawPlayer(player, isDashing)
     -- Draw shield effect if active
     if player.hasShield then
@@ -169,7 +139,6 @@ function Renderer.drawPlayer(player, isDashing)
         love.graphics.setLineWidth(2)
         love.graphics.circle("line", player.x, player.y, player.radius * 2 * shieldPulse)
     end
-    
     -- Draw player
     if isDashing then
         Utils.drawCircle(player.x, player.y, player.radius * 1.2, Utils.colors.playerDashing)
@@ -177,7 +146,6 @@ function Renderer.drawPlayer(player, isDashing)
         Utils.drawCircle(player.x, player.y, player.radius, Utils.colors.player)
     end
 end
-
 function Renderer.drawPlayerTrail(trail)
     for i, point in ipairs(trail) do
         if point.isDashing then
@@ -189,24 +157,20 @@ function Renderer.drawPlayerTrail(trail)
         end
     end
 end
-
 function Renderer.drawDashCooldown(player, cooldown, maxCooldown)
     if cooldown > 0 and not player.onPlanet then
         Utils.setColor(Utils.colors.gray, 0.5)
-        love.graphics.arc("line", "open", player.x, player.y, player.radius + 5, 
+        love.graphics.arc("line", "open", player.x, player.y, player.radius + 5,
             0, math.pi * 2 * (1 - cooldown / maxCooldown))
     end
 end
-
 function Renderer.drawPlanets(planets)
     -- Try to use texture atlas for optimized rendering
     local PerformanceSystem = Utils.require("src.performance.performance_system")
     local useAtlas = PerformanceSystem and PerformanceSystem.textureAtlas
-    
     for i, planet in ipairs(planets) do
         -- Use planet's own color or default
         local planetColor = planet.color or Utils.colors["planet" .. i] or Utils.colors.planet1
-        
         -- Try to use texture atlas first
         if useAtlas then
             local spriteName = "planet_" .. (planet.radius > 60 and "large" or planet.radius > 40 and "medium" or "small")
@@ -215,7 +179,6 @@ function Renderer.drawPlanets(planets)
                 goto continue
             end
         end
-        
         -- Fallback to original rendering
         -- Different appearance for discovered vs undiscovered planets
         if planet.discovered then
@@ -224,14 +187,11 @@ function Renderer.drawPlanets(planets)
             -- Undiscovered planets are slightly dimmer but still visible
             local dimColor = {planetColor[1] * 0.7, planetColor[2] * 0.7, planetColor[3] * 0.7}
             Utils.drawCircle(planet.x, planet.y, planet.radius, dimColor)
-            
             -- Add mysterious glow that's more visible
             Utils.setColor(Utils.colors.white, 0.3)
             love.graphics.circle("line", planet.x, planet.y, planet.radius + 5)
         end
-        
         ::continue::
-        
         -- Draw rotation indicator
         if planet.rotationSpeed then
             Utils.setColor(Utils.colors.white, 0.3)
@@ -241,7 +201,6 @@ function Renderer.drawPlanets(planets)
             local iy = planet.y + math.sin(indicatorAngle) * planet.radius * 0.8
             love.graphics.line(planet.x, planet.y, ix, iy)
         end
-        
         -- Planet type indicator (only show for high LOD)
         if planet.type and planet.discovered and (not planet.lodLevel or planet.lodLevel == "high") then
             love.graphics.setFont((Renderer.fonts and Renderer.fonts.light) or love.graphics.getFont())
@@ -265,7 +224,6 @@ function Renderer.drawPlanets(planets)
                 local b = 0.5 + math.sin(time * 2 + 4) * 0.5
                 Utils.setColor({r, g, b}, 0.9)
                 love.graphics.print("QUANTUM", planet.x - 25, planet.y - 10)
-                
                 -- Draw quantum distortion effect
                 love.graphics.setLineWidth(2)
                 for i = 1, 3 do
@@ -278,16 +236,13 @@ function Renderer.drawPlanets(planets)
         end
     end
 end
-
 function Renderer.drawRings(rings)
     local RingSystem = Utils.require("src.systems.ring_system")
     local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
-    
     for _, ring in ipairs(rings) do
         if not ring.collected and (ring.visible == nil or ring.visible) then
             local pulse = math.sin(ring.pulsePhase) * 0.1 + 1
             local alpha = ring.color[4] or 0.8
-            
             -- Special visual effects for different ring types
             if ring.type == "power_shield" then
                 -- Shield rings have a protective aura
@@ -335,60 +290,50 @@ function Renderer.drawRings(rings)
                     love.graphics.printf(tostring(ring.chainNumber), ring.x - 10, ring.y - 8, 20, "center")
                 end
             end
-            
             -- Draw the main ring
             Utils.setColor(ring.color, alpha)
             love.graphics.setLineWidth(3)
-            
             -- Draw rotating ring segments
             local segments = 8
             for i = 1, segments do
                 local angle1 = (i-1) / segments * math.pi * 2 + ring.rotation
                 local angle2 = i / segments * math.pi * 2 + ring.rotation
                 local gap = 0.1
-                
-                love.graphics.arc("line", "open", ring.x, ring.y, ring.radius * pulse, 
+                love.graphics.arc("line", "open", ring.x, ring.y, ring.radius * pulse,
                     angle1 + gap, angle2 - gap)
-                love.graphics.arc("line", "open", ring.x, ring.y, ring.innerRadius * pulse, 
+                love.graphics.arc("line", "open", ring.x, ring.y, ring.innerRadius * pulse,
                     angle1 + gap, angle2 - gap)
             end
-            
             -- Special inner glow for warp rings
             if ring.type == "warp" then
                 Utils.setColor({ring.color[1], ring.color[2], ring.color[3]}, alpha * 0.6)
                 love.graphics.circle("fill", ring.x, ring.y, ring.innerRadius * 0.8 * pulse)
             end
-            
             -- ADDICTION ENGINE: Draw rarity-specific effects
             if RingRaritySystem and ring.rarity then
                 RingRaritySystem.drawRing(ring, {worldToScreen = function(x, y) return x, y end})
             end
         end
     end
-    
     -- Draw active power indicators
     local screenHeight = love.graphics.getHeight()
     local indicatorY = screenHeight - 100
     local indicatorX = 10
-    
     if RingSystem.isActive("shield") then
         Utils.setColor({0.2, 1, 0.2}, 0.8)
         love.graphics.print("SHIELD ACTIVE", indicatorX, indicatorY)
         indicatorY = indicatorY - 25
     end
-    
     if RingSystem.isActive("magnet") then
         Utils.setColor({1, 0.2, 1}, 0.8)
         love.graphics.print("MAGNET ACTIVE", indicatorX, indicatorY)
         indicatorY = indicatorY - 25
     end
-    
     if RingSystem.isActive("slowmo") then
         Utils.setColor({0.2, 0.8, 1}, 0.8)
         love.graphics.print("SLOWMO ACTIVE", indicatorX, indicatorY)
         indicatorY = indicatorY - 25
     end
-    
     if RingSystem.isActive("multijump") then
         local GameState = Utils.require("src.core.game_state")
         local player = GameState.player
@@ -399,16 +344,14 @@ function Renderer.drawRings(rings)
         end
     end
 end
-
 function Renderer.drawParticles(particles)
     if #particles == 0 then return end
-    
     -- Group particles by color for batching
     local particleGroups = {}
     for _, p in ipairs(particles) do
-        local colorKey = string.format("%.2f,%.2f,%.2f", 
-            p.color[1] or 1, 
-            p.color[2] or 1, 
+        local colorKey = string.format("%.2f,%.2f,%.2f",
+            p.color[1] or 1,
+            p.color[2] or 1,
             p.color[3] or 1
         )
         if not particleGroups[colorKey] then
@@ -416,13 +359,11 @@ function Renderer.drawParticles(particles)
         end
         table.insert(particleGroups[colorKey], p)
     end
-    
     -- Draw each group with its color (reduces state changes)
     for colorKey, group in pairs(particleGroups) do
         -- Parse color from key
         local r, g, b = colorKey:match("([^,]+),([^,]+),([^,]+)")
         r, g, b = tonumber(r), tonumber(g), tonumber(b)
-        
         -- Draw all particles of this color together
         for _, p in ipairs(group) do
             local alpha = p.lifetime / p.maxLifetime
@@ -431,31 +372,25 @@ function Renderer.drawParticles(particles)
         end
     end
 end
-
 function Renderer.drawPullIndicator(player, mouseX, mouseY, mouseStartX, mouseStartY, pullPower, maxPullDistance)
     if not player.onPlanet then return end
-    
     -- Only draw if there's pull power
     if pullPower > 0 then
         -- Draw pull line (from player to mouse)
         Utils.setColor(Utils.colors.white, 0.5)
         love.graphics.setLineWidth(3)
         love.graphics.line(player.x, player.y, mouseX, mouseY)
-    
         -- Power indicator at mouse position
         local powerPercent = pullPower / maxPullDistance
         Utils.setColor(Utils.colors.red, powerPercent)
         love.graphics.circle("fill", mouseX, mouseY, 5 + powerPercent * 10)
-        
         -- Draw jump direction indicator (opposite of pull)
         local swipeX = mouseX - mouseStartX
         local swipeY = mouseY - mouseStartY
         local swipeDistance = Utils.vectorLength(swipeX, swipeY)
-        
         if swipeDistance > 0 then
             local jumpDirectionX = -swipeX / swipeDistance
             local jumpDirectionY = -swipeY / swipeDistance
-            
             -- Draw jump direction arrow
             Utils.setColor(Utils.colors.green, 0.8)
             love.graphics.setLineWidth(4)
@@ -463,25 +398,22 @@ function Renderer.drawPullIndicator(player, mouseX, mouseY, mouseStartX, mouseSt
             local arrowEndX = player.x + jumpDirectionX * arrowLength
             local arrowEndY = player.y + jumpDirectionY * arrowLength
             love.graphics.line(player.x, player.y, arrowEndX, arrowEndY)
-            
             -- Draw arrowhead
             local arrowheadSize = 8
             local perpX = -jumpDirectionY
             local perpY = jumpDirectionX
-            love.graphics.line(arrowEndX, arrowEndY, 
+            love.graphics.line(arrowEndX, arrowEndY,
                 arrowEndX - jumpDirectionX * arrowheadSize + perpX * arrowheadSize * 0.5,
                 arrowEndY - jumpDirectionY * arrowheadSize + perpY * arrowheadSize * 0.5)
-            love.graphics.line(arrowEndX, arrowEndY, 
+            love.graphics.line(arrowEndX, arrowEndY,
                 arrowEndX - jumpDirectionX * arrowheadSize - perpX * arrowheadSize * 0.5,
                 arrowEndY - jumpDirectionY * arrowheadSize - perpY * arrowheadSize * 0.5)
         end
     end
 end
-
 -- Mobile on-screen controls
 function Renderer.drawMobileControls(player, fonts)
     if not player then return end
-    
     -- Safety check for fonts
     if not fonts then
         fonts = {
@@ -491,155 +423,122 @@ function Renderer.drawMobileControls(player, fonts)
             extraBold = love.graphics.getFont()
         }
     end
-    
     local isMobile = Utils.MobileInput.isMobile()
-    
     if not isMobile then return end
-    
     local screenWidth, screenHeight = love.graphics.getDimensions()
-    
     -- Draw dash button (bottom right)
     local dashBtnSize = 80
     local dashBtnX = screenWidth - dashBtnSize - 20
     local dashBtnY = screenHeight - dashBtnSize - 20
-    
     -- Check if dash is available
     local canDash = player.onPlanet == nil and player.dashCooldown <= 0 and not player.isDashing
     local dashAlpha = canDash and 0.8 or 0.3
-    
     Utils.setColor(Utils.colors.dash, dashAlpha)
     love.graphics.circle("fill", dashBtnX + dashBtnSize/2, dashBtnY + dashBtnSize/2, dashBtnSize/2)
-    
     -- Draw dash icon
     Utils.setColor(Utils.colors.white, dashAlpha)
     love.graphics.setFont(fonts.bold)
     love.graphics.printf("DASH", dashBtnX, dashBtnY + dashBtnSize/2 - 10, dashBtnSize, "center")
-    
     -- Draw cooldown indicator
     if player.dashCooldown > 0 then
         local cooldownPercent = player.dashCooldown / 1.0
         Utils.setColor(Utils.colors.red, 0.5)
-        love.graphics.arc("fill", dashBtnX + dashBtnSize/2, dashBtnY + dashBtnSize/2, 
+        love.graphics.arc("fill", dashBtnX + dashBtnSize/2, dashBtnY + dashBtnSize/2,
                          dashBtnSize/2, -math.pi/2, -math.pi/2 + cooldownPercent * 2 * math.pi)
     end
-    
     -- Draw pause button (top right)
     local pauseBtnSize = 50
     local pauseBtnX = screenWidth - pauseBtnSize - 20
     local pauseBtnY = 20
-    
     Utils.setColor(Utils.colors.white, 0.6)
     love.graphics.rectangle("fill", pauseBtnX, pauseBtnY, pauseBtnSize, pauseBtnSize, 5)
-    
     -- Draw pause icon
     Utils.setColor(Utils.colors.text, 0.8)
     love.graphics.setFont(fonts.bold)
     love.graphics.printf("II", pauseBtnX, pauseBtnY + pauseBtnSize/2 - 10, pauseBtnSize, "center")
-    
     -- Draw touch area indicator when on planet
     if player.onPlanet then
         Utils.setColor(Utils.colors.white, 0.1)
         love.graphics.circle("fill", player.x, player.y, 100)
         Utils.setColor(Utils.colors.white, 0.3)
         love.graphics.circle("line", player.x, player.y, 100)
-        
         -- Draw swipe hint
         Utils.setColor(Utils.colors.white, 0.5)
         love.graphics.setFont(fonts.light)
         love.graphics.printf("Swipe to jump", player.x - 50, player.y + 120, 100, "center")
     end
 end
-
 -- Enhanced pull indicator for mobile
 function Renderer.drawMobilePullIndicator(player, mouseX, mouseY, mouseStartX, mouseStartY, pullPower, maxPullDistance)
     if not player.onPlanet then return end
-    
     -- Utils is already available from the top of the file
     local isMobile = Utils.MobileInput.isMobile()
-    
     if not isMobile then
         -- Use original pull indicator for desktop
         Renderer.drawPullIndicator(player, mouseX, mouseY, mouseStartX, mouseStartY, pullPower, maxPullDistance)
         return
     end
-    
     -- Enhanced mobile pull indicator
     local powerPercent = pullPower / maxPullDistance
-    
     -- Draw power ring around player
     Utils.setColor(Utils.colors.white, 0.3)
     love.graphics.circle("line", player.x, player.y, 50 + powerPercent * 50)
-    
     -- Draw power meter
     local meterWidth = 200
     local meterHeight = 20
     local meterX = (love.graphics.getWidth() - meterWidth) / 2
     local meterY = love.graphics.getHeight() - 100
-    
     -- Background
     Utils.setColor(Utils.colors.white, 0.2)
     love.graphics.rectangle("fill", meterX, meterY, meterWidth, meterHeight, 10)
-    
     -- Power fill
     Utils.setColor(Utils.colors.green, 0.8)
     love.graphics.rectangle("fill", meterX, meterY, meterWidth * powerPercent, meterHeight, 10)
-    
     -- Border
     Utils.setColor(Utils.colors.white, 0.5)
     love.graphics.rectangle("line", meterX, meterY, meterWidth, meterHeight, 10)
-    
     -- Power text
     love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
     Utils.setColor(Utils.colors.white, 0.8)
-    love.graphics.printf("POWER: " .. math.floor(powerPercent * 100) .. "%", 
+    love.graphics.printf("POWER: " .. math.floor(powerPercent * 100) .. "%",
                         meterX, meterY - 25, meterWidth, "center")
-    
     -- Draw direction arrow
     if pullPower > 0 then
         local swipeX = mouseX - mouseStartX
         local swipeY = mouseY - mouseStartY
         local swipeDistance = Utils.vectorLength(swipeX, swipeY)
-        
         if swipeDistance > 0 then
             local jumpDirectionX = -swipeX / swipeDistance
             local jumpDirectionY = -swipeY / swipeDistance
-            
             -- Calculate arrow properties
             local arrowLength = 40 + powerPercent * 30
             local arrowEndX = player.x + jumpDirectionX * arrowLength
             local arrowEndY = player.y + jumpDirectionY * arrowLength
             local lineWidth = 6
             local arrowheadSize = 12
-            
             -- Draw arrow shaft
             Utils.setColor(Utils.colors.green, 0.8)
             love.graphics.setLineWidth(lineWidth)
             love.graphics.setLineJoin("round")
             love.graphics.setLineCap("round")
             love.graphics.line(player.x, player.y, arrowEndX, arrowEndY)
-            
             -- Calculate arrowhead points for a proper triangle
             local perpX = -jumpDirectionY
             local perpY = jumpDirectionX
-            
             -- Arrowhead base (where it connects to the shaft)
             local arrowheadBaseX = arrowEndX - jumpDirectionX * (arrowheadSize * 0.3)
             local arrowheadBaseY = arrowEndY - jumpDirectionY * (arrowheadSize * 0.3)
-            
             -- Arrowhead side points
             local arrowheadLeftX = arrowheadBaseX + perpX * arrowheadSize * 0.6
             local arrowheadLeftY = arrowheadBaseY + perpY * arrowheadSize * 0.6
             local arrowheadRightX = arrowheadBaseX - perpX * arrowheadSize * 0.6
             local arrowheadRightY = arrowheadBaseY - perpY * arrowheadSize * 0.6
-            
             -- Draw arrowhead as a filled triangle
             love.graphics.setLineWidth(1)
             love.graphics.polygon("fill", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
-            
             -- Draw arrowhead outline to match shaft
             love.graphics.setLineWidth(lineWidth * 0.8)
             love.graphics.polygon("line", arrowEndX, arrowEndY, arrowheadLeftX, arrowheadLeftY, arrowheadRightX, arrowheadRightY)
-            
             -- Reset line settings
             love.graphics.setLineWidth(1)
             love.graphics.setLineJoin("miter")
@@ -647,13 +546,11 @@ function Renderer.drawMobilePullIndicator(player, mouseX, mouseY, mouseStartX, m
         end
     end
 end
-
 function Renderer.drawUI(score, combo, comboTimer, speedBoost, fonts)
     -- Draw score
     Utils.setColor(Utils.colors.text)
     love.graphics.setFont(fonts.bold)
     love.graphics.print("Score: " .. Utils.formatNumber(score), 10, 160)
-    
     -- Draw combo
     if combo > 0 then
         local comboAlpha = math.min(comboTimer / 3.0, 1)
@@ -664,48 +561,38 @@ function Renderer.drawUI(score, combo, comboTimer, speedBoost, fonts)
         love.graphics.print("Speed x" .. string.format("%.1f", speedBoost), 10, 210)
     end
 end
-
 function Renderer.drawControlsHint(player, fonts)
     love.graphics.setFont(fonts.light)
     Utils.setColor(Utils.colors.white, 0.5)
-    
     local hints = {}
     if player.onPlanet then
         table.insert(hints, "Pull back and release to jump")
     else
         table.insert(hints, "Shift/Z/X: Dash")
     end
-    
     -- Add other controls
     table.insert(hints, "TAB: Map")
     table.insert(hints, "U: Upgrades")
     table.insert(hints, "L: Lore")
-    
     -- Check if warp drive is unlocked
     local UpgradeSystem = Utils.require("src.systems.upgrade_system")
     if UpgradeSystem.upgrades.warp_drive.currentLevel > 0 then
         table.insert(hints, "W: Warp")
     end
-    
     table.insert(hints, "F5: Save")
-    
     local hintText = table.concat(hints, " | ")
     love.graphics.printf(hintText, 0, love.graphics.getHeight() - 30, love.graphics.getWidth(), "center")
 end
-
 function Renderer.drawGameOver(score, fonts)
     love.graphics.setFont(fonts.extraBold)
     Utils.setColor(Utils.colors.gameOver)
     love.graphics.printf("GAME OVER", 0, love.graphics.getHeight()/2 - 50, love.graphics.getWidth(), "center")
-    
     love.graphics.setFont(fonts.bold)
     Utils.setColor(Utils.colors.text)
     love.graphics.printf("Score: " .. Utils.formatNumber(score), 0, love.graphics.getHeight()/2, love.graphics.getWidth(), "center")
-    
     love.graphics.setFont(fonts.regular)
     love.graphics.printf("Click or Press Space to Restart", 0, love.graphics.getHeight()/2 + 50, love.graphics.getWidth(), "center")
 end
-
 function Renderer.drawSoundStatus(enabled, fonts)
     if not enabled then
         love.graphics.setFont(fonts.light)
@@ -713,13 +600,11 @@ function Renderer.drawSoundStatus(enabled, fonts)
         love.graphics.print("Sound: OFF (Press M to toggle)", 10, love.graphics.getHeight() - 20)
     end
 end
-
 function Renderer.drawExplorationIndicator(player, Camera)
     -- Draw distance from origin
     local distFromOrigin = math.sqrt(player.x^2 + player.y^2)
     local screenWidth = love.graphics.getWidth()
     local screenHeight = love.graphics.getHeight()
-    
     -- Use the new UI animation system for exploration indicator
     local UIAnimationSystem = Utils.require("src.ui.ui_animation_system")
     if UIAnimationSystem then
@@ -748,19 +633,16 @@ function Renderer.drawExplorationIndicator(player, Camera)
         -- Fallback to old system if animation system not available
         local indicatorX = math.max(10, math.min(screenWidth - 160, screenWidth - 160))
         local indicatorY = 10
-        
         -- Distance indicator
         Utils.setColor(Utils.colors.white, 0.7)
         love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
         love.graphics.print(string.format("Distance: %.0f", distFromOrigin), indicatorX, indicatorY)
-        
         -- Zoom indicator
         love.graphics.setFont(Renderer.fonts.light or love.graphics.getFont())
         if Renderer.camera then
             love.graphics.print(string.format("Zoom: %.1fx", Renderer.camera.scale), indicatorX, indicatorY + 25)
         end
     end
-    
     -- Danger warning if too far
     if distFromOrigin > 2000 then
         local pulse = math.sin(love.timer.getTime() * 4) * 0.5 + 0.5
@@ -768,7 +650,6 @@ function Renderer.drawExplorationIndicator(player, Camera)
         love.graphics.setFont(Renderer.fonts.bold or love.graphics.getFont())
         love.graphics.printf("WARNING: ENTERING THE VOID", 0, 100, screenWidth, "center")
     end
-    
     -- Stuck warning indicator
     local GameState = Utils.require("src.core.game_state")
     if GameState.player and GameState.player.stuckWarning then
@@ -778,15 +659,12 @@ function Renderer.drawExplorationIndicator(player, Camera)
         love.graphics.printf("SLOW MOVEMENT - PRESS R TO RESET", 0, 150, screenWidth, "center")
     end
 end
-
 function Renderer.drawButton(text, x, y, width, height, isHovered)
     Utils.drawButton(text, x, y, width, height, nil, nil, isHovered)
 end
-
 function Renderer.drawProgressBar(x, y, width, height, progress)
     Utils.drawProgressBar(x, y, width, height, progress)
 end
-
 function Renderer.drawText(text, x, y, font, color, align)
     if font then
         love.graphics.setFont(font)
@@ -800,14 +678,11 @@ function Renderer.drawText(text, x, y, font, color, align)
         love.graphics.print(text, x, y)
     end
 end
-
 function Renderer.drawCenteredText(text, y, font, color)
     Renderer.drawText(text, 0, y, font, color, "center")
 end
-
 function Renderer.drawPanel(x, y, width, height, color)
     Utils.setColor(color or Utils.colors.background)
     love.graphics.rectangle("fill", x, y, width, height)
 end
-
-return Renderer 
+return Renderer

@@ -1,10 +1,8 @@
 -- Unit tests for game logic using Busted-style syntax
 package.path = package.path .. ";../../?.lua"
-
 local Utils = require("src.utils.utils")
 Utils.require("tests.busted")
 local GameLogic = Utils.require("src.core.game_logic")
-
 describe("Game Logic", function()
     describe("Distance Calculations", function()
         it("should calculate distance correctly", function()
@@ -13,14 +11,12 @@ describe("Game Logic", function()
             assert.equals(3, dx)
             assert.equals(4, dy)
         end)
-        
         it("should handle negative coordinates", function()
             local dist, dx, dy = GameLogic.calculateDistance(-1, -1, 2, 3)
             assert.equals(5, dist)
             assert.equals(3, dx)
             assert.equals(4, dy)
         end)
-        
         it("should handle nil inputs gracefully", function()
             local dist, dx, dy = GameLogic.calculateDistance(nil, 0, 3, 4)
             assert.equals(0, dist)
@@ -28,134 +24,112 @@ describe("Game Logic", function()
             assert.equals(0, dy)
         end)
     end)
-    
     describe("Vector Normalization", function()
         it("should normalize vectors correctly", function()
             local nx, ny = GameLogic.normalizeVector(3, 4)
             assert.equals(0.6, nx)
             assert.equals(0.8, ny)
-            
             -- Test magnitude
             local mag = math.sqrt(nx*nx + ny*ny)
             assert.equals(1.0, mag)
         end)
-        
         it("should handle zero vector", function()
             local nx, ny = GameLogic.normalizeVector(0, 0)
             assert.equals(0, nx)
             assert.equals(0, ny)
         end)
-        
         it("should handle nil inputs", function()
             local nx, ny = GameLogic.normalizeVector(nil, 4)
             assert.equals(0, nx)
             assert.equals(0, ny)
         end)
     end)
-    
     describe("Gravity Calculations", function()
         it("should calculate gravity correctly", function()
             local gx, gy = GameLogic.calculateGravity(100, 100, 200, 100, 50)
             assert.is_true(gx > 0, "Gravity x should be positive, got: " .. tostring(gx))
             assert.equals(0, gy)
-            
             -- Test gravity strength decreases with distance
             local gx2, gy2 = GameLogic.calculateGravity(100, 100, 300, 100, 50)
             assert.is_true(gx2 < gx, "Gravity should decrease with distance")
         end)
-        
         it("should return zero gravity inside planet", function()
             local gx, gy = GameLogic.calculateGravity(100, 100, 100, 100, 50)
             assert.equals(0, gx)
             assert.equals(0, gy)
         end)
     end)
-    
     describe("Orbit Calculations", function()
         it("should calculate orbit position at angle 0", function()
             local x, y = GameLogic.calculateOrbitPosition(100, 100, 0, 50)
             assert.equals(150, x)
             assert.equals(100, y)
         end)
-        
         it("should calculate orbit position at angle π/2", function()
             local x, y = GameLogic.calculateOrbitPosition(100, 100, math.pi/2, 50)
             assert.equals(100, x)
             assert.equals(150, y)
         end)
     end)
-    
     describe("Collision Detection", function()
         it("should detect ring collision when player passes through", function()
             local hit = GameLogic.checkRingCollision(125, 100, 10, 100, 100, 30, 20)
             assert.is_true(hit)
         end)
-        
         it("should not detect ring collision when too far", function()
             local miss = GameLogic.checkRingCollision(200, 100, 10, 100, 100, 30, 20)
             assert.is_false(miss)
         end)
-        
         it("should not detect collision in center hole", function()
             local inHole = GameLogic.checkRingCollision(100, 100, 5, 100, 100, 30, 20)
             assert.is_false(inHole)
         end)
-        
         it("should detect planet collision when touching", function()
             local hit = GameLogic.checkPlanetCollision(150, 100, 10, 100, 100, 50)
             assert.is_true(hit)
         end)
-        
         it("should not detect planet collision when far", function()
             local miss = GameLogic.checkPlanetCollision(200, 100, 10, 100, 100, 50)
             assert.is_false(miss)
         end)
     end)
-    
     describe("Jump Mechanics", function()
         it("should calculate jump velocity correctly", function()
             local vx, vy = GameLogic.calculateJumpVelocity(150, 100, 100, 100, 300, 0, 0)
             assert.equals(300, vx)
             assert.equals(0, vy)
         end)
-        
         it("should add tangent velocity to jump", function()
             local vx, vy = GameLogic.calculateJumpVelocity(150, 100, 100, 100, 300, 50, 0)
             assert.equals(350, vx)
             assert.equals(0, vy)
         end)
-        
         it("should calculate tangent velocity", function()
             local vx, vy = GameLogic.calculateTangentVelocity(0, 1, 50)
             assert.equals(0, vx)
             assert.equals(50, vy)
-            
             local vx2, vy2 = GameLogic.calculateTangentVelocity(math.pi/2, 1, 50)
             assert.equals(-50, vx2)
             assert.is_true(math.abs(vy2) < 0.001)
         end)
     end)
-    
     describe("Speed Boost", function()
         it("should apply speed boost correctly", function()
             local vx, vy = GameLogic.applySpeedBoost(100, 0, 2.0)
             assert.equals(200, vx)
             assert.equals(0, vy)
         end)
-        
         it("should handle fractional boosts", function()
             local vx, vy = GameLogic.applySpeedBoost(100, 100, 0.5)
             assert.equals(50, vx)
             assert.equals(50, vy)
         end)
-        
         it("should preserve zero velocity", function()
             local vx, vy = GameLogic.applySpeedBoost(0, 0, 2.0)
             assert.equals(0, vx)
             assert.equals(0, vy)
         end)
     end)
-    
     describe("Bounds Checking", function()
         it("should detect out of bounds correctly", function()
             assert.is_true(GameLogic.isOutOfBounds(-150, 100, 800, 600))
@@ -165,10 +139,8 @@ describe("Game Logic", function()
             assert.is_false(GameLogic.isOutOfBounds(400, 300, 800, 600))
         end)
     end)
-    
     describe("Progression Integration", function()
         local mockProgression
-        
         before_each(function()
             mockProgression = {
                 getUpgradeMultiplier = spy(function(upgrade)
@@ -181,12 +153,10 @@ describe("Game Logic", function()
                 end)
             }
         end)
-        
         it("should calculate combo bonus without progression", function()
             local bonus = GameLogic.calculateComboBonus(5, nil)
             assert.equals(35, bonus)
         end)
-        
         it("should apply progression multiplier to combo bonus", function()
             -- Create mock directly in test to avoid before_each issues
             local mockProg = {
@@ -202,12 +172,10 @@ describe("Game Logic", function()
             local bonus = GameLogic.calculateComboBonus(5, mockProg)
             assert.equals(70, bonus)
         end)
-        
         it("should calculate speed boost without progression", function()
             local boost = GameLogic.calculateSpeedBoost(3, nil)
             assert.equals(1.3, boost)
         end)
-        
         it("should apply progression multiplier to speed boost", function()
             -- Create mock directly in test to avoid before_each issues
             local mockProg = {

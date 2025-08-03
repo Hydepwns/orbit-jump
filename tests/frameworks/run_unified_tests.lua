@@ -1,9 +1,7 @@
 -- Unified Test Runner for Orbit Jump
 -- Consolidates all test types into a single, efficient runner
-
 local Utils = require("src.utils.utils")
 local UnifiedTestFramework = Utils.require("tests.unified_test_framework")
-
 -- Configuration
 local config = {
     testTypes = {
@@ -17,7 +15,6 @@ local config = {
     filter = nil,
     timeout = 30 -- seconds
 }
-
 -- ANSI color codes
 local colors = {
     green = "\27[32m",
@@ -26,24 +23,19 @@ local colors = {
     blue = "\27[34m",
     reset = "\27[0m"
 }
-
 local function printColored(color, text)
     Utils.Logger.output(colors[color] .. text .. colors.reset)
 end
-
 -- Parse command line arguments
 local function parseArgs(...)
     local args = {...}
     local i = 1
-    
     -- Handle case where no arguments are passed
     if #args == 0 then
         return
     end
-    
     while i <= #args do
         local arg = args[i]
-        
         if arg == "--unit-only" then
             config.testTypes.unit = true
             config.testTypes.integration = false
@@ -99,11 +91,9 @@ local function parseArgs(...)
             print("  lua run_unified_tests.lua --filter \"player\" # Run tests with 'player' in name")
             os.exit(0)
         end
-        
         i = i + 1
     end
 end
-
 -- Test discovery
 local function discoverTests()
     local tests = {
@@ -112,7 +102,6 @@ local function discoverTests()
         performance = {},
         ui = {}
     }
-    
     -- Unit tests
     if config.testTypes.unit then
         local unitTestFiles = {
@@ -127,7 +116,6 @@ local function discoverTests()
             "tests/unit/test_performance_monitor.lua",
             "tests/unit/test_performance_system.lua"
         }
-        
         for _, file in ipairs(unitTestFiles) do
             local success, testSuite = pcall(Utils.require, file:gsub("^tests/", ""):gsub("%.lua$", ""))
             if config.verbose then
@@ -145,13 +133,11 @@ local function discoverTests()
             end
         end
     end
-    
     -- Integration tests
     if config.testTypes.integration then
         local integrationTestFiles = {
             "tests/integration/test_addiction_features_integration.lua"
         }
-        
         for _, file in ipairs(integrationTestFiles) do
             local success, testSuite = pcall(Utils.require, file:gsub("^tests/", ""):gsub("%.lua$", ""))
             if success and testSuite then
@@ -159,13 +145,11 @@ local function discoverTests()
             end
         end
     end
-    
     -- Performance tests
     if config.testTypes.performance then
         local performanceTestFiles = {
             "tests/performance/test_performance_benchmarks.lua"
         }
-        
         for _, file in ipairs(performanceTestFiles) do
             local success, testSuite = pcall(Utils.require, file:gsub("^tests/", ""):gsub("%.lua$", ""))
             if success and testSuite then
@@ -173,7 +157,6 @@ local function discoverTests()
             end
         end
     end
-    
     -- UI tests
     if config.testTypes.ui then
         local uiTestFiles = {
@@ -184,7 +167,6 @@ local function discoverTests()
             "tests/ui/test_upgrade_system.lua",
             "tests/ui/test_achievement_system.lua"
         }
-        
         for _, file in ipairs(uiTestFiles) do
             local success, testSuite = pcall(Utils.require, file:gsub("^tests/", ""):gsub("%.lua$", ""))
             if success and testSuite then
@@ -192,18 +174,14 @@ local function discoverTests()
             end
         end
     end
-    
     return tests
 end
-
 -- Test filtering
 local function filterTests(testSuites, pattern)
     if not pattern then
         return testSuites
     end
-    
     local filtered = {}
-    
     for testType, suites in pairs(testSuites) do
         filtered[testType] = {}
         for suiteName, suite in pairs(suites) do
@@ -218,15 +196,12 @@ local function filterTests(testSuites, pattern)
             end
         end
     end
-    
     return filtered
 end
-
 -- Test execution with timeout
 local function runTestWithTimeout(testName, testFn, timeout)
     local startTime = os.clock()
     local success, error = true, nil
-    
     -- Set up timeout
     local function timeoutHandler()
         if os.clock() - startTime > timeout then
@@ -235,42 +210,32 @@ local function runTestWithTimeout(testName, testFn, timeout)
         end
         return true
     end
-    
     -- Run the test
     success, error = Utils.ErrorHandler.safeCall(testFn)
-    
     -- Check timeout
     if not timeoutHandler() then
         success = false
         error = "Test timed out after " .. timeout .. " seconds"
     end
-    
     return success, error, os.clock() - startTime
 end
-
 -- Run test suites
 local function runTestSuites(testSuites, testType)
     printColored("blue", string.format("\n📋 Running %s Tests", testType:upper()))
     printColored("blue", string.rep("=", 50))
-    
     local totalTests = 0
     local passedTests = 0
     local failedTests = 0
     local startTime = os.clock()
-    
     for suiteName, testSuite in pairs(testSuites) do
         if config.verbose then
             printColored("yellow", string.format("\n🔍 Suite: %s", suiteName))
         end
-        
         local suitePassed = 0
         local suiteFailed = 0
-        
         for testName, testFn in pairs(testSuite) do
             totalTests = totalTests + 1
-            
             local success, error, duration = runTestWithTimeout(testName, testFn, config.timeout)
-            
             if success then
                 if config.verbose then
                     printColored("green", string.format("  ✅ %s (%.3fs)", testName, duration))
@@ -283,36 +248,28 @@ local function runTestSuites(testSuites, testType)
                 failedTests = failedTests + 1
             end
         end
-        
         if config.verbose and suitePassed + suiteFailed > 0 then
             local suiteColor = suiteFailed == 0 and "green" or "red"
             printColored(suiteColor, string.format("  %d/%d tests passed", suitePassed, suitePassed + suiteFailed))
         end
     end
-    
     local endTime = os.clock()
     local totalTime = endTime - startTime
-    
     printColored("blue", string.format("\n📊 %s Tests Summary:", testType:upper()))
-    printColored("blue", string.format("  Total: %d | Passed: %d | Failed: %d | Time: %.3fs", 
+    printColored("blue", string.format("  Total: %d | Passed: %d | Failed: %d | Time: %.3fs",
         totalTests, passedTests, failedTests, totalTime))
-    
     return passedTests, failedTests, totalTime
 end
-
 -- Main execution
 local function main(...)
     printColored("blue", "🔧 Starting main function...")
     parseArgs(...)
-    
     printColored("yellow", "🚀 Orbit Jump Unified Test Runner")
     printColored("yellow", string.rep("=", 60))
-    
     -- Initialize framework
     printColored("blue", "🔧 Initializing framework...")
     UnifiedTestFramework.init()
     printColored("blue", "✅ Framework initialized")
-    
     -- Discover tests
     printColored("blue", "🔍 Discovering tests...")
     local success, allTests = pcall(discoverTests)
@@ -321,13 +278,11 @@ local function main(...)
         os.exit(1)
     end
     printColored("blue", "📋 Test discovery complete")
-    
     -- Apply filters
     if config.filter then
         allTests = filterTests(allTests, config.filter)
         printColored("blue", "🔍 Filter: " .. config.filter)
     end
-    
     -- Count total tests
     local totalTestSuites = 0
     for _, testType in pairs(allTests) do
@@ -335,20 +290,16 @@ local function main(...)
             totalTestSuites = totalTestSuites + 1
         end
     end
-    
     if totalTestSuites == 0 then
         printColored("yellow", "⚠️  No tests found matching criteria")
         os.exit(0)
     end
-    
     printColored("blue", string.format("📋 Found %d test suites", totalTestSuites))
-    
     -- Run tests
     local overallStartTime = os.clock()
     local totalPassed = 0
     local totalFailed = 0
     local totalTime = 0
-    
     for testType, testSuites in pairs(allTests) do
         if next(testSuites) then
             local passed, failed, time = runTestSuites(testSuites, testType)
@@ -357,16 +308,13 @@ local function main(...)
             totalTime = totalTime + time
         end
     end
-    
     local overallEndTime = os.clock()
     local overallTime = overallEndTime - overallStartTime
-    
     -- Final summary
     print(string.rep("=", 60))
     printColored("yellow", "📊 Overall Test Results:")
-    printColored("yellow", string.format("  Total: %d | Passed: %d | Failed: %d | Time: %.3fs", 
+    printColored("yellow", string.format("  Total: %d | Passed: %d | Failed: %d | Time: %.3fs",
         totalPassed + totalFailed, totalPassed, totalFailed, overallTime))
-    
     if totalFailed == 0 then
         printColored("green", "🎉 All tests passed!")
         os.exit(0)
@@ -375,10 +323,9 @@ local function main(...)
         os.exit(1)
     end
 end
-
 -- Run if called directly
 if arg and #arg > 0 then
     main(table.unpack(arg))
 else
     main()
-end 
+end

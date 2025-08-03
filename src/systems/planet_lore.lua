@@ -1,9 +1,7 @@
 -- Planet Lore System for Orbit Jump
 -- Collectible logs and story fragments scattered across planets
-
 local Utils = require("src.utils.utils")
 local PlanetLore = {}
-
 -- Lore entries for different planet types
 PlanetLore.entries = {
     ice = {
@@ -14,7 +12,7 @@ PlanetLore.entries = {
             discovered = false
         },
         {
-            id = "ice_2", 
+            id = "ice_2",
             title = "Crystal Cores",
             text = "Deep within each ice planet lies a crystal core, still pulsing with ancient energy. The rings seem drawn to these cores.",
             discovered = false
@@ -26,7 +24,6 @@ PlanetLore.entries = {
             discovered = false
         }
     },
-    
     lava = {
         {
             id = "lava_1",
@@ -47,7 +44,6 @@ PlanetLore.entries = {
             discovered = false
         }
     },
-    
     tech = {
         {
             id = "tech_1",
@@ -68,7 +64,6 @@ PlanetLore.entries = {
             discovered = false
         }
     },
-    
     void = {
         {
             id = "void_1",
@@ -89,7 +84,6 @@ PlanetLore.entries = {
             discovered = false
         }
     },
-    
     standard = {
         {
             id = "standard_1",
@@ -105,7 +99,6 @@ PlanetLore.entries = {
         }
     }
 }
-
 -- Special lore unlocked by achievements
 PlanetLore.specialEntries = {
     {
@@ -130,17 +123,14 @@ PlanetLore.specialEntries = {
         discovered = false
     }
 }
-
 -- Currently displayed lore
 PlanetLore.currentDisplay = nil
 PlanetLore.displayTimer = 0
 PlanetLore.fadeIn = 0
-
 -- Discover a random lore entry for a planet type
 function PlanetLore.discoverRandomLore(planetType)
     local entries = PlanetLore.entries[planetType]
     if not entries then return nil end
-    
     -- Find undiscovered entries
     local undiscovered = {}
     for _, entry in ipairs(entries) do
@@ -148,23 +138,17 @@ function PlanetLore.discoverRandomLore(planetType)
             table.insert(undiscovered, entry)
         end
     end
-    
     if #undiscovered == 0 then return nil end
-    
     -- Pick a random undiscovered entry
     local entry = undiscovered[math.random(#undiscovered)]
     entry.discovered = true
-    
     -- Display it
     PlanetLore.display(entry)
-    
     return entry
 end
-
 -- Check and unlock special entries
 function PlanetLore.checkSpecialEntries()
     local AchievementSystem = Utils.require("src.systems.achievement_system")
-    
     for _, entry in ipairs(PlanetLore.specialEntries) do
         if not entry.discovered and AchievementSystem.achievements[entry.requirement] then
             if AchievementSystem.achievements[entry.requirement].unlocked then
@@ -174,23 +158,19 @@ function PlanetLore.checkSpecialEntries()
             end
         end
     end
-    
     return nil
 end
-
 -- Display a lore entry
 function PlanetLore.display(entry)
     PlanetLore.currentDisplay = entry
     PlanetLore.displayTimer = 8.0 -- Show for 8 seconds
     PlanetLore.fadeIn = 0
-    
     -- Play discovery sound
     local soundManager = Utils.require("src.audio.sound_manager")
     if soundManager and soundManager.playLoreDiscovered then
         soundManager:playLoreDiscovered()
     end
 end
-
 -- Update the display
 function PlanetLore.update(dt)
     if PlanetLore.currentDisplay then
@@ -198,71 +178,56 @@ function PlanetLore.update(dt)
         if PlanetLore.fadeIn < 1 then
             PlanetLore.fadeIn = math.min(1, PlanetLore.fadeIn + dt * 2)
         end
-        
         -- Update timer
         PlanetLore.displayTimer = PlanetLore.displayTimer - dt
-        
         -- Fade out
         if PlanetLore.displayTimer < 1 then
             PlanetLore.fadeIn = PlanetLore.displayTimer
         end
-        
         -- Remove when done
         if PlanetLore.displayTimer <= 0 then
             PlanetLore.currentDisplay = nil
         end
     end
 end
-
 -- Draw the lore display
 function PlanetLore.draw()
     if not PlanetLore.currentDisplay then return end
-    
     local entry = PlanetLore.currentDisplay
     local alpha = PlanetLore.fadeIn
-    
     local width = 600
     local height = 200
     local x = (love.graphics.getWidth() - width) / 2
     local y = love.graphics.getHeight() - height - 50
-    
     -- Background
     love.graphics.setColor(0, 0, 0, alpha * 0.9)
     love.graphics.rectangle("fill", x, y, width, height, 10)
-    
     -- Border
     love.graphics.setColor(0.5, 0.3, 0.8, alpha * 0.8)
     love.graphics.setLineWidth(2)
     love.graphics.rectangle("line", x, y, width, height, 10)
-    
     -- Icon
     love.graphics.setColor(0.7, 0.5, 1, alpha)
     love.graphics.circle("fill", x + 50, y + 50, 30)
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.print("📜", x + 35, y + 35)
-    
     -- Title
     love.graphics.setColor(1, 0.9, 0.5, alpha)
     love.graphics.setFont(love.graphics.getFont())
     love.graphics.print("LORE DISCOVERED", x + 100, y + 20)
-    
     love.graphics.setColor(1, 1, 1, alpha)
     love.graphics.print(entry.title, x + 100, y + 45)
-    
     -- Text (word wrap)
     love.graphics.setColor(0.8, 0.8, 0.8, alpha)
     love.graphics.printf(entry.text, x + 30, y + 80, width - 60, "left")
-    
     -- Progress hint
     love.graphics.setColor(0.5, 0.5, 0.5, alpha * 0.7)
     love.graphics.print("More lore awaits on distant worlds...", x + 30, y + height - 30)
 end
-
 -- Get completion stats
 function PlanetLore.getStats()
     local total = 0
     local discovered = 0
-    
     -- Count regular entries
     for planetType, entries in pairs(PlanetLore.entries) do
         for _, entry in ipairs(entries) do
@@ -272,7 +237,6 @@ function PlanetLore.getStats()
             end
         end
     end
-    
     -- Count special entries
     for _, entry in ipairs(PlanetLore.specialEntries) do
         total = total + 1
@@ -280,21 +244,18 @@ function PlanetLore.getStats()
             discovered = discovered + 1
         end
     end
-    
     return {
         total = total,
         discovered = discovered,
         percentage = (discovered / total) * 100
     }
 end
-
 -- Save/Load
 function PlanetLore.getSaveData()
     local saveData = {
         entries = {},
         specialEntries = {}
     }
-    
     -- Save regular entries
     for planetType, entries in pairs(PlanetLore.entries) do
         saveData.entries[planetType] = {}
@@ -302,18 +263,14 @@ function PlanetLore.getSaveData()
             saveData.entries[planetType][entry.id] = entry.discovered
         end
     end
-    
     -- Save special entries
     for _, entry in ipairs(PlanetLore.specialEntries) do
         saveData.specialEntries[entry.id] = entry.discovered
     end
-    
     return saveData
 end
-
 function PlanetLore.loadSaveData(data)
     if not data then return end
-    
     -- Load regular entries
     if data.entries then
         for planetType, entries in pairs(data.entries) do
@@ -326,7 +283,6 @@ function PlanetLore.loadSaveData(data)
             end
         end
     end
-    
     -- Load special entries
     if data.specialEntries then
         for _, entry in ipairs(PlanetLore.specialEntries) do
@@ -336,5 +292,4 @@ function PlanetLore.loadSaveData(data)
         end
     end
 end
-
 return PlanetLore

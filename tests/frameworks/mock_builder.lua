@@ -1,12 +1,9 @@
 -- MockBuilder utility for consistent mock object creation
 -- Provides standardized patterns for creating test mocks
-
 local MockBuilder = {}
-
 -- State tracking for validation
 MockBuilder._createdMocks = {}
 MockBuilder._mockRegistry = {}
-
 -- Reset all mock state (call between tests)
 function MockBuilder.reset()
     MockBuilder._createdMocks = {}
@@ -17,7 +14,6 @@ function MockBuilder.reset()
         end
     end
 end
-
 -- Validate that mocks are properly configured
 function MockBuilder.validate()
     local issues = {}
@@ -33,7 +29,6 @@ function MockBuilder.validate()
     end
     return issues
 end
-
 -- Track created mocks for validation
 local function trackMock(mockType, mock)
     if not MockBuilder._createdMocks[mockType] then
@@ -42,7 +37,6 @@ local function trackMock(mockType, mock)
     table.insert(MockBuilder._createdMocks[mockType], mock)
     return mock
 end
-
 -- Create a standardized player mock
 function MockBuilder.createPlayer(options)
     options = options or {}
@@ -59,7 +53,6 @@ function MockBuilder.createPlayer(options)
         trailPositions = options.trailPositions or {},
         jumpPower = options.jumpPower or 300,
         gravityMultiplier = options.gravityMultiplier or 1.0,
-        
         -- Validation
         _validate = function()
             if not player.x or not player.y then
@@ -71,10 +64,8 @@ function MockBuilder.createPlayer(options)
             return nil
         end
     }
-    
     return trackMock("player", player)
 end
-
 -- Create a standardized planet mock
 function MockBuilder.createPlanet(options)
     options = options or {}
@@ -87,7 +78,6 @@ function MockBuilder.createPlanet(options)
         type = options.type or "standard",
         color = options.color or {0.7, 0.4, 0.3},
         gravityMultiplier = options.gravityMultiplier or 1.0,
-        
         -- Validation
         _validate = function()
             if planet.radius <= 0 then
@@ -99,10 +89,8 @@ function MockBuilder.createPlanet(options)
             return nil
         end
     }
-    
     return trackMock("planet", planet)
 end
-
 -- Create a standardized ring mock
 function MockBuilder.createRing(options)
     options = options or {}
@@ -118,7 +106,6 @@ function MockBuilder.createRing(options)
         color = options.color or {0.3, 0.7, 1, 0.8},
         type = options.type or "standard",
         value = options.value or 10,
-        
         -- Validation
         _validate = function()
             if ring.radius <= ring.innerRadius then
@@ -130,10 +117,8 @@ function MockBuilder.createRing(options)
             return nil
         end
     }
-    
     return trackMock("ring", ring)
 end
-
 -- Create a standardized particle mock
 function MockBuilder.createParticle(options)
     options = options or {}
@@ -146,7 +131,6 @@ function MockBuilder.createParticle(options)
         maxLife = options.maxLife or 1.0,
         color = options.color or {1, 1, 1, 1},
         size = options.size or 2,
-        
         -- Validation
         _validate = function()
             if particle.life < 0 or particle.life > particle.maxLife then
@@ -158,10 +142,8 @@ function MockBuilder.createParticle(options)
             return nil
         end
     }
-    
     return trackMock("particle", particle)
 end
-
 -- Create a standardized camera mock
 function MockBuilder.createCamera(options)
     options = options or {}
@@ -170,16 +152,13 @@ function MockBuilder.createCamera(options)
         y = options.y or 0,
         scale = options.scale or 1.0,
         rotation = options.rotation or 0,
-        
         -- Camera methods
         worldToScreen = function(worldX, worldY)
             return (worldX - camera.x) * camera.scale, (worldY - camera.y) * camera.scale
         end,
-        
         screenToWorld = function(screenX, screenY)
             return screenX / camera.scale + camera.x, screenY / camera.scale + camera.y
         end,
-        
         -- Validation
         _validate = function()
             if camera.scale <= 0 then
@@ -188,10 +167,8 @@ function MockBuilder.createCamera(options)
             return nil
         end
     }
-    
     return trackMock("camera", camera)
 end
-
 -- Create a standardized game state mock
 function MockBuilder.createGameState(options)
     options = options or {}
@@ -203,7 +180,6 @@ function MockBuilder.createGameState(options)
         score = options.score or 0,
         combo = options.combo or 0,
         gameMode = options.gameMode or "playing",
-        
         -- Game state methods
         getPlanets = function() return gameState.planets end,
         getRings = function() return gameState.rings end,
@@ -215,7 +191,6 @@ function MockBuilder.createGameState(options)
         setPlanets = function(planets) gameState.planets = planets end,
         setRings = function(rings) gameState.rings = rings end,
         addParticle = function(particle) table.insert(gameState.particles, particle) end,
-        
         -- Validation
         _validate = function()
             if gameState.score < 0 then
@@ -227,20 +202,16 @@ function MockBuilder.createGameState(options)
             return nil
         end
     }
-    
     return trackMock("gameState", gameState)
 end
-
 -- Create enhanced graphics call tracker for renderer tests
 function MockBuilder.createGraphicsTracker()
     local tracker = {
         calls = {},
-        
         -- Clear all tracked calls
         clear = function()
             tracker.calls = {}
         end,
-        
         -- Get calls of a specific type
         getCalls = function(callType)
             local filtered = {}
@@ -251,17 +222,14 @@ function MockBuilder.createGraphicsTracker()
             end
             return filtered
         end,
-        
         -- Count calls of a specific type
         countCalls = function(callType)
             return #tracker.getCalls(callType)
         end,
-        
         -- Check if a call exists matching a predicate
         hasCall = function(callType, predicate)
             local calls = tracker.getCalls(callType)
             if not predicate then return #calls > 0 end
-            
             for _, call in ipairs(calls) do
                 if predicate(call) then
                     return true
@@ -269,17 +237,14 @@ function MockBuilder.createGraphicsTracker()
             end
             return false
         end,
-        
         -- Record a graphics call
         record = function(callType, data)
             data.type = callType
             table.insert(tracker.calls, data)
         end
     }
-    
     return tracker
 end
-
 -- Create mock systems for integration tests
 function MockBuilder.createMockSystems()
     return {
@@ -293,20 +258,17 @@ function MockBuilder.createMockSystems()
             setEnabled = function(enabled) end,
             setVolume = function(volume) end
         },
-        
         ParticleSystem = {
             add = function(particle) end,
             update = function(dt) end,
             get = function() return {} end,
             clear = function() end
         },
-        
         AchievementSystem = {
             checkAchievement = function(type, data) end,
             unlockAchievement = function(id) end,
             getUnlockedAchievements = function() return {} end
         },
-        
         PerformanceMonitor = {
             startTimer = function(name) end,
             endTimer = function(name) return 0 end,
@@ -315,5 +277,4 @@ function MockBuilder.createMockSystems()
         }
     }
 end
-
 return MockBuilder

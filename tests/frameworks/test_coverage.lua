@@ -1,10 +1,7 @@
 -- Test Coverage Tracker for Orbit Jump
 -- Monitors test coverage across all modules
-
 local Utils = require("src.utils.utils")
-
 local TestCoverage = {}
-
 -- Function counts per module (approximate based on code analysis)
 TestCoverage.functions = {
     game = 12,            -- Main game controller
@@ -40,7 +37,6 @@ TestCoverage.functions = {
     settings_menu = 14,   -- Settings menu
     pause_menu = 10       -- Pause menu
 }
-
 -- Currently tested functions (will be updated as we add tests)
 TestCoverage.tested = {
     game = 9,             -- Game controller tests added
@@ -77,44 +73,35 @@ TestCoverage.tested = {
     pause_menu = 10,      -- Full coverage achieved!
     config = 8            -- Full coverage achieved!
 }
-
 function TestCoverage.calculateCoverage()
     local total = 0
     local tested = 0
-    
     for module, count in pairs(TestCoverage.functions) do
         total = total + count
         tested = tested + (TestCoverage.tested[module] or 0)
     end
-    
     return (tested / total) * 100
 end
-
 function TestCoverage.getModuleCoverage(moduleName)
     local total = TestCoverage.functions[moduleName] or 0
     local tested = TestCoverage.tested[moduleName] or 0
-    
     if total == 0 then return 0 end
     return (tested / total) * 100
 end
-
 function TestCoverage.generateReport()
     Utils.Logger.info("\n" .. string.rep("=", 60))
     Utils.Logger.info("TEST COVERAGE REPORT")
     Utils.Logger.info(string.rep("=", 60))
-    
     local totalCoverage = TestCoverage.calculateCoverage()
     Utils.Logger.info("Overall Coverage: %.1f%%", totalCoverage)
     Utils.Logger.info("")
-    
     Utils.Logger.info("Module Coverage:")
     for module, count in pairs(TestCoverage.functions) do
         local coverage = TestCoverage.getModuleCoverage(module)
         local status = coverage >= 80 and "✅" or coverage >= 50 and "⚠️" or "❌"
-        Utils.Logger.info("  %s %s: %.1f%% (%d/%d)", 
+        Utils.Logger.info("  %s %s: %.1f%% (%d/%d)",
             status, module, coverage, TestCoverage.tested[module] or 0, count)
     end
-    
     Utils.Logger.info("\nPriority for testing:")
     local priorities = {}
     for module, count in pairs(TestCoverage.functions) do
@@ -123,20 +110,15 @@ function TestCoverage.generateReport()
             table.insert(priorities, {module = module, coverage = coverage, count = count})
         end
     end
-    
     table.sort(priorities, function(a, b) return a.coverage < b.coverage end)
-    
     for i, priority in ipairs(priorities) do
         if i <= 5 then
             Utils.Logger.info("  %d. %s (%.1f%%)", i, priority.module, priority.coverage)
         end
     end
-    
     Utils.Logger.info(string.rep("=", 60))
 end
-
 function TestCoverage.updateModule(moduleName, testedCount)
     TestCoverage.tested[moduleName] = testedCount
 end
-
-return TestCoverage 
+return TestCoverage

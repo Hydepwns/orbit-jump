@@ -1,8 +1,6 @@
 -- Achievement Definitions Module
 -- Contains all achievement data, tiers, and configurations
-
 local AchievementDefinitions = {}
-
 -- Tiered achievement definitions
 AchievementDefinitions.achievements = {
   -- Explorer Category with Tiers
@@ -20,7 +18,6 @@ AchievementDefinitions.achievements = {
       {name = "Diamond", count = 500, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Universe Explorer"}}
     }
   },
-  
   -- Collector Category with Tiers
   {
     id = "ring_baron",
@@ -36,7 +33,6 @@ AchievementDefinitions.achievements = {
       {name = "Diamond", count = 50000, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Ring Baron"}}
     }
   },
-  
   -- Perfectionist Category with Tiers
   {
     id = "combo_virtuoso",
@@ -52,7 +48,6 @@ AchievementDefinitions.achievements = {
       {name = "Diamond", count = 250, points = 250, color = {0.8, 0.4, 1, 1}, reward = {type = "title", value = "Flawless"}}
     }
   },
-  
   -- Legacy single-tier achievements (keeping for compatibility)
   {
     id = "first_planet",
@@ -95,15 +90,13 @@ AchievementDefinitions.achievements = {
     target = 5000
   }
 }
-
 -- Achievement categories
 AchievementDefinitions.categories = {
   "Explorer",
-  "Collector", 
+  "Collector",
   "Perfectionist",
   "Legacy"
 }
-
 -- Get achievement by ID
 function AchievementDefinitions.getAchievement(id)
   for _, achievement in ipairs(AchievementDefinitions.achievements) do
@@ -113,7 +106,6 @@ function AchievementDefinitions.getAchievement(id)
   end
   return nil
 end
-
 -- Get achievements by category
 function AchievementDefinitions.getAchievementsByCategory(category)
   local categoryAchievements = {}
@@ -124,7 +116,6 @@ function AchievementDefinitions.getAchievementsByCategory(category)
   end
   return categoryAchievements
 end
-
 -- Get all tiered achievements
 function AchievementDefinitions.getTieredAchievements()
   local tieredAchievements = {}
@@ -135,7 +126,6 @@ function AchievementDefinitions.getTieredAchievements()
   end
   return tieredAchievements
 end
-
 -- Get all legacy achievements
 function AchievementDefinitions.getLegacyAchievements()
   local legacyAchievements = {}
@@ -146,5 +136,4 @@ function AchievementDefinitions.getLegacyAchievements()
   end
   return legacyAchievements
 end
-
-return AchievementDefinitions 
+return AchievementDefinitions

@@ -1,12 +1,9 @@
 --[[
     Tutorial Modules Configuration for Orbit Jump
-    
     This module contains all tutorial module definitions with progressive
     skill introduction and context-sensitive help.
 --]]
-
 local TutorialModules = {}
-
 -- Tutorial modules with progressive skill introduction
 TutorialModules.modules = {
     basic_movement = {
@@ -69,7 +66,6 @@ TutorialModules.modules = {
             }
         }
     },
-    
     space_navigation = {
         id = "space_navigation",
         name = "Space Navigation",
@@ -109,7 +105,6 @@ TutorialModules.modules = {
             }
         }
     },
-    
     planet_interaction = {
         id = "planet_interaction",
         name = "Planet Interaction",
@@ -121,9 +116,9 @@ TutorialModules.modules = {
                 title = "Approaching a Planet",
                 text = "You're approaching another planet!\nNotice how its gravity begins to affect your trajectory.",
                 duration = 3,
-                condition = function(player, gameState) 
-                    return not player.onPlanet and gameState.nearestPlanet and 
-                           gameState.nearestPlanet.distance < 200 
+                condition = function(player, gameState)
+                    return not player.onPlanet and gameState.nearestPlanet and
+                           gameState.nearestPlanet.distance < 200
                 end,
                 interactionRequired = false,
                 highlight = "nearest_planet",
@@ -134,9 +129,9 @@ TutorialModules.modules = {
                 title = "Preparing to Land",
                 text = "To land safely, you need to reduce your velocity.\nUse your dash to slow down as you approach.",
                 duration = 0,
-                condition = function(player, gameState) 
-                    return not player.onPlanet and gameState.nearestPlanet and 
-                           gameState.nearestPlanet.distance < 100 
+                condition = function(player, gameState)
+                    return not player.onPlanet and gameState.nearestPlanet and
+                           gameState.nearestPlanet.distance < 100
                 end,
                 interactionRequired = true,
                 action = "dash_to_land",
@@ -155,7 +150,6 @@ TutorialModules.modules = {
             }
         }
     },
-    
     advanced_techniques = {
         id = "advanced_techniques",
         name = "Advanced Techniques",
@@ -167,9 +161,9 @@ TutorialModules.modules = {
                 title = "Gravity Assist",
                 text = "You can use planets' gravity to gain speed!\nFly close to a planet to slingshot around it.",
                 duration = 0,
-                condition = function(player, gameState) 
-                    return not player.onPlanet and gameState.nearestPlanet and 
-                           gameState.nearestPlanet.distance < 150 and 
+                condition = function(player, gameState)
+                    return not player.onPlanet and gameState.nearestPlanet and
+                           gameState.nearestPlanet.distance < 150 and
                            player.velocity and (player.velocity.x^2 + player.velocity.y^2) > 200
                 end,
                 interactionRequired = true,
@@ -190,7 +184,6 @@ TutorialModules.modules = {
         }
     }
 }
-
 -- Skill progression definitions
 TutorialModules.skillLevels = {
     movement = { level = 0, xp = 0, maxXp = 100 },
@@ -198,26 +191,23 @@ TutorialModules.skillLevels = {
     timing = { level = 0, xp = 0, maxXp = 200 },
     precision = { level = 0, xp = 0, maxXp = 250 }
 }
-
 -- Contextual help definitions
 TutorialModules.contextualHelp = {
     stuck_in_space = {
         title = "Need Help?",
         text = "Press T to access tutorials or use your dash to reach a planet.",
-        condition = function(player, gameState) 
-            return not player.onPlanet and not player.dashesLeft and 
+        condition = function(player, gameState)
+            return not player.onPlanet and not player.dashesLeft and
                    gameState.nearestPlanet and gameState.nearestPlanet.distance > 300
         end,
         duration = 5
     },
-    
     low_energy = {
         title = "Low Energy",
         text = "Your energy is running low. Land on a planet to recharge.",
         condition = function(player) return player.energy and player.energy < 20 end,
         duration = 3
     },
-    
     high_velocity = {
         title = "High Velocity",
         text = "You're moving very fast! Be careful when approaching planets.",
@@ -225,7 +215,6 @@ TutorialModules.contextualHelp = {
         duration = 2
     }
 }
-
 -- Action prompts
 TutorialModules.actionPrompts = {
     mouse_drag = "Click and drag to pull back",
@@ -234,7 +223,6 @@ TutorialModules.actionPrompts = {
     dash_to_land = "Use dash to slow down for landing",
     gravity_assist = "Fly close to the planet for gravity assist"
 }
-
 -- Visual cue definitions
 TutorialModules.visualCues = {
     welcome_animation = {
@@ -242,35 +230,30 @@ TutorialModules.visualCues = {
         duration = 3,
         effect = "fade_in"
     },
-    
     planet_highlight = {
         type = "highlight",
         target = "planet",
         color = {0.2, 0.8, 1.0},
         pulse = true
     },
-    
     pullback_guide = {
         type = "guide",
         target = "player",
         direction = "backward",
         color = {1.0, 0.8, 0.2}
     },
-    
     trajectory_preview = {
         type = "preview",
         target = "trajectory",
         color = {0.8, 1.0, 0.2},
         dashed = true
     },
-    
     dash_indicator = {
         type = "indicator",
         target = "player",
         icon = "dash",
         color = {0.2, 1.0, 0.8}
     },
-    
     gravity_field = {
         type = "field",
         target = "planet",
@@ -278,16 +261,13 @@ TutorialModules.visualCues = {
         alpha = 0.3
     }
 }
-
 -- Utility functions
 function TutorialModules.getModule(moduleId)
     return TutorialModules.modules[moduleId]
 end
-
 function TutorialModules.getAllModules()
     return TutorialModules.modules
 end
-
 function TutorialModules.getAvailableModules(completedModules)
     local available = {}
     for moduleId, module in pairs(TutorialModules.modules) do
@@ -299,7 +279,6 @@ function TutorialModules.getAvailableModules(completedModules)
     end
     return available
 end
-
 function TutorialModules.getNextModule(completedModules)
     local available = TutorialModules.getAvailableModules(completedModules)
     if #available > 0 then
@@ -307,35 +286,27 @@ function TutorialModules.getNextModule(completedModules)
     end
     return nil
 end
-
 function TutorialModules.isModuleAvailable(moduleId, completedModules)
     if completedModules[moduleId] then
         return false
     end
-    
     local module = TutorialModules.modules[moduleId]
     if not module then
         return false
     end
-    
     if not module.prerequisite then
         return true
     end
-    
     return completedModules[module.prerequisite] == true
 end
-
 function TutorialModules.getActionPrompt(action)
     return TutorialModules.actionPrompts[action] or "Perform the required action"
 end
-
 function TutorialModules.getVisualCue(cueId)
     return TutorialModules.visualCues[cueId]
 end
-
 function TutorialModules.checkContextualHelp(gameState, player)
     local activeHints = {}
-    
     for hintId, hint in pairs(TutorialModules.contextualHelp) do
         if hint.condition(player, gameState) then
             table.insert(activeHints, {
@@ -346,8 +317,6 @@ function TutorialModules.checkContextualHelp(gameState, player)
             })
         end
     end
-    
     return activeHints
 end
-
-return TutorialModules 
+return TutorialModules
