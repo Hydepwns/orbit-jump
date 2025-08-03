@@ -159,6 +159,53 @@ setup_test_environment() {
     log_success "Test environment ready"
 }
 
+# Run tests with LÖVE2D
+run_love2d_tests() {
+    local test_suite="$1"
+    shift
+    local test_options=("$@")
+    
+    log_info "Launching LÖVE2D test runner..."
+    
+    # Build LÖVE2D command
+    local love_cmd=("love" "$PROJECT_ROOT" "test")
+    
+    # Add test suite
+    if [[ "$test_suite" != "all" ]]; then
+        love_cmd+=("$test_suite")
+    fi
+    
+    # Add options
+    for opt in "${test_options[@]}"; do
+        case "$opt" in
+            filter=*)
+                love_cmd+=("--filter" "${opt#filter=}")
+                ;;
+            timeout=*)
+                love_cmd+=("--time-limit" "${opt#timeout=}")
+                ;;
+            coverage)
+                love_cmd+=("--coverage")
+                ;;
+            visual)
+                love_cmd+=("--visual")
+                ;;
+        esac
+    done
+    
+    # Run LÖVE2D with test mode
+    "${love_cmd[@]}"
+    local exit_code=$?
+    
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "All tests passed!"
+    else
+        log_error "Tests failed with exit code: $exit_code"
+    fi
+    
+    return $exit_code
+}
+
 # Run unified test suite
 run_unified_tests() {
     local test_suite="$1"
@@ -166,7 +213,16 @@ run_unified_tests() {
     local test_options=("$@")
     
     local start_time=$(date +%s)
-    local test_script="$PROJECT_ROOT/tests/run_unified_tests_simple.lua"
+    
+    # Check if LÖVE2D is available
+    if command -v love &> /dev/null; then
+        log_info "Running tests with LÖVE2D..."
+        run_love2d_tests "$test_suite" "${test_options[@]}"
+        return $?
+    else
+        log_warning "LÖVE2D not found, falling back to Lua runner"
+        local test_script="$PROJECT_ROOT/tests/run_unified_tests_simple.lua"
+    fi
     
     log_info "Running $test_suite test suite..."
     
