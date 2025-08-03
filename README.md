@@ -69,6 +69,13 @@ lua install.lua --luarocks
 lua install.lua --manual
 ```
 
+### Package Validation
+
+```bash
+# Validate package structure for LuaRocks publishing
+lua scripts/publishing/test_package.lua
+```
+
 ## Quick Start
 
 ```bash
@@ -92,18 +99,6 @@ love .
 lua tests/run_interactive_tests.lua
 ```
 
-### Project Structure
-
-```
-src/
-├── core/              # Core game systems
-├── systems/           # Game features
-├── utils/             # Utilities
-├── audio/             # Sound system
-├── ui/                # Interface
-└── world/             # World generation
-```
-
 ## Controls
 
 ### Desktop
@@ -125,6 +120,7 @@ src/
 - [Architecture](docs/architecture.md)
 - [Testing](docs/testing.md)
 - [Contributing](docs/contributing.md)
+- [LuaRocks Publishing](docs/publishing.md)
 
 ## License
 
