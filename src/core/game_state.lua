@@ -1,18 +1,16 @@
 -- Game State Manager for Orbit Jump
 -- Centralizes all game state management for consistency
-
 local Utils = require("src.utils.utils")
 -- Cache commonly used modules
-local TutorialSystem = Utils.require("src.ui.tutorial_system")
-local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system")
+-- Use new modular tutorial system instead of deprecated versions
+local TutorialSystem = Utils.require("src.ui.tutorial.tutorial_modules")
+local EnhancedTutorialSystem = Utils.require("src.ui.enhanced_tutorial_system_new")
 local WorldGenerator = Utils.require("src.systems.world_generator")
 local PlayerSystem = Utils.require("src.systems.player_system")
 local ParticleSystem = Utils.require("src.systems.particle_system")
 local CollisionSystem = Utils.require("src.systems.collision_system")
 local RingSystem = Utils.require("src.systems.ring_system")
-
 local GameState = {}
-
 -- Game states
 GameState.STATES = {
     PLAYING = "playing",
@@ -20,10 +18,8 @@ GameState.STATES = {
     PAUSED = "paused",
     MENU = "menu"
 }
-
 -- Current state
 GameState.current = GameState.STATES.PLAYING
-
 -- Game data
 GameState.data = {
     score = 0,
@@ -39,11 +35,9 @@ GameState.data = {
     maxPullDistance = 250,
     isCharging = false
 }
-
 -- Time scale for random events
 GameState.world_time_scale = 1.0
 GameState.player_time_scale = 1.0
-
 -- Player state
 GameState.player = {
     x = 0,
@@ -61,14 +55,12 @@ GameState.player = {
     trail = {},
     speedBoost = 1.0
 }
-
 -- Game objects
 GameState.objects = {
     planets = {},
     rings = {},
     particles = {}
 }
-
 -- UI state
 GameState.ui = {
     currentScreen = "game",
@@ -77,7 +69,6 @@ GameState.ui = {
     menuSelection = 1,
     upgradeSelection = 1
 }
-
 -- Configuration
 GameState.config = {
     gravity = 15000,
@@ -85,77 +76,60 @@ GameState.config = {
     maxCombo = 100,
     comboTimeout = 3.0
 }
-
 -- Performance optimizations
 GameState.spatialGrid = nil
 GameState.particlePool = nil
-
 -- State validation
 function GameState.validateState()
     local errors = {}
-    
     -- Validate player state
     if not GameState.player.x or not GameState.player.y then
         table.insert(errors, "Player position is invalid")
     end
-    
     if GameState.player.radius <= 0 then
         table.insert(errors, "Player radius must be positive")
     end
-    
     -- Validate game data
     if GameState.data.score < 0 then
         table.insert(errors, "Score cannot be negative")
     end
-    
     if GameState.data.combo < 0 then
         table.insert(errors, "Combo cannot be negative")
     end
-    
     -- Validate screen dimensions
     if GameState.data.screenWidth <= 0 or GameState.data.screenHeight <= 0 then
         table.insert(errors, "Screen dimensions must be positive")
     end
-    
     if #errors > 0 then
         Utils.Logger.error("Game state validation failed: %s", table.concat(errors, ", "))
         return false, errors
     end
-    
     return true
 end
-
 function GameState.init(screenWidth, screenHeight)
     Utils.Logger.info("Initializing game state with screen dimensions: %dx%d", screenWidth, screenHeight)
-    
     GameState.data.screenWidth = screenWidth
     GameState.data.screenHeight = screenHeight
-    
     -- Initialize performance optimizations
     GameState.spatialGrid = Utils.SpatialGrid.new(100)
     GameState.particlePool = Utils.ObjectPool.new(
         function() return {x=0, y=0, vx=0, vy=0, lifetime=0, maxLifetime=1, size=2, color=Utils.colors.particle} end,
-        function(particle) 
+        function(particle)
             particle.x, particle.y, particle.vx, particle.vy = 0, 0, 0, 0
             particle.lifetime = 0
         end
     )
-    
     GameState.reset()
-    
     local valid, errors = GameState.validateState()
     if not valid then
         Utils.Logger.error("Game state initialization failed")
         return false
     end
-    
     Utils.Logger.info("Game state initialized successfully")
     return true
 end
-
 function GameState.reset()
     Utils.Logger.info("Resetting game state")
-    
     GameState.current = GameState.STATES.PLAYING
     GameState.data.score = 0
     GameState.data.combo = 0
@@ -164,25 +138,21 @@ function GameState.reset()
     GameState.data.isMouseDown = false
     GameState.data.pullPower = 0
     GameState.data.isCharging = false
-    
     -- Reset streak system to clear all visual effects
     local StreakSystem = Utils.require("src.systems.streak_system")
     if StreakSystem and StreakSystem.reset then
         StreakSystem.reset()
     end
-    
     -- Reset XP system to clear all animations
     local XPSystem = Utils.require("src.systems.xp_system")
     if XPSystem and XPSystem.reset then
         XPSystem.reset()
     end
-    
     -- Reset player (only if planets are available)
     if GameState.objects.planets and #GameState.objects.planets > 0 then
         GameState.player.x = GameState.objects.planets[1].x + GameState.objects.planets[1].radius + 20
         GameState.player.y = GameState.objects.planets[1].y
         GameState.player.onPlanet = 1
-        
         -- Calculate initial angle
         local planet = GameState.objects.planets[GameState.player.onPlanet]
         GameState.player.angle = Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x)
@@ -193,7 +163,6 @@ function GameState.reset()
         GameState.player.onPlanet = nil
         GameState.player.angle = 0
     end
-    
     GameState.player.vx = 0
     GameState.player.vy = 0
     GameState.player.isDashing = false
@@ -201,15 +170,12 @@ function GameState.reset()
     GameState.player.dashCooldown = 0
     GameState.player.trail = {}
     GameState.player.speedBoost = 1.0
-    
     -- Clear objects
     GameState.objects.rings = {}
     GameState.objects.particles = {}
 end
-
 function GameState.update(dt)
     GameState.data.gameTime = GameState.data.gameTime + dt
-    
     -- Update rings (for event rings with velocity)
     local RingSystem = Utils.require("src.systems.ring_system")
     if RingSystem and GameState.objects.rings then
@@ -219,7 +185,6 @@ function GameState.update(dt)
             end
         end
     end
-    
     -- Update combo timer
     if GameState.data.comboTimer > 0 then
         GameState.data.comboTimer = GameState.data.comboTimer - dt
@@ -228,35 +193,29 @@ function GameState.update(dt)
             GameState.player.speedBoost = 1.0
         end
     end
-    
     -- FAILURE DETECTION: Check if player is out of bounds and break streak
     local screenWidth = GameState.data.screenWidth or love.graphics.getWidth()
     local screenHeight = GameState.data.screenHeight or love.graphics.getHeight()
     local margin = 100 -- Forgiving margin
-    
     if GameState.player and not GameState.player.onPlanet then
-        local outOfBounds = GameState.player.x < -margin or 
-                           GameState.player.x > screenWidth + margin or 
-                           GameState.player.y < -margin or 
+        local outOfBounds = GameState.player.x < -margin or
+                           GameState.player.x > screenWidth + margin or
+                           GameState.player.y < -margin or
                            GameState.player.y > screenHeight + margin
-        
         if outOfBounds then
             -- Player went off screen - this is a failure
             local StreakSystem = Utils.require("src.systems.streak_system")
             if StreakSystem and StreakSystem.breakStreak then
                 StreakSystem.breakStreak("out_of_bounds", GameState)
             end
-            
             -- Reset player to nearest planet
             GameState.resetPlayerToNearestPlanet()
         end
     end
-    
     -- Auto-reset if player is stuck in space for too long
     if GameState.player.onPlanet == nil or GameState.player.onPlanet == false then
         -- Check if player velocity is very low (essentially stuck)
         local speed = math.sqrt(GameState.player.vx^2 + GameState.player.vy^2)
-        
         -- More lenient stuck detection - only consider stuck if very slow AND not near any planet
         local nearPlanet = false
         if GameState.objects.planets then
@@ -268,22 +227,18 @@ function GameState.update(dt)
                 end
             end
         end
-        
         if speed < 20 and not nearPlanet then  -- Much lower speed threshold and must not be near planet
             GameState.player.stuckTimer = (GameState.player.stuckTimer or 0) + dt
-            
             -- Show warning when getting close to stuck threshold
             if GameState.player.stuckTimer > 5 then  -- Warning at 5 seconds
                 GameState.player.stuckWarning = true
             end
-            
             if GameState.player.stuckTimer > 8 then -- Much longer reset timer (8 seconds instead of 3)
-                Utils.Logger.info("Player stuck detected - Speed: %.1f, Timer: %.1f, Near planet: %s", 
+                Utils.Logger.info("Player stuck detected - Speed: %.1f, Timer: %.1f, Near planet: %s",
                     speed, GameState.player.stuckTimer, tostring(nearPlanet))
                 GameState.resetPlayerToNearestPlanet()
                 GameState.player.stuckTimer = 0
                 GameState.player.stuckWarning = false
-                
                 -- Show hint in tutorial
                 -- TutorialSystem is already loaded at the top
                 if TutorialSystem.isActive then
@@ -300,7 +255,6 @@ function GameState.update(dt)
     else
         GameState.player.stuckTimer = 0
     end
-    
     -- Generate new planets as player explores
     -- WorldGenerator is already loaded at the top
     if GameState.player and not GameState.player.onPlanet then
@@ -312,7 +266,6 @@ function GameState.update(dt)
         -- Add new planets to our list
         for _, planet in ipairs(newPlanets) do
             table.insert(GameState.objects.planets, planet)
-            
             -- Check for mystery box spawn on new planet
             local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
             if MysteryBoxSystem then
@@ -320,16 +273,13 @@ function GameState.update(dt)
             end
         end
     end
-    
     -- Update player using PlayerSystem
     -- PlayerSystem is already loaded at the top
     PlayerSystem.update(GameState.player, GameState.objects.planets, dt)
-    
     -- Update particles
     -- ParticleSystem is already loaded at the top
     ParticleSystem.update(dt)
     GameState.objects.particles = ParticleSystem.getParticles()
-    
     -- Update spatial grid for collisions
     -- CollisionSystem is already loaded at the top
     CollisionSystem.updateSpatialGrid(
@@ -337,7 +287,6 @@ function GameState.update(dt)
         GameState.objects.planets,
         GameState.objects.rings
     )
-    
     -- Check collisions
     CollisionSystem.checkPlanetCollisions(
         GameState.player,
@@ -346,7 +295,6 @@ function GameState.update(dt)
         GameState,
         GameState.soundManager
     )
-    
     local collectedRings = CollisionSystem.checkRingCollisions(
         GameState.player,
         GameState.objects.rings,
@@ -354,13 +302,11 @@ function GameState.update(dt)
         GameState,
         GameState.soundManager
     )
-    
     -- Check mystery box collisions
     local MysteryBoxSystem = Utils.require("src.systems.mystery_box_system")
     if MysteryBoxSystem then
         MysteryBoxSystem:checkCollision(GameState.player)
     end
-    
     -- Check ring completion
     -- RingSystem is already loaded at the top
     if #collectedRings > 0 then
@@ -371,106 +317,82 @@ function GameState.update(dt)
                 break
             end
         end
-        
         if allCollected then
             -- Generate new rings
             GameState.objects.rings = RingSystem.generateRings(GameState.objects.planets)
         end
     end
 end
-
 function GameState.setState(newState)
     GameState.current = newState
 end
-
 function GameState.isState(state)
     return GameState.current == state
 end
-
 function GameState.isPlaying()
     return GameState.isState(GameState.STATES.PLAYING)
 end
-
 function GameState.isGameOver()
     return GameState.isState(GameState.STATES.GAME_OVER)
 end
-
 function GameState.isPaused()
     return GameState.isState(GameState.STATES.PAUSED)
 end
-
 function GameState.isMenu()
     return GameState.isState(GameState.STATES.MENU)
 end
-
 function GameState.addScore(points)
     GameState.data.score = GameState.data.score + points
 end
-
 function GameState.addCombo()
     GameState.data.combo = GameState.data.combo + 1
     GameState.data.comboTimer = GameState.config.comboTimeout
 end
-
 function GameState.setCombo(newCombo)
     GameState.data.combo = newCombo
     GameState.data.comboTimer = GameState.config.comboTimeout
 end
-
 function GameState.getCombo()
     return GameState.data.combo
 end
-
 function GameState.getScore()
     return GameState.data.score
 end
-
 function GameState.getGameTime()
     return GameState.data.gameTime
 end
-
 function GameState.setPlayerPosition(x, y)
     GameState.player.x = x
     GameState.player.y = y
 end
-
 function GameState.getPlayerPosition()
     return GameState.player.x, GameState.player.y
 end
-
 function GameState.setPlayerVelocity(vx, vy)
     GameState.player.vx = vx
     GameState.player.vy = vy
 end
-
 function GameState.getPlayerVelocity()
     return GameState.player.vx, GameState.player.vy
 end
-
 function GameState.setPlayerOnPlanet(planetIndex)
     GameState.player.onPlanet = planetIndex
 end
-
 function GameState.getPlayerOnPlanet()
     return GameState.player.onPlanet
 end
-
 function GameState.setPlayerAngle(angle)
     GameState.player.angle = angle
 end
-
 function GameState.getPlayerAngle()
     return GameState.player.angle
 end
-
 function GameState.setSpeedBoost(boost)
     GameState.player.speedBoost = boost
 end
-
 function GameState.getSpeedBoost()
     return GameState.player.speedBoost
 end
-
 function GameState.setMouseDown(down, x, y)
     GameState.data.isMouseDown = down
     if down then
@@ -478,23 +400,18 @@ function GameState.setMouseDown(down, x, y)
         GameState.data.mouseStartY = y
     end
 end
-
 function GameState.isMouseDown()
     return GameState.data.isMouseDown
 end
-
 function GameState.setPullPower(power)
     GameState.data.pullPower = power
 end
-
 function GameState.getPullPower()
     return GameState.data.pullPower
 end
-
 function GameState.getMaxPullDistance()
     return GameState.data.maxPullDistance
 end
-
 function GameState.setPlanets(planets)
     GameState.objects.planets = planets
     -- Initialize player position if this is the first time planets are set
@@ -502,71 +419,55 @@ function GameState.setPlanets(planets)
         GameState.initializePlayerPosition()
     end
 end
-
 function GameState.getPlanets()
     return GameState.objects.planets
 end
-
 function GameState.setRings(rings)
     GameState.objects.rings = rings
 end
-
 function GameState.getRings()
     return GameState.objects.rings
 end
-
 function GameState.addParticle(particle)
     table.insert(GameState.objects.particles, particle)
 end
-
 function GameState.getParticles()
     return GameState.objects.particles
 end
-
 function GameState.removeParticle(index)
     table.remove(GameState.objects.particles, index)
 end
-
 function GameState.setUIScreen(screen)
     GameState.ui.currentScreen = screen
 end
-
 function GameState.getUIScreen()
     return GameState.ui.currentScreen
 end
-
 function GameState.isUIScreen(screen)
     return GameState.ui.currentScreen == screen
 end
-
 function GameState.setConfig(key, value)
     GameState.config[key] = value
 end
-
 function GameState.getConfig(key)
     return GameState.config[key]
 end
-
 -- Utility functions for common state checks
 function GameState.canJump()
     return GameState.isPlaying() and GameState.player.onPlanet ~= nil
 end
-
 function GameState.canDash()
-    return GameState.isPlaying() and 
-           GameState.player.onPlanet == nil and 
-           GameState.player.dashCooldown <= 0 and 
+    return GameState.isPlaying() and
+           GameState.player.onPlanet == nil and
+           GameState.player.dashCooldown <= 0 and
            not GameState.player.isDashing
 end
-
 function GameState.isPlayerInSpace()
     return GameState.player.onPlanet == nil
 end
-
 function GameState.isPlayerOnPlanet()
     return GameState.player.onPlanet ~= nil
 end
-
 function GameState.initializePlayerPosition()
     if GameState.objects.planets and #GameState.objects.planets > 0 then
         local planet = GameState.objects.planets[1]
@@ -576,18 +477,15 @@ function GameState.initializePlayerPosition()
         GameState.player.angle = Utils.atan2(GameState.player.y - planet.y, GameState.player.x - planet.x)
     end
 end
-
 -- Reset player to nearest planet when stuck in space
 function GameState.resetPlayerToNearestPlanet()
     if not GameState.objects.planets or #GameState.objects.planets == 0 then
         return
     end
-    
     -- Find nearest planet
     local nearestPlanet = nil
     local nearestDist = math.huge
     local nearestIndex = 1
-    
     for i, planet in ipairs(GameState.objects.planets) do
         local dist = Utils.distance(GameState.player.x, GameState.player.y, planet.x, planet.y)
         if dist < nearestDist then
@@ -596,11 +494,9 @@ function GameState.resetPlayerToNearestPlanet()
             nearestIndex = i
         end
     end
-    
     if nearestPlanet then
         -- Calculate angle to planet
         local angle = Utils.atan2(GameState.player.y - nearestPlanet.y, GameState.player.x - nearestPlanet.x)
-        
         -- Place player on planet surface
         local orbitRadius = nearestPlanet.radius + GameState.player.radius + 5
         GameState.player.x = nearestPlanet.x + math.cos(angle) * orbitRadius
@@ -612,14 +508,11 @@ function GameState.resetPlayerToNearestPlanet()
         GameState.player.isDashing = false
         GameState.player.dashTimer = 0
         GameState.player.dashCooldown = 0
-        
         Utils.Logger.info("Reset player to nearest planet")
     end
 end
-
 -- Challenge state management
 GameState.challengeBackup = nil
-
 -- Clear game objects for challenge
 function GameState.clearForChallenge()
     -- Backup current state
@@ -629,13 +522,11 @@ function GameState.clearForChallenge()
         score = GameState.data.score,
         combo = GameState.data.combo
     }
-    
     -- Clear current objects
     GameState.objects.planets = {}
     GameState.objects.rings = {}
     GameState.objects.particles = {}
 end
-
 -- Restore from challenge
 function GameState.restoreFromChallenge()
     if GameState.challengeBackup then
@@ -645,13 +536,11 @@ function GameState.restoreFromChallenge()
         GameState.challengeBackup = nil
     end
 end
-
 -- Input handling
 function GameState.handleKeyPress(key)
     if not GameState.isPlaying() then
         return
     end
-    
     -- Handle debug keys
     if key == "f1" then
         if GameState.camera then
@@ -668,12 +557,10 @@ function GameState.handleKeyPress(key)
         end
     end
 end
-
 function GameState.handleMousePress(x, y, button)
     if not GameState.isPlaying() then
         return
     end
-    
     if button == 1 and GameState.player.onPlanet then
         -- Start jump charge
         GameState.data.mouseStartX = x
@@ -681,12 +568,10 @@ function GameState.handleMousePress(x, y, button)
         GameState.data.isCharging = true
     end
 end
-
 function GameState.handleMouseMove(x, y)
     if not GameState.isPlaying() then
         return
     end
-    
     -- Update pull power during charging
     if GameState.data.isCharging and GameState.player.onPlanet and GameState.data.mouseStartX then
         local dx = GameState.data.mouseStartX - x
@@ -695,12 +580,10 @@ function GameState.handleMouseMove(x, y)
         GameState.setPullPower(pullPower)
     end
 end
-
 function GameState.handleMouseRelease(x, y, button)
     if not GameState.isPlaying() then
         return
     end
-    
     if button == 1 then
         if GameState.data.isCharging and GameState.player.onPlanet then
             -- Calculate jump
@@ -708,7 +591,6 @@ function GameState.handleMouseRelease(x, y, button)
             local dy = GameState.data.mouseStartY - y
             local pullPower = math.min(Utils.distance(0, 0, dx, dy), GameState.data.maxPullDistance)
             local pullAngle = Utils.atan2(dy, dx)
-            
             -- Execute jump
             -- PlayerSystem is already loaded at the top
             PlayerSystem.jump(
@@ -718,12 +600,10 @@ function GameState.handleMouseRelease(x, y, button)
                 GameState,
                 GameState.soundManager
             )
-            
             -- Notify tutorial system of jump action
             -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("jump")
             EnhancedTutorialSystem.onPlayerAction("jump")
-            
             -- Check for random event trigger
             local RandomEventsSystem = Utils.require("src.systems.random_events_system")
             if RandomEventsSystem then
@@ -737,45 +617,35 @@ function GameState.handleMouseRelease(x, y, button)
                 x, y,
                 GameState.soundManager
             )
-            
             -- Notify tutorial system of dash action
             -- TutorialSystem is already loaded at the top
             TutorialSystem.onPlayerAction("dash")
             EnhancedTutorialSystem.onPlayerAction("dash")
         end
-        
         GameState.data.isCharging = false
         GameState.data.mouseStartX = nil
         GameState.data.mouseStartY = nil
         GameState.data.pullPower = 0
     end
 end
-
 -- Spawn a special event ring for random events
 function GameState.spawnEventRing(x, y, rarityType, options)
     options = options or {}
-    
     local RingSystem = Utils.require("src.systems.ring_system")
     local ring = RingSystem.generateRing(x, y, "default")
-    
     -- Apply rarity
     local RingRaritySystem = Utils.require("src.systems.ring_rarity_system")
     RingRaritySystem.applyRarityToRing(ring, rarityType)
-    
     -- Apply event-specific properties
     if options.velocity_y then
         ring.vy = options.velocity_y
     end
-    
     if options.particle_trail then
         ring.particle_trail = true
         ring.particle_color = options.particle_color or {1, 1, 1}
     end
-    
     -- Add to game state
     table.insert(GameState.objects.rings, ring)
-    
     return ring
 end
-
-return GameState 
+return GameState
