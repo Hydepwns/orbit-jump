@@ -2,6 +2,7 @@
 
 [![LÖVE](https://img.shields.io/badge/LÖVE-11.0%2B-ff69b4.svg)](https://love2d.org/)
 [![Lua](https://img.shields.io/badge/Lua-5.3%2B-blue.svg)](https://www.lua.org/)
+[![LuaRocks](https://img.shields.io/badge/LuaRocks-1.0.0--2-orange.svg)](https://luarocks.org/modules/hydepwns/orbit-jump)
 [![Tests](https://img.shields.io/badge/tests-unified%20framework-brightgreen.svg)](docs/testing.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -26,12 +27,11 @@ A gravity-based arcade game with realistic physics and adaptive systems.
 # Install via LuaRocks
 luarocks install orbit-jump
 
-# Or install from local rockspec
-luarocks install orbit-jump-1.0.0-1.rockspec
-
 # Run the game
 love orbit-jump
 ```
+
+**Note**: LÖVE2D must be installed separately via your system package manager.
 
 ### Manual Installation
 

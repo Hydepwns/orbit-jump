@@ -40,7 +40,7 @@ local essentialFiles = {
     "main.lua",
     "README.md",
     "LICENSE",
-    "orbit-jump-1.0.0-1.rockspec"
+    "orbit-jump-1.0.0-2.rockspec"
 }
 
 local allEssentialFilesExist = true
@@ -59,20 +59,19 @@ print("")
 print("2. Testing Rockspec Content:")
 local rockspecContent = {
     "package = \"orbit%-jump\"",
-    "version = \"1%.0%.0%-1\"",
+    "version = \"1%.0%.0%-2\"",
     "description = {",
     "summary =",
     "homepage =",
     "license = \"MIT\"",
     "dependencies = {",
     "lua >= 5%.3",
-    "love2d >= 11%.0",
     "build = {",
     "type = \"builtin\"",
     "modules = {"
 }
 
-local rockspecValid = testFileContent("orbit-jump-1.0.0-1.rockspec", rockspecContent)
+local rockspecValid = testFileContent("orbit-jump-1.0.0-2.rockspec", rockspecContent)
 if rockspecValid then
     print("✅ Rockspec contains all required fields")
 else
@@ -169,10 +168,10 @@ if allTestsPassed then
     print("Your Orbit Jump package is ready for LuaRocks publishing!")
     print("")
     print("Next steps:")
-    print("1. Create a git tag: git tag v1.0.0")
-    print("2. Push the tag: git push origin v1.0.0")
-    print("3. Upload to LuaRocks: luarocks upload orbit-jump-1.0.0-1.rockspec")
-    print("4. Verify installation: luarocks install orbit-jump")
+print("1. Create a git tag: git tag v1.0.0")
+print("2. Push the tag: git push origin v1.0.0")
+print("3. Upload to LuaRocks: luarocks upload orbit-jump-1.0.0-2.rockspec")
+print("4. Verify installation: luarocks install orbit-jump")
 else
     print("❌ FAILED: Some validation tests failed.")
     print("Please fix the issues above before publishing.")
